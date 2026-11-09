@@ -1,6 +1,6 @@
 # Scout Media Design System
 
-Version 1.0.0 (2026-11-09). **Do not edit these files here.** Generated from Scout's private design master. To change a value, ask Joy or Sean; the master rebuilds and re-syncs this folder.
+Version 1.0.0 (2026-11-09). **Do not edit these files here.** Generated from the Scout design master in Scout-Internal › `content/design/unified/`. To change a value, edit `tokens.json` there, run `build.py`, then `sync-to-repos.sh`.
 
 | File | What it is |
 |---|---|
