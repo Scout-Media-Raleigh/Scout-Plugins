@@ -1,5 +1,10 @@
 # Scout Build changelog
 
+## 0.14.1 (2026-11-09)
+
+- **Business info from the theme.** `scout-setup.json` can carry a `business` section (name, type, phone, email, city, state, other profiles and the rest of Business info). Fill from theme copies it into Scout Core's Business info, filling blank fields only, so anything typed there stays. `same_as` is a list of https links; anything else is dropped.
+- **File editing row** reads the Scout Core switch too, so it shows Off when the switch keeps the editors off even if the host's wp-config.php says otherwise.
+
 ## 0.14.0 (2026-11-09)
 
 - **Saved keys never go quiet when the site's security keys change (scoutraleigh.com, Nov 5 to 9).** The Email app password, the theme key and the Hub keys are encrypted with the site's own security keys. When a host changed those keys, all three silently read as "not set", and form email went out through the host and into junk. Now each saved secret keeps a short fingerprint of the keys it was made with (8 characters of a hash, never the keys or the secret), and when they no longer match it reads as "can't be read":

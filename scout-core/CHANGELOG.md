@@ -1,5 +1,9 @@
 # Scout Core — Changelog
 
+## 1.10.2 (2026-11-09)
+
+- **Turn off the code editor works on WP Engine.** WP Engine's own wp-config.php sets DISALLOW_FILE_EDIT to false, and a setting like that can't be changed once it is set, so on scoutraleigh.com the switch did nothing. The switch now also takes away the code-editing permissions (edit themes, edit plugins, edit files), so the editors are gone whatever wp-config.php says. Off still means off.
+
 ## 1.10.1 (2026-11-09)
 
 - **Turn off the code editor.** A new Spam protection switch (on by default) does what DISALLOW_FILE_EDIT in wp-config.php does: the theme and plugin code editors leave wp-admin, so a stolen login can't change site code (Site Standard rule 22). A value set in wp-config.php still wins. Nothing visitors see changes.

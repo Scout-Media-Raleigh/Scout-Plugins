@@ -143,7 +143,7 @@ final class Scout_Hub_Security {
 		$now     = time();
 		return array(
 			self::xmlrpc_row( (bool) apply_filters( 'xmlrpc_enabled', true ), $core && Scout_Core_Protection::xmlrpc_needed(), $core, $protect ),
-			self::file_edit_row( ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT ) || ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) ),
+			self::file_edit_row( ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT ) || ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) || ( $core && method_exists( 'Scout_Core_Protection', 'editor_locked' ) && Scout_Core_Protection::editor_locked() ) ),
 			self::admins_row( $admins, $now, self::since() ),
 			self::two_step_row( $admins, $plugins ),
 			self::backups_row( self::backups_by() ),
@@ -185,7 +185,7 @@ final class Scout_Hub_Security {
 			'state' => $off ? 'good' : 'warn',
 			'note'  => $off
 				? __( 'Nobody can change theme or plugin code from inside WordPress.', 'scout-build' )
-				: __( 'Admins can change theme and plugin code in WordPress. Turn on "Turn off the code editor" in Spam protection (Scout Core 1.10.1 and up).', 'scout-build' ),
+				: __( 'Admins can change theme and plugin code in WordPress. Turn on "Turn off the code editor" in Spam protection (Scout Core 1.10.2 and up).', 'scout-build' ),
 		);
 	}
 

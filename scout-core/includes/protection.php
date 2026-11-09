@@ -85,12 +85,30 @@ final class Scout_Core_Protection {
 	/**
 	 * Site Standard rule 22: no editing theme or plugin code from wp-admin. Same as
 	 * DISALLOW_FILE_EDIT in wp-config.php, set from here so nobody has to edit that file.
-	 * A value already set in wp-config.php always wins.
+	 * Some hosts (WP Engine) put DISALLOW_FILE_EDIT false in wp-config.php, and a constant
+	 * can't be changed once set, so the switch also takes the editing capabilities away.
 	 */
 	public static function maybe_lock_editor() {
-		if ( self::on( 'file_edit_off' ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+		if ( ! self::on( 'file_edit_off' ) ) {
+			return;
+		}
+		if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
 			define( 'DISALLOW_FILE_EDIT', true );
 		}
+		add_filter( 'map_meta_cap', array( __CLASS__, 'deny_editor' ), 10, 2 );
+	}
+
+	/** True when the switch keeps the code editors off. */
+	public static function editor_locked() {
+		return self::on( 'file_edit_off' );
+	}
+
+	/**
+	 * @param string[] $caps Capabilities the check needs.
+	 * @param string   $cap  The capability asked for.
+	 */
+	public static function deny_editor( $caps, $cap ) {
+		return in_array( $cap, array( 'edit_themes', 'edit_plugins', 'edit_files' ), true ) ? array( 'do_not_allow' ) : $caps;
 	}
 
 	public static function register_settings() {
