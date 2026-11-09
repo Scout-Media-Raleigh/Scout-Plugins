@@ -1,5 +1,9 @@
 # Scout Reviews: Changelog
 
+## 0.7.1 (2026-11-09)
+
+- **A review with "&" in the name is no longer added twice.** WordPress can save "Mr. & Mrs. Sowinski" as "Mr. &amp; Mrs. Sowinski", so the theme's duplicate check missed it and Fill from theme added it again each run. The check now compares the names as plain text.
+
 ## 0.7.0 (2026-11-09)
 
 - **Google totals every day, with an API key.** Review settings has a new box, Check Google every day, with a Google place ID and a Google API key (Places API, New). With both set, the site asks Google once a day for the rating and review count and puts them in the Google row, marking the totals as checked today. Check Google now runs one check on demand, and saving the box runs the first one. No sign-in is needed and no reviews are brought in.
