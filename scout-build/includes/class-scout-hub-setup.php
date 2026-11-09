@@ -7,12 +7,16 @@
  * this fills it in so nobody retypes it in the dashboard. Each section runs
  * again only when its contents change (a new theme version), and it only
  * fills blanks: anything someone already set in WordPress stays as it is.
+ * Two exceptions in "reviews": totals replace the saved ones when their
+ * "checked" date is newer than the last check, and reviews are only added.
  *
  * Format (every section optional):
  * {
  *   "team":    [ { "name", "role", "bio", "email", "military_branch", "photo", "order" } ],
- *   "reviews": { "business", "headline", "ask", "photo", "card_headline", "google_review_url",
- *                "background", "text_color", "accent", "heading_font", "body_font", "label_font" },
+ *   "reviews": { "business", "headline", "ask", "photo", "card_headline", "google_review_url", "google_place_id",
+ *                "background", "text_color", "accent", "heading_font", "body_font", "label_font",
+ *                "totals": { "checked": "YYYY-MM-DD", "profiles": { "google": { "rating", "count", "url" } } },
+ *                "items": [ { "source", "author", "rating", "date", "text", "url" } ] },
  *   "chat":    { "name", "team", "notify", "book_url", "work_url", "photo_1", "photo_2" },
  *   "hours":   { "confirmed": true, "days": { "tuesday": [ ["09:00", "17:00"] ] } },
  *   "analytics": { "gtm": "GTM-XXXXXXX" },
@@ -95,8 +99,7 @@ final class Scout_Hub_Setup {
 			if ( empty( $data[ $section ] ) || ! is_array( $data[ $section ] ) ) {
 				continue;
 			}
-			// The reviews section reruns once after 0.4.4, when untouched defaults started counting as blank.
-			$hash = md5( (string) wp_json_encode( $data[ $section ] ) . ( 'reviews' === $section ? '|defaults-blank' : '' ) );
+			$hash = md5( (string) wp_json_encode( $data[ $section ] ) . ( 'reviews' === $section ? self::reviews_hash_extra( $data[ $section ] ) : '' ) );
 			if ( ( $done[ $section ] ?? '' ) === $hash ) {
 				continue;
 			}
@@ -217,6 +220,28 @@ final class Scout_Hub_Setup {
 		return true;
 	}
 
+	/**
+	 * Extra text in the reviews section's run hash, so the section runs again
+	 * when something outside the file changes what it would do:
+	 * - "|defaults-blank": once after 0.4.4, when untouched defaults started counting as blank.
+	 * - "|totals-waiting": the totals carry a future "checked" date. When that day
+	 *   comes the text drops out, the hash changes and the totals apply.
+	 * - "|reviews-old": the file has totals, reviews or a place ID but Scout Reviews
+	 *   is too old to take them. Once it updates, the section runs again.
+	 */
+	private static function reviews_hash_extra( array $in ): string {
+		$extra = '|defaults-blank';
+		$old   = ( ( ! empty( $in['totals'] ) || ! empty( $in['items'] ) ) && ! class_exists( 'Scout_Reviews_Theme' ) )
+			|| ( ! empty( $in['google_place_id'] ) && ! class_exists( 'Scout_Reviews_Places' ) );
+		if ( $old ) {
+			$extra .= '|reviews-old';
+		} elseif ( is_array( $in['totals'] ?? null ) && class_exists( 'Scout_Reviews_Theme' )
+			&& Scout_Reviews_Theme::is_future( (string) ( $in['totals']['checked'] ?? '' ) ) ) {
+			$extra .= '|totals-waiting';
+		}
+		return $extra;
+	}
+
 	private static function reviews( array $in ): bool {
 		if ( ! class_exists( 'Scout_Reviews_Requests' ) ) {
 			return false;
@@ -238,6 +263,21 @@ final class Scout_Hub_Setup {
 				$saved['profiles']['google']['write_url'] = $write;
 				update_option( Scout_Reviews_Settings::OPTION, $saved );
 			}
+		}
+
+		// Totals and reviews Scout keeps track of (Scout Reviews 0.6.0+). The newest check wins
+		// for totals; reviews are only ever added. See Scout_Reviews_Theme.
+		if ( class_exists( 'Scout_Reviews_Theme' ) ) {
+			if ( ! empty( $in['totals'] ) && is_array( $in['totals'] ) ) {
+				Scout_Reviews_Theme::apply_totals( $in['totals'] );
+			}
+			if ( ! empty( $in['items'] ) && is_array( $in['items'] ) ) {
+				Scout_Reviews_Theme::add_items( array_values( $in['items'] ) );
+			}
+		}
+		// The place ID for the daily Google check (Scout Reviews 0.7.0+). Not a secret; the API key never comes from the theme.
+		if ( ! empty( $in['google_place_id'] ) && class_exists( 'Scout_Reviews_Places' ) ) {
+			Scout_Reviews_Places::fill_place_id( (string) $in['google_place_id'] );
 		}
 		return true;
 	}

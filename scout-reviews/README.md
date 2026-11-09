@@ -131,6 +131,37 @@ New reviews arrive as drafts with a count on the Reviews menu. Publish the
 ones you want. Google keeps control of the name, text, stars, and date; a
 review deleted on Google comes off the site on the next sync.
 
+## Google totals every day, with an API key (0.7.0)
+
+A lighter way to keep the Google rating and review count current, without the
+sign-in above and without bringing in the reviews themselves. Once a day the
+site asks Google's Places API (New) for the business's rating and review
+count, and puts them in the Google row on Review settings.
+
+1. **Get the place ID.** Open Google's Place ID Finder
+   (developers.google.com/maps/documentation/places/web-service/place-id),
+   search for the business as it appears on Google Maps, and copy the ID that
+   starts with `ChIJ`. The theme can carry it as `reviews.google_place_id` in
+   `scout-setup.json` (it is not a secret), and Fill from theme puts it in
+   when the field is blank.
+2. **Make the API key.** In Google Cloud, pick or make a project, turn on
+   **Places API (New)** under APIs & Services, then make an API key under
+   APIs & Services > Credentials. Limit the key to Places API (New). The daily
+   check asks only for `rating` and `userRatingCount`.
+3. **Put both on Review settings > Check Google every day** and click Save.
+   The first check runs straight away. The key is stored encrypted and only
+   ever shows as "Saved" with a Replace button. You can set
+   `SCOUT_REVIEWS_PLACES_KEY` in `wp-config.php` instead.
+
+The key never goes in `scout-setup.json`, the update report, logs, REST output
+or the Hub API. A good check replaces the Google rating and count and marks the
+totals as checked today. A failed check changes nothing and keeps a plain
+reason, which Review settings shows; after three days of failures Site status
+asks for a look and links here. "Check Google now" runs one check on demand.
+While the Business Profile sign-in is connected, its sync owns the Google
+numbers and this check stands down. Deleting the plugin removes the key and
+the place ID.
+
 ## What this feature needs from the theme
 
 - **DESIGN.md:** on the site, the stylesheet reads the DESIGN.md roles
@@ -155,6 +186,46 @@ review deleted on Google comes off the site on the next sync.
   the setting is blank: `business`, `headline`, `ask`, `photo`,
   `card_headline`, `google_review_url`, and the look keys `background`,
   `text_color`, `accent`, `heading_font`, `body_font`, `label_font`.
+- **scout-setup.json, `google_place_id` (0.7.0):** the business's Google
+  place ID for the daily Google check (above). Filled only when the field is
+  blank. The API key is never read from the theme.
+- **scout-setup.json, review totals and reviews (0.6.0):** Scout keeps track
+  of each client's review profiles, so the theme can carry what Scout last saw.
+
+  ```json
+  "reviews": {
+    "totals": {
+      "checked": "2026-11-09",
+      "profiles": {
+        "google": { "rating": 4.9, "count": 52, "url": "https://maps.app.goo.gl/..." },
+        "yelp":   { "rating": 4.0, "count": 4,  "url": "https://www.yelp.com/biz/..." }
+      }
+    },
+    "items": [
+      { "source": "google", "author": "Pat R.", "rating": 5, "date": "2026-10-02",
+        "text": "The review, word for word.", "url": "https://..." }
+    ]
+  }
+  ```
+
+  - `totals.profiles` keys are the platform keys on Review settings:
+    `google`, `facebook`, `yelp`, `clutch`, `upcity`, `designrush`, `bbb`,
+    `avvo`, `tripadvisor` (plus any a `scout_reviews_sources` filter adds).
+    `url` is the profile link; the "leave a review" link stays where it is.
+    Facebook has no stars, so only its count is used.
+  - **The newest check wins.** A platform's totals change only when `checked`
+    is a real `YYYY-MM-DD` date, not in the future, and newer than the last
+    time that platform was checked (saving Review settings counts as a check).
+    The saved "last updated" moves to the `checked` date, not to the day the
+    theme was installed, so Site status still says how long ago someone
+    looked. A future date waits until that day.
+  - `items` are added once each as published reviews, matched on `source`,
+    `author` and `date` (the trash counts, so a deleted review stays deleted).
+    A review already on the site is never edited or removed. `rating` is 0 to
+    5, `date` is `YYYY-MM-DD`, and a review with no `author` or `text` is
+    skipped.
+  - While Google is connected and syncing, Google's own totals and reviews
+    win, and the theme's Google totals and Google reviews are skipped.
 - **Restyling today:** override the `--sr-*` variables on `.scout-reviews`,
   copy `templates/section.php`, `summary.php` or `card.php` to
   `{theme}/scout-reviews/`, or turn the stylesheet off in Settings or with

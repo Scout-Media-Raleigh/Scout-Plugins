@@ -85,12 +85,55 @@ final class Scout_Reviews_Settings {
 	 */
 	public static function set_profile( string $slug, array $profile ): void {
 		$settings                      = self::get();
-		$settings['profiles'][ $slug ] = array_merge( self::profile( $slug ), $profile );
+		$settings['profiles'][ $slug ] = array_merge( self::profile( $slug ), $profile, array( 'checked' => time() ) );
 		self::$internal_write          = true;
 		update_option( self::OPTION, $settings );
 		self::$internal_write = false;
 		update_option( self::STAMP, time(), false );
 		Scout_Reviews_Query::flush();
+	}
+
+	/**
+	 * Write several platforms' totals that someone checked on a given day (the
+	 * theme's scout-setup.json, through Scout Build). Each row keeps its review
+	 * link and remembers its own check time, and the saved stamp moves to that
+	 * day, never to now, so the freshness warning still measures the real check.
+	 *
+	 * @param array<string,array> $rows    slug => { rating, count, url }.
+	 * @param int                 $checked When the totals were checked (a Unix time).
+	 */
+	public static function set_totals( array $rows, int $checked ): void {
+		if ( ! $rows ) {
+			return;
+		}
+		$settings = self::get();
+		foreach ( $rows as $slug => $row ) {
+			$current = is_array( $settings['profiles'][ $slug ] ?? null ) ? $settings['profiles'][ $slug ] : array();
+			$merged  = array_merge( self::profile( $slug ), $current, $row );
+			$merged['checked']             = $checked;
+			$settings['profiles'][ $slug ] = $merged;
+		}
+		self::$internal_write = true;
+		update_option( self::OPTION, $settings );
+		self::$internal_write = false;
+		if ( $checked > (int) get_option( self::STAMP, 0 ) ) {
+			update_option( self::STAMP, $checked, false );
+		}
+		Scout_Reviews_Query::flush();
+	}
+
+	/**
+	 * When one platform's totals were last checked. Every write stamps its own
+	 * rows (the form, a sync, the theme), so a daily Google check does not make
+	 * Yelp look freshly checked. Rows saved before 0.6.0 fall back to the last
+	 * save of the whole form.
+	 */
+	public static function checked_at( string $slug ): int {
+		$row = self::get()['profiles'][ $slug ] ?? array();
+		if ( is_array( $row ) && ! empty( $row['checked'] ) ) {
+			return (int) $row['checked'];
+		}
+		return (int) get_option( self::STAMP, 0 );
 	}
 
 	public static function sanitize( $input ): array {
@@ -119,6 +162,7 @@ final class Scout_Reviews_Settings {
 				'count'     => max( 0, (int) ( $row['count'] ?? 0 ) ),
 				'url'       => esc_url_raw( trim( (string) ( $row['url'] ?? '' ) ), array( 'https', 'http' ) ),
 				'write_url' => esc_url_raw( trim( (string) ( $row['write_url'] ?? '' ) ), array( 'https', 'http' ) ),
+				'checked'   => time(), // Saving the form is a check of every row (see checked_at()).
 			);
 			if ( $clean['rating'] || $clean['count'] || $clean['url'] || $clean['write_url'] ) {
 				$out['profiles'][ $slug ] = $clean;
