@@ -94,6 +94,7 @@ $GLOBALS['modified'][3]  = time() - MINUTE_IN_SECONDS;
 $GLOBALS['faq_pages']    = array( 3 );
 $s = $H::answer_scan();
 ok( 10 === $s['checked'] && 1 === $s['changed'], 'saved page leaves the count: 0 of 10, 1 changed' );
+ok( false === $s['blocked'], 'site loads its own pages: not blocked' );
 ok( 1 === $GLOBALS['scheduled'], 'saved page starts a background run' );
 $H::run_scan();
 ok( array( 3 ) === $GLOBALS['fetched'], 'the run loads only the saved page' );
@@ -137,6 +138,8 @@ $GLOBALS['scheduled'] = 0;
 $GLOBALS['trans'][ $H::SCAN_KEY ] = array( 'time' => time() - 5 * MINUTE_IN_SECONDS, 'tried' => 4, 'loaded' => 0 );
 $H::answer_scan();
 ok( 0 === $GLOBALS['scheduled'], 'site can\'t load its own pages: waits out the 30 minutes' );
+$s = $H::answer_scan();
+ok( true === $s['blocked'] && 1 === $s['changed'], 'site can\'t load its own pages: the result says so, so the note won\'t promise a re-check' );
 
 // Rows saved before this release have no theme stamp: they are checked again.
 morning_run();

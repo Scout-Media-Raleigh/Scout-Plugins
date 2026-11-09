@@ -124,7 +124,7 @@ final class Scout_Hub_Health {
 	 * changed (saved, FAQs edited, theme updated) is left out of the count and
 	 * checked again within a few minutes.
 	 *
-	 * @return array{found:int, checked:int, time:int, oldest:int, changed:int}|null Null while the first checks run.
+	 * @return array{found:int, checked:int, time:int, oldest:int, changed:int, blocked:bool}|null Null while the first checks run.
 	 */
 	public static function answer_scan(): ?array {
 		$seen  = (array) get_option( self::SEEN_KEY, array() );
@@ -163,6 +163,7 @@ final class Scout_Hub_Health {
 				spawn_cron();
 			}
 		}
+		$out['blocked'] = $failed; // The site couldn't load its own pages: only visitors' views check them now.
 		if ( ! $out['checked'] ) {
 			return $failed ? $out : null;
 		}
@@ -883,8 +884,15 @@ final class Scout_Hub_Health {
 			/* translators: 1: time since the newest page check, 2: time since the oldest */
 			$bits[] = $newest === $oldest ? sprintf( __( 'pages checked %s ago', 'scout-build' ), $newest ) : sprintf( __( 'pages checked %1$s to %2$s ago', 'scout-build' ), $newest, $oldest );
 			$redo   = (int) ( $scan['changed'] ?? 0 );
-			/* translators: %d: pages being checked again */
-			$again  = $redo ? ' ' . sprintf( _n( '%d page changed and is being checked again.', '%d pages changed and are being checked again.', $redo, 'scout-build' ), $redo ) : '';
+			if ( ! $redo ) {
+				$again = '';
+			} elseif ( empty( $scan['blocked'] ) ) {
+				/* translators: %d: pages being checked again */
+				$again = ' ' . sprintf( _n( '%d page changed and is being checked again.', '%d pages changed and are being checked again.', $redo, 'scout-build' ), $redo );
+			} else {
+				/* translators: %d: pages waiting for a visit */
+				$again = ' ' . sprintf( _n( '%d page changed. The site can\'t load its own pages, so it is checked again the next time someone opens it.', '%d pages changed. The site can\'t load its own pages, so each is checked again the next time someone opens it.', $redo, 'scout-build' ), $redo );
+			}
 			$out[]  = array(
 				'label' => __( 'Direct answers', 'scout-build' ),
 				/* translators: 1: pages with answers, 2: pages checked */
