@@ -70,7 +70,7 @@ final class Scout_Core_Controls {
 			case 'number':
 				return ( '' === $value || ! is_numeric( $value ) ) ? '' : (string) ( 0 + $value );
 			case 'select':
-				return array_key_exists( $value, $options ) ? $value : '';
+				return self::match_option( $value, $options );
 			case 'checkbox':
 				return empty( $value ) ? '' : '1';
 			case 'image':
@@ -83,14 +83,45 @@ final class Scout_Core_Controls {
 	}
 
 	/**
+	 * Resolve a submitted select value to one of the allowed keys.
+	 *
+	 * Matching ignores case and surrounding space, so an importer that writes
+	 * "Google" stores the canonical key "google". Anything else is rejected.
+	 *
+	 * @param mixed $value   Submitted value.
+	 * @param array $options Allowed value => label.
+	 * @return string The matching key as declared, or '' when none matches.
+	 */
+	public static function match_option( $value, array $options ) {
+		if ( ! is_scalar( $value ) ) {
+			return '';
+		}
+		$value = trim( (string) $value );
+		if ( '' === $value ) {
+			return '';
+		}
+		foreach ( array_keys( $options ) as $key ) {
+			if ( 0 === strcasecmp( (string) $key, $value ) ) {
+				return (string) $key;
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * Sanitizer callable for register_post_meta / register_setting.
 	 *
+	 * This callback runs inside every update_post_meta / add_post_meta / REST
+	 * write, including the meta box saves, so a select field must pass its
+	 * options here. Without them every select value is stored as ''.
+	 *
 	 * @param string $control Control name.
+	 * @param array  $options For select: allowed value => label.
 	 * @return callable
 	 */
-	public static function sanitizer_for( $control ) {
-		return function ( $value ) use ( $control ) {
-			return self::sanitize( $control, $value );
+	public static function sanitizer_for( $control, array $options = array() ) {
+		return function ( $value ) use ( $control, $options ) {
+			return self::sanitize( $control, $value, $options );
 		};
 	}
 
