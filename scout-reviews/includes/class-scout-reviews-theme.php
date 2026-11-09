@@ -178,8 +178,11 @@ final class Scout_Reviews_Theme {
 				),
 			)
 		);
+		// WordPress can store "&" in a title as "&amp;", so compare the decoded text.
+		$want = html_entity_decode( $author, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		foreach ( (array) $ids as $id ) {
-			if ( 0 === strcasecmp( trim( (string) get_post_field( 'post_title', (int) $id ) ), $author )
+			$have = html_entity_decode( trim( (string) get_post_field( 'post_title', (int) $id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			if ( 0 === strcasecmp( $have, $want )
 				&& (string) get_post_meta( (int) $id, Scout_Reviews_Post_Type::META_DATE, true ) === $date ) {
 				return true;
 			}
