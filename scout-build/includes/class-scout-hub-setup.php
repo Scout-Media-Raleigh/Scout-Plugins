@@ -81,6 +81,7 @@ final class Scout_Hub_Setup {
 		}
 		$done = (array) get_option( self::DONE, array() );
 		$jobs = array(
+			'business' => array( __CLASS__, 'business' ),
 			'team'    => array( __CLASS__, 'team' ),
 			'reviews' => array( __CLASS__, 'reviews' ),
 			'chat'    => array( __CLASS__, 'chat' ),
@@ -111,13 +112,46 @@ final class Scout_Hub_Setup {
 			/**
 			 * The setup file filled something in. The Site log listens.
 			 *
-			 * @param string[] $filled The sections that ran: team, reviews, chat, hours, analytics, cards.
+			 * @param string[] $filled The sections that ran: business, team, reviews, chat, hours, analytics, cards.
 			 */
 			do_action( 'scout_hub_setup_done', $filled );
 		}
 	}
 
 	/* ---------- sections ---------- */
+
+	/**
+	 * Business info (Scout Core). Fills blank fields only, so anything typed on
+	 * Business info stays. "same_as" takes a list of profile links.
+	 */
+	private static function business( array $in ): bool {
+		if ( ! class_exists( 'Scout_Core_Business' ) ) {
+			return false;
+		}
+		$keys = array_diff( array_keys( Scout_Core_Business::fields() ), array( 'hours' ) );
+		$fill = array();
+		foreach ( $keys as $key ) {
+			if ( ! isset( $in[ $key ] ) ) {
+				continue;
+			}
+			if ( 'same_as' === $key ) {
+				$links = array();
+				foreach ( (array) $in[ $key ] as $url ) {
+					$url = esc_url_raw( trim( (string) $url ), array( 'https' ) );
+					if ( '' !== $url ) {
+						$links[] = $url;
+					}
+				}
+				$fill[ $key ] = implode( "\n", $links );
+			} elseif ( in_array( $key, array( 'email', 'notice_email' ), true ) ) {
+				$fill[ $key ] = sanitize_email( (string) $in[ $key ] );
+			} else {
+				$fill[ $key ] = sanitize_text_field( (string) $in[ $key ] );
+			}
+		}
+		self::fill_option( Scout_Core_Business::OPTION, $fill );
+		return true;
+	}
 
 	private static function team( array $people ): bool {
 		if ( ! post_type_exists( 'scout_team' ) || ! class_exists( 'Scout_Team' ) ) {
