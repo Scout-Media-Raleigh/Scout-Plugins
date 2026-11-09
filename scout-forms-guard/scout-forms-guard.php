@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       Scout Forms Guard
- * Description:       In-house spam protection for Gravity Forms: a hidden honeypot, a time trap, and a signed token. Also refuses files sent to File Upload fields set to Hidden (a reported Gravity Forms security flaw) and names those fields for you to fix. No reCAPTCHA, no Akismet, no third-party calls.
- * Version:           0.3.6
+ * Description:       In-house spam protection for Gravity Forms: a hidden honeypot, a time trap, and a signed token. Also refuses files sent to File Upload fields set to Hidden and list answers that carry hidden code (two reported Gravity Forms security flaws), and names the upload fields for you to fix. No reCAPTCHA, no Akismet, no third-party calls.
+ * Version:           0.3.7
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Requires Plugins:  gravityforms
@@ -111,6 +111,11 @@ final class Scout_Forms_Guard {
 		$form    = isset( $validation_result['form'] ) ? $validation_result['form'] : array();
 		$form_id = isset( $form['id'] ) ? (int) $form['id'] : 0;
 
+		// 0. A List field must hold plain answers, never serialized PHP.
+		if ( self::list_payload_is_unsafe( $form, $_POST ) ) {
+			return self::fail( $validation_result );
+		}
+
 		// 1. Honeypot must be empty.
 		$honeypot = isset( $_POST[ self::HP ] ) ? trim( (string) wp_unslash( $_POST[ self::HP ] ) ) : '';
 		if ( '' !== $honeypot ) {
@@ -133,6 +138,54 @@ final class Scout_Forms_Guard {
 		}
 
 		return $validation_result;
+	}
+
+	/**
+	 * Layer 5: List answers that carry serialized PHP. Gravity Forms up to 3.1.2
+	 * passes a List answer headed for a Post Custom Field into PHP's unserialize
+	 * (CVE-2026-103039, reported 9.8), which lets a stranger run code when another
+	 * plugin or theme supplies a way to use it. Nobody types serialized PHP into
+	 * a List field, so a submission that does is refused. The fix is to update
+	 * Gravity Forms; this keeps a site safe until it has. Off with the
+	 * scout_forms_guard_block_serialized filter.
+	 *
+	 * @param array $form Gravity Forms form array.
+	 * @param array $post The submitted values, normally $_POST.
+	 */
+	public static function list_payload_is_unsafe( $form, $post ): bool {
+		if ( ! apply_filters( 'scout_forms_guard_block_serialized', true, $form ) ) {
+			return false;
+		}
+		foreach ( (array) ( isset( $form['fields'] ) ? $form['fields'] : array() ) as $field ) {
+			$type  = is_object( $field ) ? ( isset( $field->type ) ? $field->type : '' ) : ( isset( $field['type'] ) ? $field['type'] : '' );
+			$input = is_object( $field ) ? ( isset( $field->inputType ) ? $field->inputType : '' ) : ( isset( $field['inputType'] ) ? $field['inputType'] : '' );
+			if ( 'list' !== $type && 'list' !== $input ) {
+				continue;
+			}
+			$id  = is_object( $field ) ? $field->id : ( isset( $field['id'] ) ? $field['id'] : '' );
+			$key = 'input_' . $id;
+			if ( isset( $post[ $key ] ) && self::has_serialized( wp_unslash( $post[ $key ] ) ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** True when a value, or anything nested in it, looks like serialized PHP. */
+	public static function has_serialized( $value ): bool {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $item ) {
+				if ( self::has_serialized( $item ) ) {
+					return true;
+				}
+			}
+			return false;
+		}
+		if ( ! is_string( $value ) ) {
+			return false;
+		}
+		// An object or class (O:8:"Name":...), an array (a:2:{...}), or the marker PHP leaves for a missing class.
+		return (bool) preg_match( '/(?:^|[^A-Za-z0-9])[OC]:\d+:"|^\s*a:\d+:\{|__PHP_Incomplete_Class/', $value );
 	}
 
 	/**
