@@ -28,7 +28,7 @@ only administrators change settings.
 
 | Type | Holds | Address |
 |---|---|---|
-| Event | Dates and times, status, how people attend, venue and address or online link, ticket link and button words, availability, price range, sales dates, minimum age, capacity, What to know lines, schema type. Title, description, excerpt and photo are the post's own. | `/event/name/` |
+| Event | Dates and times, status, how people attend, venue and address or online link, whether the address goes only in the confirmation, ticket link and button words, availability, price range, sales dates, minimum age, capacity, What to know lines, schema type. Title, description, excerpt and photo are the post's own. | `/event/name/` |
 | Session | Event, day, start and end, room or tent, track, kind (class, keynote, performance, activity, break), seats, speakers. | `/session/name/` |
 | Speaker | What they do, short bio, website, social links. Photo is the featured image; full bio is the editor. | `/speaker/name/` |
 
@@ -90,6 +90,30 @@ Sign-ups live in their own table (`wp_scout_event_signups`), created on
 activation and on update. Deleting the plugin keeps it, like every other
 piece of the client's content. Paid shop tickets write into the same table,
 one row per ticket (see below), so the door list and check-in are one list.
+
+## Address only in the confirmation
+
+For events at a home or a private place, where the address goes only to
+people with a ticket. Tick **Address only in the confirmation** in the
+event's Where box, or turn it on for every event under **Events, Settings,
+Private addresses**. An event that matches the site default follows the
+default when it changes; ticking it the other way makes it that event's own
+choice. Off by default.
+
+- **Public:** the event page shows the venue and city, with "The address
+  comes with your ticket." under them (editable under Settings), and no
+  street, ZIP code or map link. Cards already show only the venue. The Google
+  Calendar link and the public .ics file carry the venue and city.
+- **Event schema:** the Place keeps its name and an address with the town,
+  state and country, without `streetAddress` or `postalCode`.
+- **With the ticket:** the sign-up email, the paid ticket email, the ticket
+  page (with a Directions link) and the .ics file attached to both emails
+  carry the full address. On the event page, a ticket holder's own link
+  (`?se_ticket=`) shows the full address in the details too, and its Add to
+  calendar links carry it. Only a ticket that is going for that event unlocks
+  it; a waitlist place, a refunded ticket or another event's code does not.
+- `scout_event_data()` is public data: it leaves out the street and ZIP code
+  for these events and sets `address_private` to true.
 
 ## Speaker photos
 
@@ -319,11 +343,11 @@ this order so sessions can point at what came before:
 
 | File | Columns |
 |---|---|
-| events | title, slug, start_date, start_time, end_date, end_time, status, mode, venue, street, city, region, postal, country, online_url, availability, ticket_url, ticket_label, price_from, price_to, sales_start, sales_end, min_age, capacity, signup, signup_guests, agree, waiver, photo_ask, know, schema_type, excerpt, description, photo, regions, post_status |
+| events | title, slug, start_date, start_time, end_date, end_time, status, mode, venue, street, city, region, postal, country, address_private, online_url, availability, ticket_url, ticket_label, price_from, price_to, sales_start, sales_end, min_age, capacity, signup, signup_guests, agree, waiver, photo_ask, know, schema_type, excerpt, description, photo, regions, post_status |
 | speakers | name, slug, role, short_bio, bio, website, links, photo, photos, topics, regions, order, post_status |
 | sessions | title, slug, event, date, start, end, room, track, kind, speakers, capacity, description, topics, regions, post_status |
 
-`region` on events is the state in the address; `regions` is the event's regions (Midwest, Southeast). Dates are `YYYY-MM-DD`, times `HH:MM`. `links`, `speakers`, `know`, `photos`, `topics` and `regions` take
+`region` on events is the state in the address; `regions` is the event's regions (Midwest, Southeast). `address_private` is yes or no (empty follows the site default). Dates are `YYYY-MM-DD`, times `HH:MM`. `links`, `speakers`, `know`, `photos`, `topics` and `regions` take
 several values separated by `|`. `event` and `speakers` match by slug, then by
 title or name. `photo` is a file name already in the Media Library or a web
 address. Unknown columns are ignored.
@@ -357,7 +381,8 @@ nothing. Notes list rows that could not be matched or read.
   start and end, eventStatus, eventAttendanceMode, Place with PostalAddress or
   VirtualLocation, Offer or AggregateOffer (price, currency, availability,
   sales dates), organizer, performers from the sessions, typicalAgeRange and
-  capacity. No node without a start date.
+  capacity. No node without a start date. An event with its address only in
+  the confirmation leaves out streetAddress and postalCode.
 - Speaker pages: a Person node with jobTitle, description, image and sameAs.
 - With Scout Core active the nodes join its graph (`scout_schema_graph`) and
   the organizer points at `/#business`. Without it the plugin prints its own

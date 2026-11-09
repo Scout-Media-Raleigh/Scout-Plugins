@@ -1,5 +1,10 @@
 # Scout Members changelog
 
+## 0.5.0 (2026-11-09)
+
+- **Keep members-only events off the public calendar** (Settings, Members-only events). For clubs whose member events are private (Kai, Bliss Boogie, Nov 6: "The member events are private, so they don't get posted publicly"). When it is on, anyone who cannot see members-only content never sees a members-only event or its sessions in event lists, the month calendar, cards, upcoming and directory blocks, previous and next links, search, feeds or the REST API, and the sitemap leaves them out for everyone. The event's own address shows the members note with the sign-in form, search engines are told to skip it, its description reads "A page for members.", its Event schema does not print, and its calendar file sends people back to the page. Members and the people who run the site see it everywhere, with its Members only tag. A member opening their ticket link while signed out still gets their ticket (with Scout Events 0.17.0 or later). Scheduled reminders, the dashboard and WP-CLI see every event as before.
+- **Off by default.** Sites that leave it off keep members-only events on the calendar with the tag, exactly as in 0.4.8.
+
 ## 0.4.8 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** the membership pages now read the theme's DESIGN.md (accent fill, on accent, line, surface 2 and card corner, from `design-tokens.css`) when the theme does not set `--scout-members-*`. Sites that set them, or set neither, look exactly the same.

@@ -203,7 +203,18 @@ final class Scout_Events_Front {
 			$rows[] = array( __( 'When', 'scout-events' ), esc_html( $dates ) . ( '' !== $times ? '<br>' . esc_html( $times ) : '' ) );
 		}
 		$where = array();
-		if ( 'online' !== $e['mode'] ) {
+		if ( 'online' !== $e['mode'] && Scout_Events::address_hidden( $id, $e ) ) {
+			// Address only in the confirmation: the venue and city, no street, ZIP code or map link.
+			if ( '' !== $e['venue'] ) {
+				$where[] = esc_html( $e['venue'] );
+			}
+			if ( '' !== Scout_Events::city_label( $e ) ) {
+				$where[] = esc_html( Scout_Events::city_label( $e ) );
+			}
+			if ( $where ) {
+				$where[] = '<span class="se-address-note">' . esc_html( Scout_Events::settings()['address_note'] ) . '</span>';
+			}
+		} elseif ( 'online' !== $e['mode'] ) {
 			if ( '' !== $e['venue'] ) {
 				$where[] = esc_html( $e['venue'] );
 			}

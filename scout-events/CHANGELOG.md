@@ -1,5 +1,12 @@
 # Scout Events changelog
 
+## 0.17.0 (2026-11-09)
+
+- **Address only in the confirmation.** For events at a home or a private place (Kai, Bliss Boogie, Nov 6: "We will send out addresses in the ticket confirmations"). A tick in each event's Where box, and a site-wide default under Events, Settings. When it is on, the event page shows the venue and city with "The address comes with your ticket." under them, with no street, ZIP code or map link. The Google Calendar link and the public calendar file carry the venue and city too, and the Event schema keeps the place's name, town, state and country without streetAddress or postalCode. The sign-up email, the paid ticket email, the ticket page (with a Directions link) and the calendar file attached to both emails carry the full address. A ticket holder's own ticket link also shows the full address on the event page and in its Add to calendar links, and only a ticket that is going for that event unlocks it.
+- The line under the venue is editable under Settings, Private addresses. An event left on the site default follows it when the default changes; ticking it the other way makes it that event's own choice.
+- events.csv takes an `address_private` column (yes or no). `scout_event_data()` leaves out the street and ZIP code when the address is private and says so in `address_private`.
+- **Off by default.** With the tick and the default both off, every page, link, file and email is the same as 0.16.8.
+
 ## 0.16.8 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** event cards, the ticket and the portals now read the theme's DESIGN.md (accent fill, on accent, line, muted text, surface 2 and card corner, from `design-tokens.css`) when the theme does not set `--scout-events-*`. Sites that set them, or set neither, look exactly the same.

@@ -133,6 +133,18 @@ final class Scout_Events_Editor {
 					self::field( 'url', $n, 'online_url', __( 'Online link (for online events)', 'scout-events' ), $e['online_url'], 'se-wide' );
 					?>
 				</div>
+				<?php $site_private = (bool) Scout_Events::settings()['address_private']; ?>
+				<p class="se-field se-wide">
+					<input type="hidden" name="scout_event[address_private_box]" value="1">
+					<label for="se-address-private"><input type="checkbox" id="se-address-private" name="scout_event[address_private_on]" value="1" aria-describedby="se-address-private-help" <?php checked( Scout_Events::address_private( (int) $post->ID, $e ) ); ?>> <?php esc_html_e( 'Address only in the confirmation', 'scout-events' ); ?></label>
+					<span class="se-help" id="se-address-private-help">
+						<?php
+						esc_html_e( 'The event page, calendar and Google show the venue and city. The street and ZIP code go out with each ticket.', 'scout-events' );
+						echo ' ';
+						echo esc_html( $site_private ? __( 'On for every event by default (Events, Settings).', 'scout-events' ) : __( 'Off for every event by default (Events, Settings).', 'scout-events' ) );
+						?>
+					</span>
+				</p>
 			</fieldset>
 
 			<fieldset class="se-group">
@@ -253,6 +265,12 @@ final class Scout_Events_Editor {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked in can_save(); every key is cleaned in sanitize_event().
 		$raw = isset( $_POST['scout_event'] ) ? (array) wp_unslash( $_POST['scout_event'] ) : array();
+		if ( ! empty( $raw['address_private_box'] ) ) {
+			// The same as the site default is stored as "follow the default", so changing the default moves this event too.
+			$on                     = ! empty( $raw['address_private_on'] );
+			$raw['address_private'] = (bool) Scout_Events::settings()['address_private'] === $on ? '' : ( $on ? 'yes' : 'no' );
+		}
+		unset( $raw['address_private_box'], $raw['address_private_on'] );
 		Scout_Events::save_event( (int) $post_id, $raw );
 	}
 

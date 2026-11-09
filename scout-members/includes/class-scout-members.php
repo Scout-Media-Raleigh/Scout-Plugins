@@ -115,8 +115,10 @@ final class Scout_Members {
 	 * product, so every email has a pay link), "all" or "off". pay_when: with
 	 * a checkout, "approval" (pay once approved) or "apply" (pay with the
 	 * application). receipt: the words that start each dues product's name.
+	 * hide_events: members-only events stay off every public listing for
+	 * people who cannot see members-only content (off by default).
 	 *
-	 * @return array{page:int,home:int,agreements_url:string,notify:string,min_age:int,plans:string,grace:int,reminders:string,pay_when:string,receipt:string}
+	 * @return array{page:int,home:int,agreements_url:string,notify:string,min_age:int,plans:string,grace:int,reminders:string,pay_when:string,receipt:string,hide_events:bool}
 	 */
 	public static function settings(): array {
 		$s = get_option( self::OPTION, array() );
@@ -132,6 +134,7 @@ final class Scout_Members {
 			'reminders'      => in_array( $s['reminders'] ?? '', self::REMINDERS, true ) ? (string) $s['reminders'] : 'checkout',
 			'pay_when'       => 'apply' === ( $s['pay_when'] ?? '' ) ? 'apply' : 'approval',
 			'receipt'        => (string) ( $s['receipt'] ?? '' ),
+			'hide_events'    => ! empty( $s['hide_events'] ),
 		);
 	}
 
@@ -151,6 +154,7 @@ final class Scout_Members {
 				'reminders'      => in_array( $in['reminders'] ?? '', self::REMINDERS, true ) ? (string) $in['reminders'] : $now['reminders'],
 				'pay_when'       => 'apply' === ( $in['pay_when'] ?? '' ) ? 'apply' : 'approval',
 				'receipt'        => sanitize_text_field( (string) ( $in['receipt'] ?? '' ) ),
+				'hide_events'    => ! empty( $in['hide_events'] ) ? 1 : 0,
 			),
 			false
 		);
