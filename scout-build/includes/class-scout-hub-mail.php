@@ -60,7 +60,24 @@ final class Scout_Hub_Mail {
 		if ( defined( 'SCOUT_MAIL_PASSWORD' ) && '' !== (string) SCOUT_MAIL_PASSWORD ) {
 			return (string) SCOUT_MAIL_PASSWORD;
 		}
-		return self::decrypt( self::settings()['password'] );
+		return self::stored_password()['plain'];
+	}
+
+	/** The saved app password as Scout_Hub_Secret reads it: none, ok or unreadable. */
+	private static function stored_password(): array {
+		return Scout_Hub_Secret::read( 'mail', self::settings()['password'], static fn( string $v ): string => self::decrypt( $v ) );
+	}
+
+	/**
+	 * The Google connection was set up, but its saved app password can't be read
+	 * anymore (the site's security keys changed). Never true while the password
+	 * lives in wp-config.php.
+	 */
+	public static function unreadable(): bool {
+		if ( defined( 'SCOUT_MAIL_PASSWORD' ) && '' !== (string) SCOUT_MAIL_PASSWORD ) {
+			return false;
+		}
+		return Scout_Hub_Secret::UNREADABLE === self::stored_password()['state'];
 	}
 
 	/** Set up: an address and a password are both saved. */
@@ -117,6 +134,9 @@ final class Scout_Hub_Mail {
 
 	public static function nav_hint( string $hint, string $slug ): string {
 		if ( self::PAGE === $slug ) {
+			if ( self::unreadable() ) {
+				return __( 'Connect again', 'scout-build' );
+			}
 			return self::ready() ? __( 'On', 'scout-build' ) : __( 'Not set up', 'scout-build' );
 		}
 		return $hint;
@@ -129,6 +149,10 @@ final class Scout_Hub_Mail {
 	/** One line for Site health. */
 	public static function check(): array {
 		$s = self::settings();
+		if ( self::unreadable() ) {
+			// Set up once and now unreadable: a fix, so it reaches Home's Today list.
+			return Scout_Hub_Secret::mail_row( self::url() );
+		}
 		if ( ! self::ready() ) {
 			return array(
 				'label'     => __( 'Site email', 'scout-build' ),
@@ -166,6 +190,7 @@ final class Scout_Hub_Mail {
 
 		if ( $clear ) {
 			delete_option( self::OPTION );
+			Scout_Hub_Secret::forgot( 'mail' );
 			self::notice( __( 'Email turned off. The site sends through the host again.', 'scout-build' ), 'success' );
 			self::back();
 		}
@@ -183,6 +208,9 @@ final class Scout_Hub_Mail {
 			$s['last']     = array();
 		}
 		update_option( self::OPTION, $s, false );
+		if ( '' !== $pass ) {
+			Scout_Hub_Secret::saved( 'mail' );
+		}
 		self::notice( self::ready() ? __( 'Saved. Send a test to make sure it arrives.', 'scout-build' ) : __( 'Saved. Add the app password to switch it on.', 'scout-build' ), 'success' );
 		self::back();
 	}
@@ -203,11 +231,19 @@ final class Scout_Hub_Mail {
 				self::$error = is_wp_error( $error ) ? $error->get_error_message() : '';
 			}
 		);
-		$site = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-		$html = static fn() => 'text/html';
+		$site   = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$google = self::ready();
+		$html   = static fn() => 'text/html';
 		add_filter( 'wp_mail_content_type', $html );
-		/* translators: %s: site name */
-		$ok = wp_mail( $to, sprintf( __( 'Your website can send email: %s', 'scout-build' ), $site ), self::test_body( $site ) );
+		$ok = wp_mail(
+			$to,
+			$google
+				/* translators: %s: site name */
+				? sprintf( __( 'Your website can send email: %s', 'scout-build' ), $site )
+				/* translators: %s: site name */
+				: sprintf( __( 'Test sent through your host, not Google: %s', 'scout-build' ), $site ),
+			self::test_body( $site, $google )
+		);
 		remove_filter( 'wp_mail_content_type', $html );
 
 		$s         = self::settings();
@@ -215,8 +251,8 @@ final class Scout_Hub_Mail {
 		update_option( self::OPTION, $s, false );
 
 		if ( $ok ) {
-			/* translators: %s: email address */
-			self::notice( sprintf( __( 'Sent to %s. Check that inbox (and junk, the first time).', 'scout-build' ), $to ), 'success' );
+			$sent = self::sent_notice( $to, $google, self::unreadable() );
+			self::notice( $sent['message'], $sent['type'] );
 		} else {
 			self::notice( __( 'Google did not accept it: ', 'scout-build' ) . self::explain( self::$error ), 'error' );
 		}
@@ -224,19 +260,52 @@ final class Scout_Hub_Mail {
 	}
 
 	/**
-	 * The test email: a small card in the site's own colors, with its icon,
-	 * that says plainly what just worked. Inline styles only, so it renders
-	 * the same in Gmail, Apple Mail and Outlook.
+	 * What the screen says after a test that WordPress accepted. Through Google,
+	 * a success. Through the host (Google not set up, or its password can't be
+	 * read), a warning that says so, because that mail often lands in junk.
+	 *
+	 * @return array{message:string,type:string}
 	 */
-	private static function test_body( string $site ): string {
-		$s    = self::settings();
-		$url  = home_url( '/' );
-		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
-		/* translators: 1: site address, 2: sending address */
-		$text = sprintf( __( 'This came from %1$s through Google, sent as %2$s. Form messages, booking notes and password resets will arrive the same way, in the inbox instead of junk.', 'scout-build' ), $host, $s['email'] );
+	public static function sent_notice( string $to, bool $google, bool $unreadable = false ): array {
+		if ( $google ) {
+			/* translators: %s: email address */
+			return array( 'message' => sprintf( __( 'Sent to %s. Check that inbox (and junk, the first time).', 'scout-build' ), $to ), 'type' => 'success' );
+		}
+		return array(
+			'message' => sprintf(
+				/* translators: 1: email address, 2: what to do */
+				__( 'Sent to %1$s through your host\'s mail, not Google. Mail sent this way often lands in junk. %2$s', 'scout-build' ),
+				$to,
+				$unreadable ? __( 'Connect Google again below.', 'scout-build' ) : __( 'Set up Google below to fix it.', 'scout-build' )
+			),
+			'type'    => 'warning',
+		);
+	}
+
+	/**
+	 * The test email: a small card in the site's own colors, with its icon,
+	 * that says plainly how it was sent. Inline styles only, so it renders
+	 * the same in Gmail, Apple Mail and Outlook.
+	 *
+	 * @param bool|null $google True when it went through Google; null asks ready().
+	 */
+	private static function test_body( string $site, ?bool $google = null ): string {
+		$s      = self::settings();
+		$url    = home_url( '/' );
+		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$google = null === $google ? self::ready() : $google;
+		if ( $google ) {
+			/* translators: 1: site address, 2: sending address */
+			$text  = sprintf( __( 'This came from %1$s through Google, sent as %2$s. Form messages, booking notes and password resets will arrive the same way, in the inbox instead of junk.', 'scout-build' ), $host, $s['email'] );
+			$title = __( 'Your website can send email.', 'scout-build' );
+		} else {
+			// WordPress sent it through the host's own mail server. Say so, never "Google".
+			$text  = __( 'This came through your host\'s mail, not Google, because the Google connection isn\'t set up (or can\'t be read). Mail sent this way often lands in junk.', 'scout-build' );
+			$title = __( 'This test went out through your host.', 'scout-build' );
+		}
 		return self::card(
 			$site,
-			__( 'Your website can send email.', 'scout-build' ),
+			$title,
 			'<p style="margin:0;text-align:center">' . esc_html( $text ) . '</p>',
 			array( array( __( 'Visit the site', 'scout-build' ), $url ) ),
 			Scout_Hub_Admin::branded() ? __( 'Sent from the Scout Email screen. Built and looked after by Scout Media & Consulting.', 'scout-build' ) : __( 'Sent from the Email screen.', 'scout-build' )
@@ -507,7 +576,7 @@ foreach ( array_values( $buttons ) as $i => $b ) {
 		$notice = get_transient( $key );
 		if ( is_array( $notice ) ) {
 			delete_transient( $key );
-			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( 'error' === $notice['type'] ? 'error' : 'success' ), esc_html( $notice['message'] ) );
+			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( in_array( $notice['type'], array( 'error', 'warning' ), true ) ? $notice['type'] : 'success' ), esc_html( $notice['message'] ) );
 		}
 		if ( function_exists( 'wp_mail_smtp' ) || defined( 'WPMS_PLUGIN_VER' ) ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'WP Mail SMTP is also installed. Scout Email takes over once it is set up here, so you can delete WP Mail SMTP.', 'scout-build' ) . '</p></div>';
@@ -521,8 +590,16 @@ foreach ( array_values( $buttons ) as $i => $b ) {
 			$tested = __( 'No test sent yet.', 'scout-build' );
 		}
 
-		// One status line: sending through Google as who, or not set up.
-		if ( ! $ready ) {
+		// One status line: sending through Google as who, can't be read, or not set up.
+		$lost = self::unreadable();
+		if ( $lost ) {
+			Scout_Hub_Admin::status_line(
+				'bad',
+				__( 'Your Google connection can\'t be read anymore.', 'scout-build' ),
+				__( 'This happens when the site\'s security keys change. The host sends the site\'s email until you connect again.', 'scout-build' ),
+				'<a class="button button-primary" href="#sm-password">' . esc_html__( 'Connect again', 'scout-build' ) . '</a>'
+			);
+		} elseif ( ! $ready ) {
 			Scout_Hub_Admin::status_line( 'warn', __( 'Not set up.', 'scout-build' ), __( 'The host sends the site\'s email for now, which often lands it in junk. Follow the three steps below.', 'scout-build' ) );
 		} else {
 			Scout_Hub_Admin::status_line(
@@ -554,7 +631,7 @@ foreach ( array_values( $buttons ) as $i => $b ) {
 						<input type="email" name="email" value="<?php echo esc_attr( $s['email'] ); ?>" placeholder="name@gmail.com" autocomplete="off">
 					</label>
 					<label><?php esc_html_e( 'App password', 'scout-build' ); ?>
-						<input type="password" name="password" value="" autocomplete="new-password" placeholder="<?php echo esc_attr( $in_config ? __( 'Set in wp-config.php', 'scout-build' ) : ( '' !== $s['password'] ? __( 'Saved. Paste a new one to replace it.', 'scout-build' ) : 'abcd efgh ijkl mnop' ) ); ?>" <?php disabled( $in_config ); ?>>
+						<input type="password" id="sm-password" name="password" value="" autocomplete="new-password" placeholder="<?php echo esc_attr( $in_config ? __( 'Set in wp-config.php', 'scout-build' ) : ( $lost ? __( 'Can\'t be read. Paste a new app password.', 'scout-build' ) : ( '' !== $s['password'] ? __( 'Saved. Paste a new one to replace it.', 'scout-build' ) : 'abcd efgh ijkl mnop' ) ) ); ?>" <?php disabled( $in_config ); ?>>
 					</label>
 					<label><?php esc_html_e( 'Sender name', 'scout-build' ); ?>
 						<input type="text" name="name" value="<?php echo esc_attr( $s['name'] ); ?>" placeholder="<?php echo esc_attr( wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) ); ?>">

@@ -671,6 +671,11 @@ final class Scout_Hub_Health {
 		if ( class_exists( 'Scout_Hub_Mail' ) ) {
 			$out[] = Scout_Hub_Mail::check();
 		}
+		// Only when the saved theme key can't be read anymore (the security keys changed).
+		$theme_key = class_exists( 'Scout_Hub_Themes' ) ? Scout_Hub_Themes::key_check() : null;
+		if ( $theme_key ) {
+			$out[] = $theme_key;
+		}
 
 		// Hidden upload fields, from Scout Forms Guard 0.3.0+.
 		if ( class_exists( 'Scout_Forms_Guard' ) && method_exists( 'Scout_Forms_Guard', 'upload_check' ) ) {

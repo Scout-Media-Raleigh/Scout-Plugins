@@ -1,5 +1,9 @@
 # Scout Accessibility changelog
 
+## 0.1.20 (2026-11-09)
+
+- **Describe a featured image right on Weekly checks (Joy, Nov 9).** When a featured image has no description, Show where now shows the image, a "Describe the image" box and Save. Saving writes the image's alt text in the Media Library and clears it from the results at once, with no new run. Images inside the page content still link to the editor. Visitors see the new alt text on that image everywhere it is used.
+
 ## 0.1.19 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** the statement's contact buttons and "last reviewed" line now read the theme's DESIGN.md accent, pill corner and muted text (from `design-tokens.css`) when the theme does not set `--scout-a11y-*`. Sites that set them, or set neither, look exactly the same.

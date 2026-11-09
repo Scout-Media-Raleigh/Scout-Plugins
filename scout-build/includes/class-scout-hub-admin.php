@@ -907,42 +907,48 @@ final class Scout_Hub_Admin {
 				. '<input type="hidden" name="action" value="' . esc_attr( Scout_Hub_Features::ACTION ) . '">'
 				. '<input type="hidden" name="slug" value=""><input type="hidden" name="do" value="refresh">'
 				. wp_nonce_field( Scout_Hub_Features::ACTION . 'refresh', '_wpnonce', true, false ) . '</form>'; // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts.
-			self::update_copy_button();
 		}
 		self::status_line( $next[0], $next[1], $next[2], $next[3] );
+		if ( $operator ) {
+			self::update_copy_button();
+		}
+
+		// Each step's full section, built first so the screen can put the ones that need
+		// someone on top, open, and fold the rest away (Joy, 2026-11-09: calmer when current).
+		$steps = self::update_summary( $rows, $ready, $approvals, $theme, $copy, $changes, $counts, $checked, $offline );
+		$body  = array();
 
 		// Step 1: ask GitHub for new versions.
-		self::step_head( 1, __( 'Check for new versions', 'scout-build' ), 'sh-step-1' );
+		ob_start();
 		?>
-		<section class="sh-box">
-			<div class="sh-upd-line">
-				<span class="sh-tag <?php echo ( $ready || $offline ) ? 'is-update' : 'is-current'; ?>"><?php
+		<div class="sh-upd-line">
+			<?php if ( $ready || $offline ) : ?>
+				<span class="sh-tag is-update"><?php
 					echo esc_html(
 						$ready
 							/* translators: %d: plugins with an update */
 							? sprintf( _n( '%d update ready', '%d updates ready', count( $ready ), 'scout-build' ), count( $ready ) )
-							: ( $offline
-								// The check failed, so "up to date" would be a guess.
-								? __( 'Could not reach GitHub. Try again in 15 minutes.', 'scout-build' )
-								: __( 'Everything is up to date', 'scout-build' ) )
+							// The check failed, so "up to date" would be a guess.
+							: __( 'Could not reach GitHub. Try again in 15 minutes.', 'scout-build' )
 					);
 				?></span>
-				<span><?php
-					/* translators: %s: time since, e.g. "5 minutes ago" */
-					echo esc_html( '' !== $when ? sprintf( __( 'Last checked %s.', 'scout-build' ), $when ) : __( 'Not checked yet.', 'scout-build' ) );
-				?></span>
-				<?php if ( $operator ) : ?>
-					<?php echo Scout_Hub_Features::button( '', 'refresh', __( 'Check again', 'scout-build' ), 'button' ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts. ?>
-				<?php endif; ?>
-			</div>
-			<p class="sh-note"><?php esc_html_e( 'If it says up to date right after a release, check again in 2 minutes.', 'scout-build' ); ?></p>
-		</section>
+			<?php endif; ?>
+			<span><?php
+				/* translators: %s: time since, e.g. "5 minutes ago" */
+				echo esc_html( '' !== $when ? sprintf( __( 'Last checked %s.', 'scout-build' ), $when ) : __( 'Not checked yet.', 'scout-build' ) );
+			?></span>
+			<?php if ( $operator ) : ?>
+				<?php echo Scout_Hub_Features::button( '', 'refresh', __( 'Check again', 'scout-build' ), 'button' ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts. ?>
+			<?php endif; ?>
+		</div>
+		<p class="sh-note"><?php esc_html_e( 'If it says up to date right after a release, check again in 2 minutes.', 'scout-build' ); ?></p>
 		<?php
+		$body[1] = (string) ob_get_clean();
 
 		// Step 2: the plugins, waiting ones on top with Scout Core first, then the OK list.
-		self::step_head( 2, __( 'Plugins', 'scout-build' ), 'sh-step-2' );
+		ob_start();
 		?>
-		<section class="sh-box" id="sh-plugins">
+		<div id="sh-plugins">
 			<ul class="sh-rows">
 				<?php foreach ( $rows as $row ) : ?>
 					<?php self::update_row( $row ); ?>
@@ -952,24 +958,27 @@ final class Scout_Hub_Admin {
 				<p class="sh-actions sh-upd-all"><a class="button" href="<?php echo esc_url( $all['url'] ); ?>"><?php echo esc_html( $all['label'] ); ?></a> <span class="sh-note"><?php esc_html_e( 'WordPress installs them one after another, in this order.', 'scout-build' ); ?></span></p>
 			<?php endif; ?>
 			<p class="sh-note"><?php esc_html_e( 'Scout plugins update themselves within hours of each release. Turn features on or off on Features.', 'scout-build' ); ?></p>
-		</section>
+		</div>
 		<?php
 		Scout_Hub_Approval::panel( $operator );
+		$body[2] = (string) ob_get_clean();
 
 		// Step 3: the theme, its version and its read-only key.
-		self::step_head( 3, __( 'Theme', 'scout-build' ), 'sh-step-3' );
+		ob_start();
 		Scout_Hub_Themes::panel( $operator );
 		if ( $theme['approval'] ) {
 			echo '<p class="sh-note">' . esc_html__( 'The new theme version waits for your OK. Approve it in step 2.', 'scout-build' ) . '</p>';
 		}
+		$body[3] = (string) ob_get_clean();
 
 		// Step 4: page copy from the theme (Scout Core's Site Sync).
-		self::step_head( 4, __( 'Page copy', 'scout-build' ), 'sh-step-4' );
+		ob_start();
 		$go = '' !== $copy['url'] ? '<a class="button" href="' . esc_url( $copy['url'] ) . '">' . esc_html( $copy['label'] ) . '</a>' : '';
 		self::status_line( $copy['state'], $copy['head'], $copy['detail'], $go );
+		$body[4] = (string) ob_get_clean();
 
 		// Step 5: client edits that go back to the repo (Scout Core's Change log).
-		self::step_head( 5, __( 'Bring changes back', 'scout-build' ), 'sh-step-5' );
+		ob_start();
 		$go = '';
 		if ( '' !== $changes['export'] ) {
 			echo '<textarea id="sh-upd-changes" hidden readonly>' . esc_textarea( $changes['export'] ) . '</textarea>';
@@ -982,9 +991,10 @@ final class Scout_Hub_Admin {
 		if ( '' !== $changes['export'] ) {
 			echo '<p class="sh-note" id="sh-upd-changes-note" aria-live="polite"></p>';
 		}
+		$body[5] = (string) ob_get_clean();
 
 		// Step 6: a short Site status summary, with the fixes named.
-		self::step_head( 6, __( 'Check the site', 'scout-build' ), 'sh-step-6' );
+		ob_start();
 		self::status_line(
 			$counts['fix'] ? 'bad' : ( $counts['look'] ? 'warn' : 'good' ),
 			/* translators: 1: checks to fix, 2: checks to look at, 3: checks that are fine */
@@ -993,14 +1003,120 @@ final class Scout_Hub_Admin {
 			$counts['fix_names'] ? sprintf( __( 'Fix: %s.', 'scout-build' ), implode( ', ', $counts['fix_names'] ) ) : '',
 			'<a class="button" href="' . esc_url( self::url( 'health' ) ) . '">' . esc_html__( 'Open Site status', 'scout-build' ) . '</a>'
 		);
+		$body[6] = (string) ob_get_clean();
 
-		if ( $operator ) {
-			self::update_copy_button();
+		// The steps that need someone come first, open.
+		$open = array_keys( array_filter( $steps, static fn( $st ) => $st['needs'] ) );
+		foreach ( $open as $n ) {
+			self::update_step( $n, $steps[ $n ], $body[ $n ], true );
+		}
+		// The rest: one compact list. Each row is a closed fold that opens its full section under it.
+		$rest = array_diff( array_keys( $steps ), $open );
+		if ( $rest ) {
+			echo '<section class="sh-box sh-upd-sums"><h2 class="sh-title">' . esc_html( $open ? __( 'The other steps', 'scout-build' ) : __( 'The six steps', 'scout-build' ) ) . '</h2><ul class="sh-rows">';
+			foreach ( $rest as $n ) {
+				$st = $steps[ $n ];
+				echo '<li class="sh-row sh-upd-sum is-' . esc_attr( $st['mark'] ) . '"><details id="sh-step-' . (int) $n . '"><summary>'
+					. '<span class="sh-upd-mark" aria-hidden="true"></span>'
+					. '<span class="screen-reader-text">' . esc_html( 'good' === $st['mark'] ? __( 'Done:', 'scout-build' ) : __( 'Not used here:', 'scout-build' ) ) . ' </span>'
+					. '<span class="sh-upd-sum-text"><strong>' . esc_html( $st['title'] ) . ':</strong> ' . esc_html( $st['line'] ) . '</span>'
+					. '<span class="sh-upd-sum-go" aria-hidden="true">›</span></summary>'
+					. '<div class="sh-upd-step">' . $body[ $n ] . '</div></details></li>'; // phpcs:ignore WordPress.Security.EscapeOutput -- each step's HTML is escaped where it is built.
+			}
+			echo '</ul></section>';
 		}
 
 		self::update_other_tools( $operator, $features );
 		echo '</div>';
 		self::update_script();
+	}
+
+	/**
+	 * The six steps in a few words each, and whether each needs someone now. The same
+	 * facts the status line reads, so the list and the status line always agree.
+	 *
+	 * @return array<int,array{title:string,line:string,needs:bool,mark:string}> Keyed 1 to 6. mark is good, warn, bad or off.
+	 */
+	private static function update_summary( array $rows, array $ready, array $approvals, array $theme, array $copy, array $changes, array $counts, int $checked, bool $offline ): array {
+		// A state after "Name:" reads as the rest of the sentence: no capital, no period.
+		$plain = static fn( string $head ): string => lcfirst( rtrim( $head, '.' ) );
+		$out   = array();
+
+		// 1. Check for new versions.
+		/* translators: %s: time since, e.g. "5 minutes" */
+		$line   = $offline ? __( 'Could not reach GitHub', 'scout-build' ) : ( $checked ? sprintf( __( 'Checked %s ago', 'scout-build' ), human_time_diff( $checked ) ) : __( 'Not checked yet', 'scout-build' ) );
+		$out[1] = array( 'title' => __( 'Check for new versions', 'scout-build' ), 'line' => $plain( $line ), 'needs' => $offline || ! $checked, 'mark' => $offline ? 'warn' : ( $checked ? 'good' : 'off' ) );
+
+		// 2. Plugins.
+		$current   = count( array_filter( $rows, static fn( $r ) => 'current' === $r['state'] ) );
+		$unchecked = count( array_filter( $rows, static fn( $r ) => 'unchecked' === $r['state'] ) );
+		if ( $ready ) {
+			/* translators: %d: plugins with an update */
+			$line = sprintf( _n( '%d waiting', '%d waiting', count( $ready ), 'scout-build' ), count( $ready ) );
+		} else {
+			/* translators: %d: plugins */
+			$line = sprintf( _n( '%d up to date', '%d up to date', $current, 'scout-build' ), $current );
+			if ( $unchecked ) {
+				/* translators: %d: plugins */
+				$line .= ', ' . sprintf( _n( '%d not checked yet', '%d not checked yet', $unchecked, 'scout-build' ), $unchecked );
+			}
+		}
+		if ( $approvals ) {
+			/* translators: %d: updates waiting for an OK */
+			$line .= ', ' . sprintf( _n( '%d waits for your OK', '%d wait for your OK', count( $approvals ), 'scout-build' ), count( $approvals ) );
+		}
+		$out[2] = array( 'title' => __( 'Plugins', 'scout-build' ), 'line' => $line, 'needs' => (bool) $ready || (bool) $approvals, 'mark' => ( $ready || $approvals ) ? 'warn' : 'good' );
+
+		// 3. Theme.
+		$name = trim( $theme['name'] . ' ' . $theme['version'] );
+		if ( ! $theme['self'] ) {
+			/* translators: %s: theme name and version */
+			$out[3] = array( 'title' => __( 'Theme', 'scout-build' ), 'line' => sprintf( __( '%s, updated by uploading it', 'scout-build' ), $name ), 'needs' => false, 'mark' => 'good' );
+		} elseif ( $theme['needs'] ) {
+			$out[3] = array( 'title' => __( 'Theme', 'scout-build' ), 'line' => $name . ', ' . $plain( $theme['head'] ), 'needs' => true, 'mark' => $theme['lost'] ? 'bad' : 'warn' );
+		} else {
+			$out[3] = array(
+				'title' => __( 'Theme', 'scout-build' ),
+				/* translators: %s: theme name and version */
+				'line'  => 'set in wp-config.php' === $theme['key'] ? sprintf( __( '%s, key in wp-config.php', 'scout-build' ), $name ) : sprintf( __( '%s, key saved', 'scout-build' ), $name ),
+				'needs' => false,
+				'mark'  => 'good',
+			);
+		}
+
+		// 4. Page copy.
+		$out[4] = array(
+			'title' => __( 'Page copy', 'scout-build' ),
+			'line'  => 'good' === $copy['state'] ? __( 'in sync', 'scout-build' ) : $plain( $copy['head'] ),
+			'needs' => 'warn' === $copy['state'],
+			'mark'  => 'off' === $copy['state'] ? 'off' : ( 'warn' === $copy['state'] ? 'warn' : 'good' ),
+		);
+
+		// 5. Bring changes back.
+		$out[5] = array(
+			'title' => __( 'Bring changes back', 'scout-build' ),
+			'line'  => 'good' === $changes['state'] ? __( 'nothing waiting', 'scout-build' ) : $plain( $changes['head'] ),
+			'needs' => $changes['count'] > 0,
+			'mark'  => $changes['count'] > 0 ? 'warn' : ( 'good' === $changes['state'] ? 'good' : 'off' ),
+		);
+
+		// 6. Check the site.
+		/* translators: 1: checks that are fine, 2: checks to look at */
+		$line = sprintf( __( '%1$d ok, %2$d to look at', 'scout-build' ), $counts['ok'], $counts['look'] );
+		if ( $counts['fix'] ) {
+			/* translators: %d: checks to fix */
+			$line .= ', ' . sprintf( __( '%d to fix', 'scout-build' ), $counts['fix'] );
+		}
+		$out[6] = array( 'title' => __( 'Check the site', 'scout-build' ), 'line' => $line, 'needs' => $counts['fix'] > 0, 'mark' => $counts['fix'] ? 'bad' : 'good' );
+		return $out;
+	}
+
+	/** A step that needs someone: its full section in an open fold, on top. Keeps the sh-step-N anchor. */
+	private static function update_step( int $n, array $step, string $html, bool $open ): void {
+		/* translators: 1: step number, 2: step name */
+		self::fold_open( sprintf( __( 'Step %1$d: %2$s', 'scout-build' ), $n, $step['title'] ), $open, 'sh-step-' . $n );
+		echo '<div class="sh-upd-step">' . $html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- each step's HTML is escaped where it is built.
+		self::fold_close();
 	}
 
 	/**
@@ -1169,7 +1285,7 @@ final class Scout_Hub_Admin {
 	 * The theme in a few words, for the status line and the report. Reads the same
 	 * facts as the Theme box (Scout_Hub_Themes::panel). Never the key itself.
 	 *
-	 * @return array{name:string,version:string,state:string,key:string,ready:bool,approval:bool}
+	 * @return array{name:string,version:string,state:string,key:string,ready:bool,approval:bool,lost:bool,self:bool,needs:bool,head:string}
 	 */
 	private static function update_theme(): array {
 		$theme = wp_get_theme();
@@ -1181,30 +1297,47 @@ final class Scout_Hub_Admin {
 			'key'      => '',
 			'ready'    => false,
 			'approval' => false,
+			'lost'     => false,
+			'self'     => false,
+			'needs'    => false, // The theme updates itself and something stops it, or a version is ready.
+			'head'     => '',    // That in one sentence, for the screen.
 		);
 		if ( ! $src ) {
 			return $out;
 		}
-		$has_key    = '' !== Scout_Hub_Themes::token();
-		$out['key'] = defined( 'SCOUT_THEME_TOKEN' ) && '' !== (string) SCOUT_THEME_TOKEN ? 'set in wp-config.php' : ( $has_key ? 'saved' : 'not set' );
-		$rel        = $has_key ? Scout_Hub_Themes::latest( $src ) : null;
-		$updates    = get_site_transient( 'update_themes' );
-		$new        = is_object( $updates ) && isset( $updates->response[ $src['stylesheet'] ]['new_version'] ) ? (string) $updates->response[ $src['stylesheet'] ]['new_version'] : '';
+		$out['self'] = true;
+		$has_key     = '' !== Scout_Hub_Themes::token();
+		$key_state   = Scout_Hub_Themes::key_state();
+		$out['key']  = Scout_Hub_Update_Report::key_word( $key_state );
+		$out['lost'] = 'unreadable' === $key_state;
+		$rel         = $has_key ? Scout_Hub_Themes::latest( $src ) : null;
+		$updates     = get_site_transient( 'update_themes' );
+		$new         = is_object( $updates ) && isset( $updates->response[ $src['stylesheet'] ]['new_version'] ) ? (string) $updates->response[ $src['stylesheet'] ]['new_version'] : '';
 		if ( '' === $new && $rel && '' === $rel['error'] && version_compare( $rel['version'], $src['version'], '>' ) ) {
 			$new = $rel['version'];
 		}
-		if ( ! $has_key ) {
+		$out['needs'] = true;
+		if ( $out['lost'] ) {
+			$out['state'] = 'updates stopped, the saved key can\'t be read';
+			$out['head']  = __( 'Updates stopped: the saved key can\'t be read.', 'scout-build' );
+		} elseif ( ! $has_key ) {
 			$out['state'] = 'needs its key to update itself';
+			$out['head']  = __( 'Needs its key to update itself.', 'scout-build' );
 		} elseif ( $rel && 'key' === $rel['error'] ) {
 			$out['state'] = 'GitHub turned the key down';
+			$out['head']  = __( 'GitHub turned the key down.', 'scout-build' );
 		} elseif ( $rel && 'offline' === $rel['error'] ) {
 			$out['state'] = 'could not reach GitHub';
+			$out['head']  = __( 'Could not reach GitHub.', 'scout-build' );
 		} elseif ( '' !== $new ) {
 			$out['ready']    = true;
 			$out['approval'] = '' !== Scout_Hub_Approval::reason( Scout_Hub_Approval::THEME . $src['stylesheet'], $new );
 			$out['state']    = $new . ' ready' . ( $out['approval'] ? ', waiting for your OK' : '' );
+			/* translators: %s: version */
+			$out['head']     = sprintf( __( '%s ready.', 'scout-build' ), $new );
 		} else {
 			$out['state'] = 'up to date';
+			$out['needs'] = false;
 		}
 		return $out;
 	}
@@ -1384,8 +1517,14 @@ final class Scout_Hub_Admin {
 			/* translators: %d: updates waiting for an OK */
 			return array( 'warn', sprintf( _n( '%d update waits for your OK.', '%d updates wait for your OK.', $oks, 'scout-build' ), $oks ), __( 'Check it on staging first, then approve it.', 'scout-build' ), $go( __( 'Approve updates', 'scout-build' ), '#sh-approval' ) );
 		}
+		if ( $theme['lost'] ) {
+			return array( 'bad', __( 'Theme updates stopped.', 'scout-build' ), __( 'The saved key can\'t be read anymore. Paste it again.', 'scout-build' ), $go( __( 'Paste the key', 'scout-build' ), '#sh-theme' ) );
+		}
 		if ( $theme['ready'] ) {
 			return array( 'warn', __( 'The theme has an update.', 'scout-build' ), __( 'It updates by itself within a few hours.', 'scout-build' ), $go( __( 'Go to the theme', 'scout-build' ), '#sh-theme' ) );
+		}
+		if ( $theme['needs'] ) {
+			return array( 'warn', __( 'Theme:', 'scout-build' ) . ' ' . $theme['head'], '', $go( __( 'Go to the theme', 'scout-build' ), '#sh-theme' ) );
 		}
 		if ( 'warn' === $copy['state'] ) {
 			return array( 'warn', __( 'Page copy:', 'scout-build' ) . ' ' . $copy['head'], '', $go( $copy['label'], $copy['url'] ) );
@@ -1404,16 +1543,10 @@ final class Scout_Hub_Admin {
 			);
 		}
 		/* translators: %s: time since, e.g. "5 minutes" */
-		return array( 'good', __( 'Everything is up to date.', 'scout-build' ), sprintf( __( 'Checked %s ago.', 'scout-build' ), human_time_diff( $checked ) ), '' );
+		return array( 'good', __( 'Everything is up to date.', 'scout-build' ), sprintf( __( 'Checked %s ago.', 'scout-build' ), human_time_diff( $checked ) ), $check( __( 'Check again', 'scout-build' ) ) );
 	}
 
-	/** A step's heading: "Step 1" above the short title. */
-	private static function step_head( int $n, string $title, string $id ): void {
-		/* translators: %d: step number */
-		echo '<div class="sh-section-head" id="' . esc_attr( $id ) . '"><p class="sh-eyebrow">' . esc_html( sprintf( __( 'Step %d', 'scout-build' ), $n ) ) . '</p><h2>' . esc_html( $title ) . '</h2></div>';
-	}
-
-	/** The Copy the update report button, at the top of the screen and again at the bottom. */
+	/** The Copy the update report button, under the status line. */
 	private static function update_copy_button(): void {
 		?>
 		<div class="sh-upd-copy">
@@ -1483,6 +1616,30 @@ final class Scout_Hub_Admin {
 		?>
 		<style>
 		.sh-upd .sh-section-head{margin-top:28px}
+		.sh-upd > .sh-box,.sh-upd > .sh-fold{margin-top:16px}
+		.sh-upd-step > .sh-box{border:0;border-radius:0;padding:0;margin:0;background:none;box-shadow:none}
+		.sh-upd-step > * + .sh-box,.sh-upd-step > .sh-box + *{margin-top:16px;padding-top:16px;border-top:1px solid var(--sh-border)}
+		.sh-upd-sums .sh-title{margin-bottom:6px}
+		.sh-upd-sums .sh-row.sh-upd-sum{display:block;padding:2px 0}
+		.sh-upd-sum summary{display:flex;align-items:center;gap:12px;min-height:var(--sh-tap);padding:8px;margin:0 -8px;list-style:none;cursor:pointer;color:var(--sh-text-2);border-radius:var(--sh-r-control);transition:background var(--sh-dur) var(--sh-ease)}
+		.sh-upd-sum summary::-webkit-details-marker{display:none}
+		.sh-upd-sum summary:hover{background:var(--sh-surface-2)}
+		.sh-upd-sum summary:focus-visible{outline:2px solid var(--sh-accent-text);outline-offset:2px}
+		.sh-upd-sum details[open] .sh-upd-sum-go{transform:rotate(90deg)}
+		.sh-upd-sum .sh-upd-step{padding:8px 0 18px 36px}
+		@container shmain (max-width: 640px){.sh-upd-sum .sh-upd-step{padding-left:0}}
+		.sh-upd-sum strong{color:var(--sh-text);font-weight:600}
+		.sh-upd-sum-text{flex:1;min-width:0;text-wrap:pretty}
+		.sh-upd-sum-go{color:var(--sh-accent-text);font-size:20px;line-height:1;transition:transform var(--sh-dur) var(--sh-ease)}
+		.sh-upd-mark{flex:none;position:relative;width:24px;height:24px;border-radius:50%;background:var(--sh-good-tint)}
+		.sh-upd-mark::after{content:"";position:absolute;left:8px;top:4px;width:6px;height:11px;border:solid var(--sh-good-mark);border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+		.sh-upd-sum.is-off .sh-upd-mark{background:var(--sh-surface-2)}
+		.sh-upd-sum.is-off .sh-upd-mark::after{left:8px;top:8px;width:8px;height:8px;border:0;border-radius:50%;background:var(--sh-border-strong);transform:none}
+		.sh-upd-sum.is-warn .sh-upd-mark{background:var(--sh-warn-tint)}
+		.sh-upd-sum.is-warn .sh-upd-mark::after,.sh-upd-sum.is-bad .sh-upd-mark::after{left:8px;top:8px;width:8px;height:8px;border:0;border-radius:50%;background:var(--sh-warn-mark);transform:none}
+		.sh-upd-sum.is-bad .sh-upd-mark{background:var(--sh-bad-tint)}
+		.sh-upd-sum.is-bad .sh-upd-mark::after{background:var(--sh-bad-mark)}
+		.sh-keylost{margin:8px 0}
 		.sh-upd-copy{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 14px;margin:12px 0 0}
 		.sh-upd-copy .sh-note{margin:0}
 		.sh-upd-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0}
@@ -1529,12 +1686,28 @@ final class Scout_Hub_Admin {
 					}
 				} );
 			} );
-			var target = location.hash ? document.getElementById( location.hash.slice( 1 ) ) : null;
-			var fold   = target ? target.closest( 'details' ) : null;
-			if ( fold ) {
+			// A link to a step (the six steps list, the status line's button) or a saved form
+			// coming back to something inside a closed fold opens that fold first.
+			var reveal = function ( id ) {
+				var target = id ? document.getElementById( id ) : null;
+				var fold   = target ? target.closest( 'details' ) : null;
+				if ( ! fold ) {
+					return false;
+				}
 				fold.open = true;
 				target.scrollIntoView();
-			}
+				return true;
+			};
+			reveal( location.hash.slice( 1 ) );
+			document.querySelectorAll( '.sh-upd a[href^="#"]' ).forEach( function ( link ) {
+				link.addEventListener( 'click', function ( e ) {
+					var id = link.getAttribute( 'href' ).slice( 1 );
+					if ( reveal( id ) ) {
+						e.preventDefault();
+						history.replaceState( null, '', '#' + id );
+					}
+				} );
+			} );
 		}() );
 		</script>
 		<?php
@@ -2074,6 +2247,9 @@ final class Scout_Hub_Admin {
 			delete_transient( 'scout_hub_keys_show_' . get_current_user_id() );
 			$open_more = true; // New keys are shown once, so the box opens on its own.
 		}
+		if ( 'unreadable' === $source ) {
+			$open_more = true; // Saved keys that can't be read anymore need new ones, so say so up front.
+		}
 
 		// One status line: lines this month, and what is waiting on the client.
 		$this_month = Scout_Hub_Log::query( array( 'month' => current_time( 'Y-m' ), 'per_page' => 1 ) )['total'];
@@ -2313,6 +2489,8 @@ final class Scout_Hub_Admin {
 						echo esc_html( sprintf( __( 'Keys made here on %s. The connection is on.', 'scout-build' ), date_i18n( get_option( 'date_format' ), Scout_Hub_Log_API::keys_made() ) ) );
 						?>
 					</p>
+				<?php elseif ( 'unreadable' === $source ) : ?>
+					<p class="sh-note sh-log-warn"><strong><?php esc_html_e( 'The saved keys can\'t be read anymore, so the connection is off.', 'scout-build' ); ?></strong> <?php esc_html_e( 'This happens when the site\'s security keys change. Make new keys and give the Sheet the new read key.', 'scout-build' ); ?></p>
 				<?php else : ?>
 					<p class="sh-note"><?php esc_html_e( 'No keys yet, so the connection is off.', 'scout-build' ); ?></p>
 				<?php endif; ?>
@@ -2321,12 +2499,12 @@ final class Scout_Hub_Admin {
 						<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Log::ACTION ); ?>">
 						<input type="hidden" name="do" value="keys">
 						<?php wp_nonce_field( Scout_Hub_Log::ACTION ); ?>
-						<button type="submit" class="button"><?php echo 'site' === $source ? esc_html__( 'Make new keys', 'scout-build' ) : esc_html__( 'Make keys', 'scout-build' ); ?></button>
+						<button type="submit" class="button"><?php echo in_array( $source, array( 'site', 'unreadable' ), true ) ? esc_html__( 'Make new keys', 'scout-build' ) : esc_html__( 'Make keys', 'scout-build' ); ?></button>
 						<?php if ( 'site' === $source ) : ?>
 							<span class="sh-note"><?php esc_html_e( 'New keys replace the old ones, and the Sheet will need the new read key.', 'scout-build' ); ?></span>
 						<?php endif; ?>
 					</form>
-					<?php if ( 'site' === $source ) : ?>
+					<?php if ( in_array( $source, array( 'site', 'unreadable' ), true ) ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sh-inline">
 							<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Log::ACTION ); ?>">
 							<input type="hidden" name="do" value="forget_keys">

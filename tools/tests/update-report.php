@@ -90,6 +90,13 @@ $keyed = $R::text( array( 'health' => $health . "\nNote: " . 'ghp' . '_' . str_r
 ok( false === strpos( $keyed, 'ghp_' ) && false !== strpos( $keyed, '[key hidden]' ), 'a key shaped string is hidden even inside the Site status part' );
 ok( false !== strpos( $text, 'Fix coming, ask [email hidden]' ), 'an address in a note is replaced, the rest of the note stays' );
 
+// The theme key in words, including a key the site can no longer read (its security keys changed).
+ok( 'saved' === $R::key_word( 'saved' ) && 'not set' === $R::key_word( 'none' ) && 'set in wp-config.php' === $R::key_word( 'config' ), 'the key states read as before: saved, not set, set in wp-config.php' );
+ok( "can't be read (paste it again)" === $R::key_word( 'unreadable' ), 'a key that can\'t be read says so, with what to do' );
+$lost = $R::text( array( 'theme' => array( 'name' => 'Patrick', 'version' => '1.4.0', 'state' => "updates stopped, the saved key can't be read", 'key' => $R::key_word( 'unreadable' ) ) ) + $data );
+ok( false !== strpos( $lost, "3. THEME\nPatrick 1.4.0: updates stopped, the saved key can't be read\nTheme key: can't be read (paste it again)" ), 'the theme part says the key can\'t be read and to paste it again' );
+ok( '' === $R::key_word( 'something else' ), 'an unknown state prints nothing' );
+
 // Counts the way Site status marks them.
 $c = $R::counts( array( array( 'label' => 'A', 'state' => 'good' ), array( 'label' => 'B', 'state' => 'warn' ), array( 'label' => 'C', 'state' => 'bad' ), array( 'label' => 'D', 'state' => 'bad' ) ) );
 ok( 1 === $c['ok'] && 1 === $c['look'] && 2 === $c['fix'] && array( 'C', 'D' ) === $c['fix_names'], 'counts are ok, look and fix, with the fix rows named' );
