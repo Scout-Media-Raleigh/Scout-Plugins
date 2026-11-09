@@ -13,7 +13,7 @@
  * Format (every section optional):
  * {
  *   "team":    [ { "name", "role", "bio", "email", "military_branch", "photo", "order" } ],
- *   "reviews": { "business", "headline", "ask", "photo", "card_headline", "google_review_url",
+ *   "reviews": { "business", "headline", "ask", "photo", "card_headline", "google_review_url", "google_place_id",
  *                "background", "text_color", "accent", "heading_font", "body_font", "label_font",
  *                "totals": { "checked": "YYYY-MM-DD", "profiles": { "google": { "rating", "count", "url" } } },
  *                "items": [ { "source", "author", "rating", "date", "text", "url" } ] },
@@ -226,13 +226,14 @@ final class Scout_Hub_Setup {
 	 * - "|defaults-blank": once after 0.4.4, when untouched defaults started counting as blank.
 	 * - "|totals-waiting": the totals carry a future "checked" date. When that day
 	 *   comes the text drops out, the hash changes and the totals apply.
-	 * - "|reviews-old": the file has totals or reviews but Scout Reviews is too old
-	 *   to take them. Once it updates, the section runs again.
+	 * - "|reviews-old": the file has totals, reviews or a place ID but Scout Reviews
+	 *   is too old to take them. Once it updates, the section runs again.
 	 */
 	private static function reviews_hash_extra( array $in ): string {
 		$extra = '|defaults-blank';
-		$takes = ! empty( $in['totals'] ) || ! empty( $in['items'] );
-		if ( $takes && ! class_exists( 'Scout_Reviews_Theme' ) ) {
+		$old   = ( ( ! empty( $in['totals'] ) || ! empty( $in['items'] ) ) && ! class_exists( 'Scout_Reviews_Theme' ) )
+			|| ( ! empty( $in['google_place_id'] ) && ! class_exists( 'Scout_Reviews_Places' ) );
+		if ( $old ) {
 			$extra .= '|reviews-old';
 		} elseif ( is_array( $in['totals'] ?? null ) && class_exists( 'Scout_Reviews_Theme' )
 			&& Scout_Reviews_Theme::is_future( (string) ( $in['totals']['checked'] ?? '' ) ) ) {
@@ -273,6 +274,10 @@ final class Scout_Hub_Setup {
 			if ( ! empty( $in['items'] ) && is_array( $in['items'] ) ) {
 				Scout_Reviews_Theme::add_items( array_values( $in['items'] ) );
 			}
+		}
+		// The place ID for the daily Google check (Scout Reviews 0.7.0+). Not a secret; the API key never comes from the theme.
+		if ( ! empty( $in['google_place_id'] ) && class_exists( 'Scout_Reviews_Places' ) ) {
+			Scout_Reviews_Places::fill_place_id( (string) $in['google_place_id'] );
 		}
 		return true;
 	}

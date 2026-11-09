@@ -561,20 +561,34 @@ final class Scout_Hub_Health {
 	 * in on Review settings) were last saved. Scout Reviews 0.5.5 stamps each
 	 * save. Andy's site showed 17 Google reviews while Google showed 20. Null
 	 * when Scout Reviews is not running or no totals are entered.
+	 *
+	 * With Scout Reviews 0.7.0's daily Google check on (an API key and a place
+	 * ID): when it works the note says so, and when it has failed for three
+	 * days it is a look with the reason and a link to Review settings.
 	 */
 	public static function review_totals(): ?array {
 		if ( ! class_exists( 'Scout_Reviews_Settings' ) ) {
-			return null;
-		}
-		$profiles = (array) ( Scout_Reviews_Settings::get()['profiles'] ?? array() );
-		$counted  = array_filter( $profiles, static fn( $p ) => is_array( $p ) && (int) ( $p['count'] ?? 0 ) > 0 );
-		if ( ! $counted ) {
 			return null;
 		}
 		$link  = array(
 			'link'      => admin_url( 'admin.php?page=scout-reviews-settings' ),
 			'link_text' => __( 'Review settings', 'scout-build' ),
 		);
+		$auto = class_exists( 'Scout_Reviews_Places' ) && method_exists( 'Scout_Reviews_Places', 'status' ) ? Scout_Reviews_Places::status() : array( 'on' => false );
+		if ( ! empty( $auto['on'] ) && (int) ( $auto['failing_days'] ?? 0 ) >= 3 ) {
+			return array(
+				'label' => __( 'Review totals', 'scout-build' ),
+				'value' => __( 'Google check failing', 'scout-build' ),
+				'state' => 'warn',
+				/* translators: 1: number of days, 2: what went wrong, in plain words. */
+				'note'  => sprintf( __( 'The daily Google check has not worked for %1$d days. %2$s', 'scout-build' ), (int) $auto['failing_days'], (string) ( $auto['error'] ?? '' ) ),
+			) + $link;
+		}
+		$profiles = (array) ( Scout_Reviews_Settings::get()['profiles'] ?? array() );
+		$counted  = array_filter( $profiles, static fn( $p ) => is_array( $p ) && (int) ( $p['count'] ?? 0 ) > 0 );
+		if ( ! $counted ) {
+			return null;
+		}
 		$stamp = (int) get_option( 'scout_reviews_totals_updated', 0 );
 		if ( ! $stamp ) {
 			return array(
@@ -591,7 +605,7 @@ final class Scout_Hub_Health {
 			/* translators: %d: days */
 			'value' => 0 === $days ? __( 'Today', 'scout-build' ) : sprintf( _n( '%d day ago', '%d days ago', $days, 'scout-build' ), $days ),
 			'state' => $old ? 'warn' : 'good',
-			'note'  => $old ? __( 'Review counts are over a month old. Type in each platform\'s current rating and count.', 'scout-build' ) : __( 'The review counts on the site were updated in the last month.', 'scout-build' ),
+			'note'  => $old ? __( 'Review counts are over a month old. Type in each platform\'s current rating and count.', 'scout-build' ) : ( ! empty( $auto['working'] ) ? __( 'Google is checked every day.', 'scout-build' ) : __( 'The review counts on the site were updated in the last month.', 'scout-build' ) ),
 		) + ( $old ? $link : array() );
 	}
 

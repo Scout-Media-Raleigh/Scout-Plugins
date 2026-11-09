@@ -1,5 +1,10 @@
 # Scout Build changelog
 
+## 0.14.3 (2026-11-09)
+
+- **Site status knows about the daily Google check** (Scout Reviews 0.7.0). When it is on and working, the Review totals row says "Google is checked every day." When it has failed for three days, the row is a look ("Google check failing") with the reason and a link to Review settings. Sites without it look the same as before.
+- **Fill from theme takes `reviews.google_place_id`** and puts it in Scout Reviews' place ID when that is blank. The API key is never read from the theme.
+
 ## 0.14.2 (2026-11-09)
 
 - **Review totals and reviews from the theme.** Fill from theme now hands the `reviews` section's `totals` (each platform's rating, count and link, with the date Scout checked them) and `items` (single reviews) to Scout Reviews 0.6.0. The newest check wins for totals, and reviews are only ever added. The look settings and the Google review link fill exactly as before.

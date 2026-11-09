@@ -131,6 +131,37 @@ New reviews arrive as drafts with a count on the Reviews menu. Publish the
 ones you want. Google keeps control of the name, text, stars, and date; a
 review deleted on Google comes off the site on the next sync.
 
+## Google totals every day, with an API key (0.7.0)
+
+A lighter way to keep the Google rating and review count current, without the
+sign-in above and without bringing in the reviews themselves. Once a day the
+site asks Google's Places API (New) for the business's rating and review
+count, and puts them in the Google row on Review settings.
+
+1. **Get the place ID.** Open Google's Place ID Finder
+   (developers.google.com/maps/documentation/places/web-service/place-id),
+   search for the business as it appears on Google Maps, and copy the ID that
+   starts with `ChIJ`. The theme can carry it as `reviews.google_place_id` in
+   `scout-setup.json` (it is not a secret), and Fill from theme puts it in
+   when the field is blank.
+2. **Make the API key.** In Google Cloud, pick or make a project, turn on
+   **Places API (New)** under APIs & Services, then make an API key under
+   APIs & Services > Credentials. Limit the key to Places API (New). The daily
+   check asks only for `rating` and `userRatingCount`.
+3. **Put both on Review settings > Check Google every day** and click Save.
+   The first check runs straight away. The key is stored encrypted and only
+   ever shows as "Saved" with a Replace button. You can set
+   `SCOUT_REVIEWS_PLACES_KEY` in `wp-config.php` instead.
+
+The key never goes in `scout-setup.json`, the update report, logs, REST output
+or the Hub API. A good check replaces the Google rating and count and marks the
+totals as checked today. A failed check changes nothing and keeps a plain
+reason, which Review settings shows; after three days of failures Site status
+asks for a look and links here. "Check Google now" runs one check on demand.
+While the Business Profile sign-in is connected, its sync owns the Google
+numbers and this check stands down. Deleting the plugin removes the key and
+the place ID.
+
 ## What this feature needs from the theme
 
 - **DESIGN.md:** on the site, the stylesheet reads the DESIGN.md roles
@@ -155,6 +186,9 @@ review deleted on Google comes off the site on the next sync.
   the setting is blank: `business`, `headline`, `ask`, `photo`,
   `card_headline`, `google_review_url`, and the look keys `background`,
   `text_color`, `accent`, `heading_font`, `body_font`, `label_font`.
+- **scout-setup.json, `google_place_id` (0.7.0):** the business's Google
+  place ID for the daily Google check (above). Filled only when the field is
+  blank. The API key is never read from the theme.
 - **scout-setup.json, review totals and reviews (0.6.0):** Scout keeps track
   of each client's review profiles, so the theme can carry what Scout last saw.
 

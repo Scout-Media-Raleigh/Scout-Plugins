@@ -1,5 +1,14 @@
 # Scout Reviews: Changelog
 
+## 0.7.0 (2026-11-09)
+
+- **Google totals every day, with an API key.** Review settings has a new box, Check Google every day, with a Google place ID and a Google API key (Places API, New). With both set, the site asks Google once a day for the rating and review count and puts them in the Google row, marking the totals as checked today. Check Google now runs one check on demand, and saving the box runs the first one. No sign-in is needed and no reviews are brought in.
+- **The key is kept safe.** It is stored encrypted with the site's own security keys, shows only as "Saved" with a Replace button, and can be set as `SCOUT_REVIEWS_PLACES_KEY` in wp-config.php instead. It never goes in scout-setup.json, the update report, logs, REST output or the Hub API. If the site's security keys change, the box says the key can't be read and asks for it again.
+- **When a check fails, nothing changes.** The last reason is kept in plain words (never the key, never Google's raw reply) and shown on Review settings. Scout Build's Site status turns it into a look after three days of failures.
+- **The place ID can come from the theme:** `reviews.google_place_id` in scout-setup.json, filled when the field is blank.
+- While the Business Profile sign-in is connected, its sync keeps the Google numbers and the daily check stands down.
+- Deleting the plugin removes the key, the place ID and the daily check. Nothing about visitors changed. `tools/tests/reviews-places.php` checks it with a stand-in for Google, so no real request is made.
+
 ## 0.6.0 (2026-11-09)
 
 - **Review totals from the theme.** Scout keeps track of each client's review profiles, so the theme's `scout-setup.json` can now carry each platform's rating, review count and profile link, with the date Scout checked them (`reviews.totals`). Scout Build's Fill from theme hands them here. The newest check wins: the theme's totals replace the saved ones only when their date is a real date, not in the future, and newer than the last time that platform was checked. Saving Review settings by hand counts as a check, so a newer typed number stays. "Totals last updated" and Site status show the date Scout checked, not the day the theme went in, so the month-old warning still means what it says.

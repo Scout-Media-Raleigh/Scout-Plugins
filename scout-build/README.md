@@ -187,8 +187,9 @@ Scout Build has no visitor-facing output. It reads these from the theme:
   `cards`). Most fill blanks only. In `reviews`, `totals` (each platform's
   rating, count and link, with the `checked` date) replace the saved totals
   when that date is newer than the last check, and `items` (single reviews)
-  are only ever added, never edited or removed. Details: Scout Reviews'
-  README. The `brand` section dresses the login screen and the admin: `logo`,
+  are only ever added, never edited or removed. `google_place_id` fills
+  the place ID for Scout Reviews' daily Google check when it is blank.
+  Details: Scout Reviews' README. The `brand` section dresses the login screen and the admin: `logo`,
   `logo_width`, `color`, `background`, `text`, `message`, `hide_menus`, `off`.
   Format: `includes/class-scout-hub-setup.php`.
 - **DESIGN.md** through `scout_design()`: `colors.accent_fill` as the
