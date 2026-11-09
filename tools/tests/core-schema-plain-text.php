@@ -67,8 +67,8 @@ function is_page() { return is_singular( 'page' ); }
 function is_post_type_archive() { return false; }
 function is_admin() { return false; }
 function is_feed() { return false; }
-function get_permalink( $post ) { return 'https://avante.test/' . get_post_field( 'post_name', $post ) . '/'; }
-function home_url( $p = '' ) { return 'https://avante.test' . $p; }
+function get_permalink( $post ) { return 'https://venue.test/' . get_post_field( 'post_name', $post ) . '/'; }
+function home_url( $p = '' ) { return 'https://venue.test' . $p; }
 function get_post_type_archive_link() { return false; }
 function get_the_date() { return '2026-11-01T00:00:00+00:00'; }
 function get_the_modified_date() { return '2026-11-09T00:00:00+00:00'; }
@@ -76,7 +76,7 @@ function has_excerpt() { return false; }
 function get_the_excerpt() { return ''; }
 function has_post_thumbnail() { return false; }
 function get_the_author_meta() { return 'Joy'; }
-function get_bloginfo() { return 'Avanté'; }
+function get_bloginfo() { return 'Example Venue'; }
 function get_site_icon_url() { return ''; }
 function wp_reset_postdata() {}
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
@@ -107,7 +107,7 @@ function graph_for( $id ) {
 }
 function no_entities( $json ) { return 0 === preg_match( '/&#?[a-z0-9]+;/i', $json ); }
 
-// The Avanté case: a page with an apostrophe and its own questions (FAQPage stands for the page).
+// The reported case: a page with an apostrophe and its own questions (FAQPage stands for the page).
 list( $json, $by ) = graph_for( 10 );
 ok( isset( $by['FAQPage'][0] ) && "New Year's Eve" === $by['FAQPage'][0]['name'], 'the FAQPage for "New Year\'s Eve" is named with a plain apostrophe' );
 ok( ! isset( $by['WebPage'] ), 'that page carries one page node, not a WebPage as well' );
@@ -136,7 +136,7 @@ ok( "Chef's picks" === ( $by['BlogPosting'][0]['headline'] ?? '' ), 'the BlogPos
 ok( no_entities( $json ), 'no HTML entities in the post graph' );
 
 // Breadcrumbs share the trail with the visible links, so the schema side decodes.
-$node = Scout_SEO_Breadcrumbs::node( array( array( 'name' => 'Home', 'url' => 'https://avante.test/' ), array( 'name' => get_the_title( 10 ), 'url' => 'https://avante.test/new-years-eve/' ) ) );
+$node = Scout_SEO_Breadcrumbs::node( array( array( 'name' => 'Home', 'url' => 'https://venue.test/' ), array( 'name' => get_the_title( 10 ), 'url' => 'https://venue.test/new-years-eve/' ) ) );
 ok( "New Year\u{2019}s Eve" === $node['itemListElement'][1]['name'], 'a breadcrumb name is plain text' );
 
 // An encoded tag must not come back as markup.

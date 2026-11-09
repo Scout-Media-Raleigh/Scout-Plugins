@@ -2,7 +2,7 @@
 
 ## 1.10.5 (2026-11-09)
 
-- **Fix: quotes in page titles showed as code in the schema.** Titles with an apostrophe or quote reached Google as HTML entities, so the "New Year's Eve" page on Avanté's staging site was named `New Year&#8217;s Eve` in its JSON-LD. Every schema name now uses the title as typed, as plain text: the WebPage name, FAQ questions on the FAQ page, and the blog post headline. FAQ answers, descriptions and breadcrumb names are decoded the same way. Nothing visitors see changes.
+- **Fix: quotes in page titles showed as code in the schema.** Titles with an apostrophe or quote reached Google as HTML entities, so a page titled "New Year's Eve" was named `New Year&#8217;s Eve` in its JSON-LD. Every schema name now uses the title as typed, as plain text: the WebPage name, FAQ questions on the FAQ page, and the blog post headline. FAQ answers, descriptions and breadcrumb names are decoded the same way. Nothing visitors see changes.
 - An FAQ question on Core's FAQ page and the same question from Scout AI Search now match, so it is listed once instead of twice.
 - Tests: `tools/tests/core-schema-plain-text.php` (no WordPress needed), run in the Lint workflow.
 
