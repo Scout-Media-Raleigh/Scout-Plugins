@@ -1,6 +1,6 @@
 # Scout Build changelog
 
-## Unreleased (2026-11-05)
+## 0.14.0 (2026-11-09)
 
 - **Saved keys never go quiet when the site's security keys change (scoutraleigh.com, Nov 5 to 9).** The Email app password, the theme key and the Hub keys are encrypted with the site's own security keys. When a host changed those keys, all three silently read as "not set", and form email went out through the host and into junk. Now each saved secret keeps a short fingerprint of the keys it was made with (8 characters of a hash, never the keys or the secret), and when they no longer match it reads as "can't be read":
   - **Email** says "Your Google connection can't be read anymore. This happens when the site's security keys change." with a Connect again button, and its menu hint says Connect again.
@@ -11,6 +11,7 @@
 - **The test email tells the truth.** It used to say "through Google" even when Google wasn't set up and the host sent it. Now, when the host sends it, the email says so ("This came through your host's mail, not Google...") and the screen shows a warning instead of a success.
 - **Updates is calm when nothing needs doing (Joy, Nov 9).** The status line says "Everything is up to date. Checked 1 minute ago." with Check again, then Copy the update report, then one short list, "The six steps", with a check mark and one line per step ("Plugins: 14 up to date", "Theme: Scout Media 1.54.0, key saved"). Each row opens its full section right under it. When something needs doing, those steps come first and open, and the rest stay in the list. The "Checked for new features and versions." notice is gone (the status line already says it); error notices stay. Step 1 no longer repeats "Everything is up to date". Every button, form, nonce, link to a step and the Other tools fold work as before. Visitors notice nothing.
 - The File editing row in Site status points to the new "Turn off the code editor" switch instead of wp-config.php.
+- **Admins row (Joy's Nov 9 report).** An admin whose display name is an email address is now a look ("an admin whose name shows an email address"), and the address is never printed, since the report gets copied out of WordPress. Names are split by semicolons, so a name with a comma like "Scout, Raleigh" reads as one name.
 
 ## 0.13.0 (2026-11-05)
 

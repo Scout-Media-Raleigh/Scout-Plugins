@@ -1,6 +1,6 @@
 # Scout Core — Changelog
 
-## Unreleased (2026-11-05)
+## 1.10.1 (2026-11-09)
 
 - **Turn off the code editor.** A new Spam protection switch (on by default) does what DISALLOW_FILE_EDIT in wp-config.php does: the theme and plugin code editors leave wp-admin, so a stolen login can't change site code (Site Standard rule 22). A value set in wp-config.php still wins. Nothing visitors see changes.
 

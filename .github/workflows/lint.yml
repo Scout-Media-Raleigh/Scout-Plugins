@@ -143,6 +143,8 @@ jobs:
         run: php tools/tests/booking-busy.php
       - name: Redirects leave out bot probes and check broken links (no WordPress needed)
         run: php tools/tests/redirects-noise.php
+      - name: Saved secrets after the site's security keys change (no WordPress needed)
+        run: php tools/tests/secret-health.php
 
   slop-check:
     name: Code slop check

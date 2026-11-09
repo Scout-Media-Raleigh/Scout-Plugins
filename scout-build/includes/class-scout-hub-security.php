@@ -235,12 +235,15 @@ final class Scout_Hub_Security {
 			if ( preg_match( self::GENERIC, trim( $a['name'] ) ) || preg_match( self::GENERIC, trim( $a['login'] ) ) ) {
 				/* translators: %s: display name */
 				$flags[] = sprintf( __( '%s (a generic name)', 'scout-build' ), $a['name'] );
+			} elseif ( is_email( trim( $a['name'] ) ) ) {
+				// Never print the address itself: the report gets copied out of WordPress.
+				$flags[] = __( 'an admin whose name shows an email address (Users, set a first and last name)', 'scout-build' );
 			} elseif ( $a['last'] ? $a['last'] < $idle : ( $since < $idle && $a['registered'] < $idle ) ) {
 				/* translators: %s: display name */
 				$flags[] = sprintf( __( '%s (no sign-in in 180 days)', 'scout-build' ), $a['name'] );
 			}
 		}
-		$names = implode( ', ', array_column( $admins, 'name' ) );
+		$names = implode( '; ', array_column( $admins, 'name' ) );
 		$row   = array(
 			'label' => __( 'Admins', 'scout-build' ),
 			/* translators: %d: number of admins */

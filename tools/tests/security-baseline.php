@@ -1,4 +1,5 @@
 <?php
+if ( ! function_exists( 'is_email' ) ) { function is_email( $e ) { return (bool) filter_var( $e, FILTER_VALIDATE_EMAIL ); } }
 // The security baseline in Site status (Site Standard rule 22): each row's ok and look logic.
 // Runs without WordPress: php tools/tests/security-baseline.php
 $fail = 0;
@@ -52,7 +53,7 @@ ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Turn off the code e
 // Admins.
 $admin = static fn( $name, $login, $last, $reg = 0 ) => array( 'name' => $name, 'login' => $login, 'last' => $last, 'registered' => $reg ?: $now - 400 * $day, 'two_step' => null );
 $r = $S::admins_row( array( $admin( 'Joy McNamara', 'joy', $now - 3 * $day ), $admin( 'Sean McNamara', 'sean', $now - 10 * $day ) ), $now, $now - 400 * $day );
-ok( 'good' === $r['state'] && '2 admins' === $r['value'] && false !== strpos( $r['note'], 'Joy McNamara, Sean McNamara' ), 'named admins who sign in are ok, listed by display name' );
+ok( 'good' === $r['state'] && '2 admins' === $r['value'] && false !== strpos( $r['note'], 'Joy McNamara; Sean McNamara' ), 'named admins who sign in are ok, listed by display name' );
 $r = $S::admins_row( array( $admin( 'Joy McNamara', 'joy', $now - 3 * $day ), $admin( 'Admin', 'admin', $now - $day ) ), $now, $now );
 ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Admin (a generic name)' ), 'a generic display name wants a look' );
 $r = $S::admins_row( array( $admin( 'Patrick', 'test2', $now - $day ) ), $now, $now );
@@ -66,6 +67,10 @@ ok( 'warn' === $r['state'], 'no sign-in in 180 days of watching is flagged' );
 $r = $S::admins_row( array( $admin( 'New Ned', 'ned', 0, $now - 5 * $day ) ), $now, $now - 200 * $day );
 ok( 'good' === $r['state'], 'a brand new admin is not flagged' );
 ok( false === strpos( var_export( $r, true ), '@' ), 'no email address appears in the row' );
+$r = $S::admins_row( array( $admin( 'Joy McNamara', 'joy', $now - 3 * $day ), $admin( 'someone@example.com', 'someone', $now - 2 * $day ) ), $now, $now );
+ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'shows an email address' ) && false === strpos( var_export( $r, true ), '@' ), 'an admin named by an email wants a look, and the address is never shown' );
+$r = $S::admins_row( array( $admin( 'Scout, Raleigh', 'scout', $now - 3 * $day ), $admin( 'Joy McNamara', 'joy', $now - $day ) ), $now, $now );
+ok( false !== strpos( $r['note'], 'Scout, Raleigh; Joy McNamara' ), 'names are split by semicolons, so a name with a comma reads as one name' );
 
 // Two-step login.
 $a1 = array( 'name' => 'Joy', 'two_step' => true );
