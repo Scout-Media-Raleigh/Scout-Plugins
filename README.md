@@ -144,3 +144,7 @@ GPL-2.0-or-later. See [`LICENSE`](LICENSE).
 ---
 
 Built by [Scout Media & Consulting](https://scoutraleigh.com) in Fuquay-Varina, NC.
+
+## Design system
+
+`design-system/` holds the Scout Media design tokens (`tokens.css`, `tokens.json`) and rules (`CORE.md`, `BRAND.md`). They are generated, so don't edit them here. Plugins read the theme's role tokens (`--bg`, `--surface`, `--text-2`, `--accent-text`, `--r-card`) with fallbacks and never define them. See `design-system/CORE.md` §6.
