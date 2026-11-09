@@ -13,7 +13,8 @@
  * with the scout_events_schema filter, when a theme prints its own.
  *
  * No node is printed for an event without a start date, since Google
- * requires one.
+ * requires one. An event with "Address only in the confirmation" gets a
+ * Place with its name, town and state, without the street or ZIP code.
  *
  * @package Scout_Events
  */
@@ -114,6 +115,10 @@ final class Scout_Events_Schema {
 					'addressCountry'  => $e['country'],
 				)
 			);
+			if ( Scout_Events::address_private( $post_id, $e ) ) {
+				// Address only in the confirmation: Google gets the town, never the street or ZIP code.
+				unset( $addr['streetAddress'], $addr['postalCode'] );
+			}
 			if ( count( $addr ) > 1 ) {
 				$place['address'] = array( '@type' => 'PostalAddress' ) + $addr;
 			}

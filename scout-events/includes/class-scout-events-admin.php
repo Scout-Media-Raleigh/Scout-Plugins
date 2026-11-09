@@ -197,7 +197,13 @@ final class Scout_Events_Admin {
 			'schema'       => ! empty( $in['schema'] ) ? 1 : 0,
 			'agreements_url'   => esc_url_raw( trim( (string) ( $in['agreements_url'] ?? '' ) ), array( 'http', 'https' ) ),
 			'agreements_label' => sanitize_text_field( (string) ( $in['agreements_label'] ?? '' ) ),
+			'address_private'  => ! empty( $in['address_private'] ) ? 1 : 0,
+			'address_note'     => sanitize_text_field( (string) ( $in['address_note'] ?? '' ) ),
 		);
+		// The default words are stored as empty, so a site keeps getting them as they improve.
+		if ( Scout_Events::default_address_note() === $new['address_note'] ) {
+			$new['address_note'] = '';
+		}
 		foreach ( array( 'event_slug', 'session_slug', 'speaker_slug' ) as $key ) {
 			if ( '' === $new[ $key ] ) {
 				$new[ $key ] = $old[ $key ];
@@ -432,7 +438,7 @@ final class Scout_Events_Admin {
 			'signups'    => array( __( 'Sign-ups', 'scout-events' ), __( 'One event’s door list: who’s going, who’s checked in, and the waitlist.', 'scout-events' ) ),
 			'volunteers' => array( __( 'Volunteers', 'scout-events' ), __( 'The volunteer shifts for each event and who has signed up for them.', 'scout-events' ) ),
 			'import'     => array( __( 'Add from spreadsheet', 'scout-events' ), __( 'Add many events, speakers, sessions and vendors at once from spreadsheet files.', 'scout-events' ) ),
-			'settings'   => array( __( 'Settings', 'scout-events' ), __( 'Event page addresses, the currency, showing events on Google, and your community agreements link.', 'scout-events' ) ),
+			'settings'   => array( __( 'Settings', 'scout-events' ), __( 'Event page addresses, the currency, showing events on Google, private addresses, and your community agreements link.', 'scout-events' ) ),
 		);
 		Scout_Admin_UI::open( $heads[ $view ][0], $heads[ $view ][1], __( 'Events', 'scout-events' ) );
 		self::message();
@@ -583,6 +589,20 @@ final class Scout_Events_Admin {
 					<p class="se-field">
 						<label for="se-set-schema"><input type="checkbox" id="se-set-schema" name="scout_events[schema]" value="1" <?php checked( $s['schema'] ); ?>> <?php esc_html_e( 'Show events on Google', 'scout-events' ); ?></label>
 						<span class="sh-note"><?php esc_html_e( 'Turn off only if the theme already prints its own event schema.', 'scout-events' ); ?></span>
+					</p>
+				</section>
+
+				<section class="sh-box" id="se-private-address">
+					<h2 class="sh-title"><?php esc_html_e( 'Private addresses', 'scout-events' ); ?></h2>
+					<p><?php esc_html_e( 'For events at a home or a private place. Each event can choose its own in its Where box.', 'scout-events' ); ?></p>
+					<p class="se-field">
+						<label for="se-set-address-private"><input type="checkbox" id="se-set-address-private" name="scout_events[address_private]" value="1" aria-describedby="se-set-address-private-help" <?php checked( $s['address_private'] ); ?>> <?php esc_html_e( 'Address only in the confirmation', 'scout-events' ); ?></label>
+						<span class="sh-note" id="se-set-address-private-help"><?php esc_html_e( 'The event page, calendar and Google show the venue and city. The sign-up email, ticket email, ticket page and calendar file carry the full address.', 'scout-events' ); ?></span>
+					</p>
+					<p class="se-field">
+						<label for="se-set-address-note"><?php esc_html_e( 'Line under the venue', 'scout-events' ); ?></label>
+						<input type="text" id="se-set-address-note" name="scout_events[address_note]" value="<?php echo esc_attr( $s['address_note'] ); ?>" class="regular-text" aria-describedby="se-set-address-note-help">
+						<span class="sh-note" id="se-set-address-note-help"><?php esc_html_e( 'Shown on the event page when the address is held back.', 'scout-events' ); ?></span>
 					</p>
 				</section>
 

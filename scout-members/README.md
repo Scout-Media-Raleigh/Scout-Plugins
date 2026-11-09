@@ -28,8 +28,9 @@ list users (administrators) see it, because member records are personal.
   paid in the last 30 days, with the latest line of each member's history.
 - **Add from spreadsheet**: bring current members in from a CSV, such as a Squarespace
   orders export. Preview first; running the same file twice changes nothing.
-- **Settings**: the membership page, plans, the next-step note sent after
-  approval, Dues and renewals, the community agreements link, a minimum age,
+- **Settings**: the membership page, whether members-only events stay off
+  the public calendar, plans, the next-step note sent after approval, Dues
+  and renewals, the community agreements link, a minimum age,
   where application emails go, and the application questions.
 
 ## Dues through the checkout (WooCommerce)
@@ -116,7 +117,32 @@ in the Events toolbar menu, so one screen shows everything waiting.
 - The **Members only** box on any page or post hides the whole page (search
   engines are told to skip it). On an event (with Scout Events) the event
   stays on the calendar with a Members only tag, and only members get the
-  ticket button. events.csv takes a `members_only` column (yes or no).
+  ticket button, unless the event is kept off the public calendar (below).
+  events.csv takes a `members_only` column (yes or no).
+
+## Members-only events off the public calendar
+
+Settings, **Members-only events**: tick **Keep members-only events off the
+public calendar** when member events are private. Off by default, and off
+keeps them on the calendar with the tag, as before.
+
+When it is on, for anyone who cannot see members-only content:
+
+- A members-only event and its sessions leave every list: `[scout_events]`
+  and its month view, event cards, upcoming and directory blocks, the
+  previous and next links on event pages, search, feeds and the REST API.
+  The sitemap leaves them out for everyone.
+- The event's address shows the members note with the sign-in form, like a
+  members-only page. Search engines are told to skip it, its description
+  reads "A page for members.", its Event schema does not print, and its
+  calendar file sends people back to the page.
+- A member opening their ticket link while signed out still gets their
+  ticket (Scout Events 0.17.0 or later).
+
+Members, and everyone who edits the site, still see these events everywhere
+with the Members only tag. Scheduled reminders, the dashboard and WP-CLI see
+every event. Ticket products for a members-only event are WooCommerce's
+own pages: set their catalog visibility to Hidden in the product.
 
 Members sign in on the site, land on the members home (or the membership
 page when there is none), and never see the dashboard. The WordPress password
@@ -149,7 +175,8 @@ person's membership record. Deleting the plugin keeps member accounts.
   shortcodes print (2). A shortcode's `level=""` wins.
 - `scout_members_account_extra` filter: more for the member's account page.
 - Uses Scout Events' `scout_events_needs_you`, `scout_events_detail_rows`,
-  `scout_events_ticket_html`, `scout_events_card_tags` and
+  `scout_events_ticket_html`, `scout_events_card_tags`,
+  `scout_events_signup_allowed`, `scout_events_event_schema` and
   `scout_events_imported_event` when Scout Events 0.6.0 or later is active.
 
 ## What this feature needs from the theme
