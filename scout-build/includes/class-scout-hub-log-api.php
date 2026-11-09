@@ -61,12 +61,19 @@ final class Scout_Hub_Log_API {
 		return strlen( $t ) >= 20 ? $t : ''; // A short key is no key.
 	}
 
-	/** Where the keys come from: 'config' (wp-config.php), 'site' (made on the screen), or ''. */
+	/**
+	 * Where the keys come from: 'config' (wp-config.php), 'site' (made on the
+	 * screen), 'unreadable' (made on the screen, but the site's security keys
+	 * changed since, so they can't be read), or ''.
+	 */
 	public static function keys_source(): string {
 		if ( ( defined( 'SCOUT_HUB_READ_TOKEN' ) && '' !== trim( (string) SCOUT_HUB_READ_TOKEN ) ) || ( defined( 'SCOUT_HUB_WRITE_TOKEN' ) && '' !== trim( (string) SCOUT_HUB_WRITE_TOKEN ) ) ) {
 			return 'config';
 		}
-		return self::site_keys() ? 'site' : '';
+		if ( self::site_keys() ) {
+			return 'site';
+		}
+		return '' !== (string) get_option( self::OPTION, '' ) ? 'unreadable' : '';
 	}
 
 	/** When the site's own keys were made, or 0. */
@@ -80,8 +87,8 @@ final class Scout_Hub_Log_API {
 		if ( '' === $stored ) {
 			return array();
 		}
-		$plain = self::decrypt( $stored );
-		$keys  = json_decode( $plain, true );
+		$plain = Scout_Hub_Secret::read( 'hub', $stored, static fn( string $v ): string => self::decrypt( $v ) )['plain'];
+		$keys  = '' !== $plain ? json_decode( $plain, true ) : null;
 		return is_array( $keys ) ? $keys : array();
 	}
 
@@ -94,11 +101,13 @@ final class Scout_Hub_Log_API {
 	public static function make_keys(): array {
 		$keys = array( 'read' => self::random_key(), 'write' => self::random_key(), 'made' => time() );
 		update_option( self::OPTION, self::encrypt( (string) wp_json_encode( $keys ) ), false );
+		Scout_Hub_Secret::saved( 'hub' );
 		return array( 'read' => $keys['read'], 'write' => $keys['write'] );
 	}
 
 	public static function forget_keys(): void {
 		delete_option( self::OPTION );
+		Scout_Hub_Secret::forgot( 'hub' );
 	}
 
 	/** 40 characters, letters and digits, from the system's random source. */

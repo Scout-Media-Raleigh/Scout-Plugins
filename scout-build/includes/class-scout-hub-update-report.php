@@ -71,6 +71,21 @@ final class Scout_Hub_Update_Report {
 		return $out;
 	}
 
+	/**
+	 * The theme key's state in the report's words. Never the key.
+	 *
+	 * @param string $state config, saved, unreadable or none (Scout_Hub_Themes::key_state()).
+	 */
+	public static function key_word( string $state ): string {
+		$words = array(
+			'config'     => 'set in wp-config.php',
+			'saved'      => 'saved',
+			'unreadable' => 'can\'t be read (paste it again)',
+			'none'       => 'not set',
+		);
+		return $words[ $state ] ?? '';
+	}
+
 	/** Email addresses and keys out of a line we wrote. */
 	public static function scrub( string $text ): string {
 		$text = (string) preg_replace( '/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[email hidden]', $text );
@@ -94,7 +109,7 @@ final class Scout_Hub_Update_Report {
 	 *     @type string $time     When the report was made, e.g. "2026-11-05 14:10".
 	 *     @type string $wp       WordPress version.
 	 *     @type string $php      PHP version.
-	 *     @type array  $theme    name, version, state (one short line), key (saved, not set, set in wp-config.php, or '').
+	 *     @type array  $theme    name, version, state (one short line), key (from key_word(): saved, not set, set in wp-config.php, can't be read (paste it again), or '').
 	 *     @type string $checked  When the versions were last checked, e.g. "5 minutes ago", or ''.
 	 *     @type bool   $offline  True when GitHub could not be reached.
 	 *     @type array  $plugins  Rows: slug, name, installed, available, on, status.

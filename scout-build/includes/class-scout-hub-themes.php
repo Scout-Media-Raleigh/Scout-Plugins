@@ -79,7 +79,40 @@ final class Scout_Hub_Themes {
 		if ( defined( 'SCOUT_THEME_TOKEN' ) && '' !== (string) SCOUT_THEME_TOKEN ) {
 			return (string) SCOUT_THEME_TOKEN;
 		}
-		return self::decrypt( (string) get_option( self::OPTION, '' ) );
+		return self::stored()['plain'];
+	}
+
+	/** The saved key as Scout_Hub_Secret reads it: none, ok or unreadable. */
+	private static function stored(): array {
+		return Scout_Hub_Secret::read( 'theme', (string) get_option( self::OPTION, '' ), static fn( string $v ): string => self::decrypt( $v ) );
+	}
+
+	/**
+	 * Where the key stands: config (wp-config.php), saved, unreadable (saved,
+	 * but the site's security keys changed since) or none. Never the key.
+	 */
+	public static function key_state(): string {
+		if ( defined( 'SCOUT_THEME_TOKEN' ) && '' !== (string) SCOUT_THEME_TOKEN ) {
+			return 'config';
+		}
+		$state = self::stored()['state'];
+		return Scout_Hub_Secret::OK === $state ? 'saved' : ( Scout_Hub_Secret::UNREADABLE === $state ? 'unreadable' : 'none' );
+	}
+
+	/**
+	 * A Site status row only when theme updates stopped because the saved key
+	 * can't be read; null otherwise, so a site that never set a key looks as before.
+	 * Shown to operators, and to the Hub's nightly read (no one signed in), since
+	 * only operators can paste the key.
+	 */
+	public static function key_check(): ?array {
+		if ( 'unreadable' !== self::key_state() || ! self::source() ) {
+			return null;
+		}
+		if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && ! Scout_Hub_Access::is_operator() ) {
+			return null;
+		}
+		return Scout_Hub_Secret::theme_row( Scout_Hub_Admin::url( 'updates' ) . '#sh-theme' );
 	}
 
 	public static function save_key(): void {
@@ -90,8 +123,10 @@ final class Scout_Hub_Themes {
 		$key = isset( $_POST['scout_theme_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['scout_theme_key'] ) ) ) : '';
 		if ( ! empty( $_POST['forget'] ) ) {
 			delete_option( self::OPTION );
+			Scout_Hub_Secret::forgot( 'theme' );
 		} elseif ( '' !== $key ) {
 			update_option( self::OPTION, self::encrypt( $key ), false );
+			Scout_Hub_Secret::saved( 'theme' );
 			$src = self::source();
 			if ( $src ) {
 				self::auto_update( $src['stylesheet'] );
@@ -302,11 +337,14 @@ final class Scout_Hub_Themes {
 			return;
 		}
 		$has_key = '' !== self::token();
+		$lost    = 'unreadable' === self::key_state();
 		$rel     = $has_key ? self::latest( $src ) : null;
 		$updates = get_site_transient( 'update_themes' );
 		$ready   = is_object( $updates ) && isset( $updates->response[ $src['stylesheet'] ]['new_version'] ) ? (string) $updates->response[ $src['stylesheet'] ]['new_version'] : '';
 		echo '<p class="sh-theme-line"><strong>' . esc_html__( 'Theme', 'scout-build' ) . '</strong> · ' . esc_html( $src['name'] . ' ' . $src['version'] ) . ' · ';
-		if ( ! $has_key ) {
+		if ( $lost ) {
+			echo '<span class="sh-tag is-update">' . esc_html__( 'Updates stopped: the key can\'t be read', 'scout-build' ) . '</span>';
+		} elseif ( ! $has_key ) {
 			echo '<span class="sh-tag is-update">' . esc_html__( 'Needs its key to update itself', 'scout-build' ) . '</span>';
 		} elseif ( $rel && 'key' === $rel['error'] ) {
 			echo '<span class="sh-tag is-update">' . esc_html__( 'GitHub turned the key down', 'scout-build' ) . '</span>';
@@ -326,14 +364,18 @@ final class Scout_Hub_Themes {
 		}
 		if ( $operator && current_user_can( 'update_themes' ) && ! ( defined( 'SCOUT_THEME_TOKEN' ) && '' !== (string) SCOUT_THEME_TOKEN ) ) {
 			// Closed once a key is saved; open while one is needed.
-			echo '<details class="sh-keyrow"' . ( $has_key ? '' : ' open' ) . '><summary><span>' . esc_html__( 'Theme key', 'scout-build' ) . '</span> <span class="sh-tag ' . ( $has_key ? 'is-current">' . esc_html__( 'Saved', 'scout-build' ) : 'is-update">' . esc_html__( 'Not set', 'scout-build' ) ) . '</span></summary>';
+			$word = $has_key ? 'is-current">' . esc_html__( 'Saved', 'scout-build' ) : ( $lost ? 'is-update">' . esc_html__( 'Can\'t be read', 'scout-build' ) : 'is-update">' . esc_html__( 'Not set', 'scout-build' ) );
+			echo '<details class="sh-keyrow"' . ( $has_key ? '' : ' open' ) . '><summary><span>' . esc_html__( 'Theme key', 'scout-build' ) . '</span> <span class="sh-tag ' . $word . '</span></summary>'; // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts.
+			if ( $lost ) {
+				echo '<p class="sh-keylost"><strong>' . esc_html__( 'The saved key can\'t be read anymore. Paste it again.', 'scout-build' ) . '</strong> ' . esc_html__( 'This happens when the site\'s security keys change.', 'scout-build' ) . '</p>';
+			}
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="sh-keyform"><input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '">';
 			wp_nonce_field( self::ACTION );
 			/* translators: %s: owner/repo. */
 			echo '<label for="sh-theme-key" class="screen-reader-text">' . esc_html( sprintf( __( 'Read-only key for %s', 'scout-build' ), $src['repo'] ) ) . '</label>';
 			echo '<input type="password" id="sh-theme-key" name="scout_theme_key" autocomplete="off" placeholder="' . esc_attr( $has_key ? __( 'Paste a new key to replace it', 'scout-build' ) : 'github_pat_…' ) . '">';
 			echo '<button type="submit" class="button">' . esc_html( $has_key ? __( 'Replace', 'scout-build' ) : __( 'Save key', 'scout-build' ) ) . '</button>';
-			if ( $has_key ) {
+			if ( $has_key || $lost ) {
 				echo '<button type="submit" name="forget" value="1" class="button sh-quiet sh-danger">' . esc_html__( 'Remove key', 'scout-build' ) . '</button>';
 			}
 			/* translators: %s: owner/repo. */

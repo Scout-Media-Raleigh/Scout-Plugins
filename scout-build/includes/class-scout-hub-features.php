@@ -143,7 +143,9 @@ final class Scout_Hub_Features {
 		$features = Scout_Hub_Catalog::features();
 		if ( 'refresh' === $do ) {
 			self::refresh();
-			self::back( __( 'Checked for new features and versions.', 'scout-build' ), 'success', 'updates' );
+			// No "Checked" notice: the Updates status line already says when it last checked.
+			wp_safe_redirect( Scout_Hub_Admin::url( 'updates' ) );
+			exit;
 		}
 		if ( 'refill' === $do ) {
 			// The setup file runs once per theme version. A save from a page that was

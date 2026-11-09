@@ -40,6 +40,7 @@ add_action(
 
 require_once SCOUT_HUB_DIR . 'includes/class-scout-admin-ui.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-access.php';
+require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-secret.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-catalog.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-features.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-requests.php';
