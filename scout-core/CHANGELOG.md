@@ -1,5 +1,11 @@
 # Scout Core — Changelog
 
+## 1.10.3 (2026-11-09)
+
+- **Fix: drop-down (select) fields saved as blank.** Every select field registered through Scout Core (a type's fields or a page fieldset) lost its value on save: the testimonial Source, North Crest's "Feature on the homepage?" on amenities, and any fieldset select. The check WordPress runs on every `update_post_meta`, `add_post_meta` and REST write had no list of allowed choices, so it rejected all of them. That check runs on the edit screen's save too, so editing and saving a testimonial blanked its Source. It now gets the field's choices. Values already saved as blank stay blank: set them again or re-run the import.
+- Select values now match ignoring case and surrounding space, and are stored as the declared key ("Google" is saved as `google`). A value that is not a choice is still rejected. A list sent to a select field (possible over REST) is rejected instead of stopping the page with a PHP error.
+- Tests: `tools/tests/core-select-meta.php` (no WordPress needed) and `tools/tests/select-meta.php`, run by the new "WordPress tests (fresh install)" CI job on a clean WordPress with Scout Core activated.
+
 ## 1.10.2 (2026-11-09)
 
 - **Turn off the code editor works on WP Engine.** WP Engine's own wp-config.php sets DISALLOW_FILE_EDIT to false, and a setting like that can't be changed once it is set, so on scoutraleigh.com the switch did nothing. The switch now also takes away the code-editing permissions (edit themes, edit plugins, edit files), so the editors are gone whatever wp-config.php says. Off still means off.
