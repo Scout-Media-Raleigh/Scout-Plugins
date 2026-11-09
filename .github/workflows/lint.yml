@@ -145,6 +145,8 @@ jobs:
         run: php tools/tests/redirects-noise.php
       - name: Saved secrets after the site's security keys change (no WordPress needed)
         run: php tools/tests/secret-health.php
+      - name: Review totals and reviews from the theme's scout-setup.json (no WordPress needed)
+        run: php tools/tests/reviews-from-theme.php
 
   slop-check:
     name: Code slop check

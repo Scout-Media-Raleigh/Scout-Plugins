@@ -183,8 +183,12 @@ Scout Build has no visitor-facing output. It reads these from the theme:
 
 - **`scout-setup.json`** (child theme first): `features.use` and
   `features.skip`, `scout_own_site`, and the sections it fills into other
-  plugins (`team`, `reviews`, `chat`, `hours`, `analytics`, `cards`). The
-  `brand` section dresses the login screen and the admin: `logo`,
+  plugins (`business`, `team`, `reviews`, `chat`, `hours`, `analytics`,
+  `cards`). Most fill blanks only. In `reviews`, `totals` (each platform's
+  rating, count and link, with the `checked` date) replace the saved totals
+  when that date is newer than the last check, and `items` (single reviews)
+  are only ever added, never edited or removed. Details: Scout Reviews'
+  README. The `brand` section dresses the login screen and the admin: `logo`,
   `logo_width`, `color`, `background`, `text`, `message`, `hide_menus`, `off`.
   Format: `includes/class-scout-hub-setup.php`.
 - **DESIGN.md** through `scout_design()`: `colors.accent_fill` as the
