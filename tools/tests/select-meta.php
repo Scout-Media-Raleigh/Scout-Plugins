@@ -45,17 +45,25 @@ $t2 = wp_insert_post( array( 'post_type' => 'testimonial', 'post_status' => 'pub
 add_post_meta( $t2, 'scout_source', 'facebook', true );
 $check( 'add_post_meta keeps a valid key', 'facebook', get_post_meta( $t2, 'scout_source', true ) );
 
-// WordPress only accepts REST meta writes on types that support
-// custom-fields. Registry types do not declare it yet, so report, don't fail.
-if ( post_type_supports( 'testimonial', 'custom-fields' ) ) {
-	$request = new WP_REST_Request( 'POST', '/wp/v2/testimonial/' . $t2 );
-	$request->set_body_params( array( 'meta' => array( 'scout_source' => 'direct' ) ) );
-	$response = rest_do_request( $request );
-	$check( 'REST write to a testimonial succeeds', 200, $response->get_status() );
-	$check( 'REST write to a testimonial keeps a valid key', 'direct', get_post_meta( $t2, 'scout_source', true ) );
-} else {
-	echo "note  testimonial does not support custom-fields: REST meta writes to it are ignored by WordPress\n";
-}
+// WordPress only exposes and accepts REST meta on types that support
+// custom-fields. Scout Core adds it to every registry type with fields.
+$check( 'testimonial supports custom-fields', true, post_type_supports( 'testimonial', 'custom-fields' ) );
+$check( 'faq (no fields) does not get custom-fields', false, post_type_supports( 'faq', 'custom-fields' ) );
+
+$response = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/testimonial/' . $t2 ) );
+$data     = $response->get_data();
+$check( 'REST read of a testimonial includes meta', 'facebook', isset( $data['meta']['scout_source'] ) ? $data['meta']['scout_source'] : null );
+
+$request = new WP_REST_Request( 'POST', '/wp/v2/testimonial/' . $t2 );
+$request->set_body_params( array( 'meta' => array( 'scout_source' => 'direct' ) ) );
+$response = rest_do_request( $request );
+$check( 'REST write to a testimonial succeeds', 200, $response->get_status() );
+$check( 'REST write to a testimonial keeps a valid key', 'direct', get_post_meta( $t2, 'scout_source', true ) );
+
+$request = new WP_REST_Request( 'POST', '/wp/v2/testimonial/' . $t2 );
+$request->set_body_params( array( 'meta' => array( 'scout_source' => 'Yelp' ) ) );
+rest_do_request( $request );
+$check( 'REST write to a testimonial stores the canonical key', 'yelp', get_post_meta( $t2, 'scout_source', true ) );
 
 /* Non-select controls on the same type still sanitize as before. */
 update_post_meta( $t, 'scout_rating', '5' );

@@ -1,5 +1,12 @@
 # Scout Core — Changelog
 
+## 1.10.4 (2026-11-09)
+
+- **Fields reach the block editor and REST.** WordPress only includes a post's `meta` in `/wp/v2/<type>`, and only saves `meta` sent to it, when the type supports custom fields. No Scout type did, so every field was missing over REST and REST writes were dropped without an error. Every Scout type with fields (testimonials, the RV park types, any companion type) now supports custom fields. Types with no fields (FAQ) are unchanged.
+- The generic Custom Fields box WordPress adds for that support is removed on those types, so the raw `scout_*` keys don't show up a second time next to the Details box. Nothing changes on the edit screen.
+- Block editor: bindings to these fields through the built-in Post Meta source can now read and edit the value in the editor. The `scout/field` source printed the value on the page before and still does.
+- Tests: `tools/tests/select-meta.php` now fails if a testimonial loses custom-fields support, and checks REST reads and writes of a select field.
+
 ## 1.10.3 (2026-11-09)
 
 - **Fix: drop-down (select) fields saved as blank.** Every select field registered through Scout Core (a type's fields or a page fieldset) lost its value on save: the testimonial Source, North Crest's "Feature on the homepage?" on amenities, and any fieldset select. The check WordPress runs on every `update_post_meta`, `add_post_meta` and REST write had no list of allowed choices, so it rejected all of them. That check runs on the edit screen's save too, so editing and saving a testimonial blanked its Source. It now gets the field's choices. Values already saved as blank stay blank: set them again or re-run the import.
