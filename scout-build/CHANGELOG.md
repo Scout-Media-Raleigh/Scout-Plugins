@@ -2,6 +2,14 @@
 
 ## Unreleased (2026-11-05)
 
+- **Saved keys never go quiet when the site's security keys change (scoutraleigh.com, Nov 5 to 9).** The Email app password, the theme key and the Hub keys are encrypted with the site's own security keys. When a host changed those keys, all three silently read as "not set", and form email went out through the host and into junk. Now each saved secret keeps a short fingerprint of the keys it was made with (8 characters of a hash, never the keys or the secret), and when they no longer match it reads as "can't be read":
+  - **Email** says "Your Google connection can't be read anymore. This happens when the site's security keys change." with a Connect again button, and its menu hint says Connect again.
+  - **Site status:** the Site email row is a fix with that message and a link to Email, so it reaches Home's Today list. A new Theme updates row ("Theme updates stopped: the saved key can't be read. Paste it again.") appears only in that case, for Scout and for the Hub's nightly read, and links to Updates. Sites that never set them up look the same as before.
+  - **Updates:** the Theme box says "The saved key can't be read anymore. Paste it again." with its key row open, and the update report says "Theme key: can't be read (paste it again)".
+  - **Site history, Hub keys:** "The saved keys can't be read anymore" with Make new keys, and the More options fold opens on its own.
+  - The first time it happens, one Site history line for Scout only: "Security keys changed: reconnect Email and paste the theme key". Keys saved before this release get their fingerprint the first time they're read. `tools/tests/secret-health.php` checks it.
+- **The test email tells the truth.** It used to say "through Google" even when Google wasn't set up and the host sent it. Now, when the host sends it, the email says so ("This came through your host's mail, not Google...") and the screen shows a warning instead of a success.
+- **Updates is calm when nothing needs doing (Joy, Nov 9).** The status line says "Everything is up to date. Checked 1 minute ago." with Check again, then Copy the update report, then one short list, "The six steps", with a check mark and one line per step ("Plugins: 14 up to date", "Theme: Scout Media 1.54.0, key saved"). Each row opens its full section right under it. When something needs doing, those steps come first and open, and the rest stay in the list. The "Checked for new features and versions." notice is gone (the status line already says it); error notices stay. Step 1 no longer repeats "Everything is up to date". Every button, form, nonce, link to a step and the Other tools fold work as before. Visitors notice nothing.
 - The File editing row in Site status points to the new "Turn off the code editor" switch instead of wp-config.php.
 
 ## 0.13.0 (2026-11-05)
