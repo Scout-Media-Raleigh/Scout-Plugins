@@ -23,7 +23,7 @@ final class Scout_Core_Meta {
 						'single'            => true,
 						'type'              => 'string',
 						'show_in_rest'      => true,
-						'sanitize_callback' => Scout_Core_Controls::sanitizer_for( $field['control'] ),
+						'sanitize_callback' => Scout_Core_Controls::sanitizer_for( $field['control'], $field['options'] ),
 						'auth_callback'     => function () {
 							return current_user_can( 'edit_posts' );
 						},

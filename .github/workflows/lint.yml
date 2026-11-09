@@ -103,6 +103,8 @@ jobs:
         run: php tools/tests/core-empty-search.php
       - name: Language versions (no WordPress needed)
         run: php tools/tests/core-hreflang.php
+      - name: Scout Core select fields keep their value on every write path (no WordPress needed)
+        run: php tools/tests/core-select-meta.php
       - name: Every plugin lists the visitor data it keeps (Site Standard rule 24)
         run: php tools/visitor-data.php --check
       - name: Every plugin README says what it needs from the theme (Site Standard rule 4)
@@ -159,3 +161,43 @@ jobs:
       # comments and visible em dashes warn. Rules: tools/slop-check.py.
       - name: Check for code slop
         run: python3 tools/slop-check.py
+
+  wp-tests:
+    name: WordPress tests (fresh install)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.0 (scout-core's floor)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+          tools: wp-cli
+
+      # A clean WordPress every run, Scout Core installed the way a site gets
+      # it (folder under wp-content/plugins), then the tests in tools/tests/.
+      - name: Install WordPress and Scout Core
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/wp && cd /tmp/wp
+          wp core download --quiet
+          wp config create --dbname=wp --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check
+          wp core install --url=http://localhost --title=Scout --admin_user=admin --admin_password=admin --admin_email=ci@example.com --skip-email
+          cp -r "$GITHUB_WORKSPACE/scout-core" wp-content/plugins/
+          mkdir -p wp-content/mu-plugins
+          cp "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset.php" "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset-register.php" wp-content/mu-plugins/
+          wp plugin activate scout-core
+
+      - name: Select fields keep their value
+        run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/select-meta.php"
