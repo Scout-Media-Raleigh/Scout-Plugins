@@ -2,7 +2,7 @@
 // Site Sync array meta (Scout Core 1.12.0): a `fields` entry whose value is a list or object
 // is compared as canonical JSON and written as a real array, so a theme can seed Scout AI
 // Search's `_scout_aeo_faqs` rows. Before this, the list was stored and compared as "Array"
-// (Chicago Prime Steakhouse staging, 2026-11-10). Runs inside a disposable WordPress with
+// (a client staging site, 2026-11-10). Runs inside a disposable WordPress with
 // Scout Core active (Scout AI Search too, for the schema check):
 //   wp eval-file tools/tests/sync-array-meta.php
 // It creates and deletes its own pages; never point it at a real site.

@@ -4,7 +4,7 @@
 
 Site Sync can carry a list in a page field, so a theme can give Scout AI Search its questions. Every text field syncs exactly as before.
 
-- **Site Sync: list and object values on `meta` and `field` entries.** A `fields` entry such as `{"post_type": "page", "slug": "menu", "meta": "_scout_aeo_faqs", "value": [{"q": "...", "a": "..."}]}` is compared as canonical JSON (object keys sorted, list order kept) and written with `update_post_meta` as a real array. Before, the list was stored and compared as the word "Array" (Chicago Prime Steakhouse staging, Nov 10), so a theme that shows FAQs had no way to give Scout AI Search the questions behind its FAQPage schema, and Scout Build reported "Direct answers: 0 of N pages".
+- **Site Sync: list and object values on `meta` and `field` entries.** A `fields` entry such as `{"post_type": "page", "slug": "menu", "meta": "_scout_aeo_faqs", "value": [{"q": "...", "a": "..."}]}` is compared as canonical JSON (object keys sorted, list order kept) and written with `update_post_meta` as a real array. Before, the list was stored and compared as the word "Array" (a client staging site, Nov 10), so a theme that shows FAQs had no way to give Scout AI Search the questions behind its FAQPage schema, and Scout Build reported "Direct answers: 0 of N pages".
 - Keep the WordPress copy, Use the theme copy and Undo work for list fields as they do for text. Rows saved with their keys in another order are not an edit. An empty list counts as no field.
 - The Page copy screen shows a list field as one line per entry, not raw JSON.
 - A list on an `seo`, `post_field`, setting, option or user entry is reported and left out; those stay text only.
