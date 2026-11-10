@@ -210,6 +210,7 @@ theme already says:
 ```php
 $d = scout_design();                       // mode, colors, fonts, radius, logo, mark (+ logo_url, mark_url)
 $d = scout_design( 'call buttons' );       // the "## Feature: call buttons" section laid over the tokens
+$f = scout_design_feature( 'call buttons' ); // 1.11.0: just that section, role names resolved; [] when the theme has none
 echo '<style>' . scout_design_css() . '</style>';   // :root{--scout-bg:...;--scout-accent-fill:...;--scout-radius-card:...}
 scout_design_issues();                     // contrast pairs that fail 4.5:1 (Scout Build shows them in Site status)
 ```
@@ -217,6 +218,27 @@ scout_design_issues();                     // contrast pairs that fail 4.5:1 (Sc
 Order of truth: Scout's defaults, then the active theme's `theme.json`
 palette and fonts, then the parent theme's `DESIGN.md`, then the child's. A
 theme without DESIGN.md still gets sensible tokens.
+
+**Feature sections (1.11.0).** A `### Feature: <name>` section is a list of
+`key: value` lines. A value that names a color role (`accent_fill`, `line`,
+`on_night`) is handed to the plugin as that color, and a `*_font` line naming a
+font role (`heading`, `label`) or a family (`Mulish`) as a font-family stack.
+Anything else (sizes, words, `rgba()` values) passes through as written.
+`scout_design_feature()` returns `[]` for a section the theme does not have, and
+a plugin keeps its own look until its section exists: a Core release never
+changes how a site looks on its own. Each plugin README lists the keys it reads
+under "What this feature needs from the theme".
+
+**Fonts.** A font's `generic` key (`serif`, `sans-serif`, `monospace`) ends its
+`--scout-font-*` stack. Without it, a family named "... Mono" is monospace, "...
+Serif" (not "Sans Serif") is serif, and anything else is sans-serif, so a serif
+whose name does not say so (Marcellus, Playfair Display) needs
+`generic: serif`.
+
+**Scales (1.11.0).** `type_scale`, `space` and `motion` maps become
+`--scout-type-<key>`, `--scout-space-<key>` and `--scout-motion-<key>`. A
+`"min max"` size (`"38px 72px"`) becomes `clamp(38px, 5.6vw, 72px)`, reaching the
+max at a 1280px screen; `"min preferred max"` is used as written.
 
 `scout_core_owns( 'hours' )` tells a theme whether a plugin does a job on this
 site, for the few fallbacks the standard allows (rule 6): the theme's own hours
@@ -227,10 +249,15 @@ line runs only while `! scout_core_owns( 'hours' )`.
 - **DESIGN.md:** Scout Core is the reader for every plugin. From the front
   matter it takes `design`, `name`, `mode`, `colors` (`bg`, `surface`,
   `surface_2`, `text`, `text_2`, `line`, `accent`, `accent_fill`,
-  `on_accent`), `fonts` (`heading`, `body`, `label`, each with `family`,
-  `weight` and `file`, and `case` and `tracking` on `label`), `radius`
-  (`pill`, `card`, `control`, `chip`), `logo` and `mark`, plus every
-  `## Feature: <name>` section. Core's own output on the site uses none of it.
+  `on_accent`, and when the theme has them `accent_text`, `night`, `on_night`,
+  `on_night_2`, `highlight`, `highlight_text`, `good`, `warn`, `bad`; any other
+  color becomes a `--scout-*` variable too), `fonts` (`heading`, `body`,
+  `label`, each with `family`, `weight`, `file` and `generic`, and `case` and
+  `tracking` on `label`), `type_scale`, `space`, `motion`, `radius` (`pill`,
+  `card`, `control`, `chip`), `logo` and `mark`, plus every
+  `## Feature: <name>` section. The contrast check covers text on night bands
+  and on the highlight (fail under 4.5:1), muted text on night and the status
+  colors on the page (warnings). Core's own output on the site uses none of it.
 - **Head and schema:** printed through `wp_head()`. The theme prints no title,
   description, canonical, Open Graph or JSON-LD of its own, breadcrumbs
   excepted (rule 7).
@@ -315,7 +342,7 @@ every client site at the next automatic update. CI checks them
 | `Scout_Core_Business::get()` (keys `name`, `phone`, `email`, `city`, `region`, `postal`, `same_as`) | scout-cards | Business details on the cards and in the saved contact |
 | The `scout` admin menu slug | scout-cards | Puts Cards and links inside the Scout menu |
 | `Scout_SEO_Head::output` on `wp_head` priority 1 | scout-cards | Removed on card pages, which print their own tags |
-| `scout_design()`, `scout_design_css()`, `scout_design_issues()` | scout-build and every plugin with a front-end look | The site's colors, fonts, corners, logo and mark from the theme's DESIGN.md |
+| `scout_design()`, `scout_design_feature()`, `scout_design_css()`, `scout_design_issues()` | scout-build and every plugin with a front-end look | The site's colors, fonts, corners, logo and mark from the theme's DESIGN.md |
 | `scout_core_owns( $job )` | every Scout theme (via the theme kit) | Whether a plugin does a job here, so a theme fallback stands down |
 
 ## Versioning ritual

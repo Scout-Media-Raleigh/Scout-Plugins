@@ -5,6 +5,7 @@
  *
  *   $d = scout_design();                 // tokens: mode, colors, fonts, radius, logo, mark
  *   $d = scout_design( 'call buttons' ); // the "## Feature: call buttons" section merged over the tokens
+ *   $f = scout_design_feature( 'call buttons' ); // just that section, role names resolved; [] when absent
  *   echo scout_design_css();             // a :root block of --scout-* variables for inline styles
  *   scout_design_issues();               // contrast pairs that fail (rule 10)
  *   scout_core_owns( 'hours' );          // true when a plugin does this job here
@@ -41,7 +42,7 @@ final class Scout_Core_Design {
 		$tokens = $all['tokens'];
 		if ( '' !== $feature ) {
 			$key = self::key( $feature );
-			$sec = $all['features'][ $key ] ?? array();
+			$sec = self::resolve( $all['features'][ $key ] ?? array(), $tokens );
 			$tokens['feature'] = $sec;
 			foreach ( $sec as $k => $v ) {
 				// A feature line named like a token (accent, surface, radius) overrides it.
@@ -59,6 +60,48 @@ final class Scout_Core_Design {
 		 * @param string $feature The feature asked for, or ''.
 		 */
 		return (array) apply_filters( 'scout_design', $tokens, $feature );
+	}
+
+	/**
+	 * One "### Feature:" section on its own, or [] when DESIGN.md has none, so a
+	 * plugin can keep its own look until the theme asks for something else.
+	 * Values that name a token are resolved: a color role ("accent_fill") becomes
+	 * the color, and a *_font line naming a role ("heading") or a family
+	 * ("Mulish") becomes a font-family stack.
+	 */
+	public static function feature( string $name ): array {
+		$all = self::all();
+		$sec = $all['features'][ self::key( $name ) ] ?? array();
+		return (array) apply_filters( 'scout_design_feature', self::resolve( $sec, $all['tokens'] ), self::key( $name ) );
+	}
+
+	/** Swap token role names in a feature section for their values. */
+	private static function resolve( array $section, array $tokens ): array {
+		$colors = (array) ( $tokens['colors'] ?? array() );
+		$fonts  = (array) ( $tokens['fonts'] ?? array() );
+		foreach ( $section as $k => $v ) {
+			if ( ! is_string( $v ) ) {
+				continue;
+			}
+			$role = self::key( $v );
+			if ( 'font' === $k || '_font' === substr( (string) $k, -5 ) ) {
+				if ( isset( $fonts[ $role ] ) && is_array( $fonts[ $role ] ) ) {
+					$section[ $k ] = self::font_stack( $fonts[ $role ] );
+				} elseif ( preg_match( '/^[A-Za-z][\w \'-]*$/', $v ) ) {
+					$font = array( 'family' => $v );
+					foreach ( $fonts as $f ) { // A family DESIGN.md already uses keeps its generic key.
+						if ( is_array( $f ) && 0 === strcasecmp( (string) ( $f['family'] ?? '' ), $v ) ) {
+							$font = $f;
+							break;
+						}
+					}
+					$section[ $k ] = self::font_stack( $font );
+				}
+			} elseif ( isset( $colors[ $role ] ) && $role === $v ) {
+				$section[ $k ] = (string) $colors[ $role ];
+			}
+		}
+		return $section;
 	}
 
 	/** Everything parsed: tokens plus every feature section. Cached per request. */
@@ -409,20 +452,85 @@ final class Scout_Core_Design {
 			$vars[ $prefix . 'radius-' . $k ] = (string) $v;
 		}
 		foreach ( (array) $t['fonts'] as $role => $f ) {
-			$family = (string) ( $f['family'] ?? '' );
-			if ( '' !== $family ) {
-				$generic = ( false !== stripos( $family, 'mono' ) ) ? 'monospace' : 'sans-serif';
-				$vars[ $prefix . 'font-' . $role ] = '"' . str_replace( '"', '', $family ) . '", ' . $generic;
+			if ( '' !== (string) ( $f['family'] ?? '' ) ) {
+				$vars[ $prefix . 'font-' . $role ] = self::font_stack( (array) $f );
 			}
 			if ( ! empty( $f['weight'] ) ) {
 				$vars[ $prefix . 'weight-' . $role ] = (string) (int) $f['weight'];
 			}
 		}
-		$css = '';
+		$vars = array_merge( $vars, self::scale_vars( $t, $prefix ) );
+		$css  = '';
 		foreach ( $vars as $name => $value ) {
 			$css .= $name . ':' . preg_replace( '/[^\w\s#,.()%"\'-]/', '', $value ) . ';';
 		}
 		return $selector . '{' . $css . '}';
+	}
+
+	/**
+	 * The generic family a font falls back to: the font's own "generic" key
+	 * (serif, sans-serif, monospace) when DESIGN.md gives one, otherwise a guess
+	 * from the name ("Geist Mono" is monospace, "Noto Serif" is serif). A serif
+	 * whose name does not say so (Marcellus) needs the key.
+	 *
+	 * @param array<string,mixed> $font
+	 */
+	public static function generic( array $font ): string {
+		$given = strtolower( trim( (string) ( $font['generic'] ?? '' ) ) );
+		if ( in_array( $given, array( 'serif', 'sans-serif', 'monospace', 'cursive', 'system-ui' ), true ) ) {
+			return $given;
+		}
+		$family = (string) ( $font['family'] ?? '' );
+		if ( false !== stripos( $family, 'mono' ) ) {
+			return 'monospace';
+		}
+		if ( preg_match( '/serif/i', $family ) && ! preg_match( '/sans/i', $family ) ) {
+			return 'serif';
+		}
+		return 'sans-serif';
+	}
+
+	/** "Marcellus", serif */
+	public static function font_stack( array $font ): string {
+		return '"' . str_replace( '"', '', (string) ( $font['family'] ?? '' ) ) . '", ' . self::generic( $font );
+	}
+
+	/**
+	 * --scout-type-*, --scout-space-* and --scout-motion-* from the type_scale,
+	 * space and motion maps, when DESIGN.md has them. A "min max" pair becomes a
+	 * clamp() that reaches max at a 1280px screen; "min preferred max" is used
+	 * as written; one value passes through.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function scale_vars( array $tokens, string $prefix = '--scout-' ): array {
+		$vars = array();
+		foreach ( array( 'type_scale' => 'type', 'space' => 'space', 'motion' => 'motion' ) as $map => $name ) {
+			foreach ( (array) ( $tokens[ $map ] ?? array() ) as $k => $v ) {
+				if ( is_array( $v ) || '' === trim( (string) $v ) ) {
+					continue;
+				}
+				$value = trim( (string) $v );
+				if ( 'motion' !== $map ) {
+					$value = self::fluid( $value );
+				}
+				$vars[ $prefix . $name . '-' . str_replace( '_', '-', (string) $k ) ] = $value;
+			}
+		}
+		return $vars;
+	}
+
+	/** "38px 72px" as clamp(38px, 5.6vw, 72px); anything else unchanged. */
+	public static function fluid( string $value ): string {
+		$parts = preg_split( '/\s+/', trim( $value ) );
+		if ( 3 === count( $parts ) ) {
+			return 'clamp(' . implode( ', ', $parts ) . ')';
+		}
+		if ( 2 === count( $parts ) && preg_match( '/^(\d*\.?\d+)px$/', $parts[1], $m ) ) {
+			$vw = rtrim( rtrim( number_format( (float) $m[1] / 12.8, 1, '.', '' ), '0' ), '.' );
+			return 'clamp(' . $parts[0] . ', ' . $vw . 'vw, ' . $parts[1] . ')';
+		}
+		return $value;
 	}
 
 	/** WCAG contrast ratio of two colors (hex or rgb()); 0 when one cannot be read. */
@@ -472,7 +580,8 @@ final class Scout_Core_Design {
 	/**
 	 * The pairs DESIGN.md must keep readable (§4): white text on the accent fill,
 	 * and body text on the page and on cards, all at 4.5:1. Muted text on the page
-	 * is checked too, as a warning. Each row: pair, ratio, need, ok, level.
+	 * is checked too, as a warning. Night bands, the highlight and the status
+	 * colors are checked when DESIGN.md names them. Each row: pair, ratio, need, ok, level.
 	 *
 	 * @return array<int,array{pair:string,ratio:float,need:float,ok:bool,level:string}>
 	 */
@@ -483,6 +592,13 @@ final class Scout_Core_Design {
 			array( 'text', 'bg', 4.5, 'fail', 'Text on the page' ),
 			array( 'text', 'surface', 4.5, 'fail', 'Text on cards' ),
 			array( 'text_2', 'bg', 4.5, 'warn', 'Muted text on the page' ),
+			// Checked only when DESIGN.md has them (Client Design Playbook keys).
+			array( 'on_night', 'night', 4.5, 'fail', 'Text on night bands' ),
+			array( 'on_night_2', 'night', 4.5, 'warn', 'Muted text on night bands' ),
+			array( 'highlight_text', 'highlight', 4.5, 'fail', 'Text on the highlight' ),
+			array( 'good', 'bg', 4.5, 'warn', 'Success messages on the page' ),
+			array( 'warn', 'bg', 4.5, 'warn', 'Warnings on the page' ),
+			array( 'bad', 'bg', 4.5, 'warn', 'Errors on the page' ),
 		);
 		$out = array();
 		foreach ( $pairs as list( $fg, $bg, $need, $level, $label ) ) {
@@ -569,6 +685,12 @@ if ( ! function_exists( 'scout_design' ) ) {
 	/** The site's design tokens, or a feature's section laid over them. */
 	function scout_design( string $feature = '' ): array {
 		return Scout_Core_Design::get( $feature );
+	}
+}
+if ( ! function_exists( 'scout_design_feature' ) ) {
+	/** One DESIGN.md "### Feature:" section with role names resolved, or [] when the theme has none. */
+	function scout_design_feature( string $name ): array {
+		return Scout_Core_Design::feature( $name );
 	}
 }
 if ( ! function_exists( 'scout_design_css' ) ) {
