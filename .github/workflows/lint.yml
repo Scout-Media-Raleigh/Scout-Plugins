@@ -153,6 +153,8 @@ jobs:
         run: php tools/tests/reviews-from-theme.php
       - name: Daily Google check with an API key, stubbed, no real request (no WordPress needed)
         run: php tools/tests/reviews-places.php
+      - name: Direct answers recount pages that changed since their check (no WordPress needed)
+        run: php tools/tests/answer-scan.php
 
   slop-check:
     name: Code slop check
