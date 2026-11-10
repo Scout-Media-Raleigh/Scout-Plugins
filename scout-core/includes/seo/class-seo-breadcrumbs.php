@@ -131,7 +131,8 @@ final class Scout_SEO_Breadcrumbs {
 			$list[] = array(
 				'@type'    => 'ListItem',
 				'position' => $i + 1,
-				'name'     => $item['name'],
+				// Plain text: titles arrive texturized ("&#8217;"), which JSON keeps as is.
+				'name'     => trim( wp_strip_all_tags( html_entity_decode( (string) $item['name'], ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) ),
 				'item'     => $item['url'],
 			);
 		}

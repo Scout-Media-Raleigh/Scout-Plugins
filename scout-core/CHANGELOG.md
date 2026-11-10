@@ -1,5 +1,11 @@
 # Scout Core — Changelog
 
+## 1.10.5 (2026-11-09)
+
+- **Fix: quotes in page titles showed as code in the schema.** Titles with an apostrophe or quote reached Google as HTML entities, so a page titled "New Year's Eve" was named `New Year&#8217;s Eve` in its JSON-LD. Every schema name now uses the title as typed, as plain text: the WebPage name, FAQ questions on the FAQ page, and the blog post headline. FAQ answers, descriptions and breadcrumb names are decoded the same way. Nothing visitors see changes.
+- An FAQ question on Core's FAQ page and the same question from Scout AI Search now match, so it is listed once instead of twice.
+- Tests: `tools/tests/core-schema-plain-text.php` (no WordPress needed), run in the Lint workflow.
+
 ## 1.10.4 (2026-11-09)
 
 - **Fields reach the block editor and REST.** WordPress only includes a post's `meta` in `/wp/v2/<type>`, and only saves `meta` sent to it, when the type supports custom fields. No Scout type did, so every field was missing over REST and REST writes were dropped without an error. Every Scout type with fields (testimonials, the RV park types, any companion type) now supports custom fields. Types with no fields (FAQ) are unchanged.
