@@ -1,5 +1,11 @@
 # Scout Call Buttons changelog
 
+## 0.2.0 (2026-11-10)
+
+- **The bar can match a light site.** The bar was dark glass on every site. When the theme's DESIGN.md has a `### Feature: call buttons` section, the bar takes its background, blur, hairline, shadow, main button colors, a hairline around Call and Text, and the label font, size, tracking and case from it. A light bar gets the theme's text color, a darker hover and a softer shadow, so its buttons stay readable. Sites without the section look exactly the same. Needs Scout Core 1.11.0; with an older Core nothing changes.
+- The keys are listed in the README under "What this feature needs from the theme". The button wording stays in Call buttons settings.
+- Tests: `tools/tests/contact-design.php` (no WordPress needed).
+
 ## 0.1.18 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** the call sheet's colors and fonts now read the theme's DESIGN.md (the `--scout-*` names from `design-tokens.css`) when the theme's own `--surface`, `--accent` and the rest are not set. Sites that set them, or set neither, look exactly the same.

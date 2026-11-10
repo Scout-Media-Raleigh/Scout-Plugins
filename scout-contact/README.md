@@ -25,8 +25,26 @@ Design: Scout features DESIGN.md 5.9 (screen 4b).
   `--scout-accent`). These are the `--scout-*` variables `tools/design-build.php` writes to the theme's `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that file. The names it read before still win when the theme
   sets them: `--surface`, `--surface-2`, `--text`, `--text-2`, `--line`,
   `--accent`, `--accent-fill`, `--on-accent`, `--accent-text`, `--font-mono`,
-  `--font-sans`. With neither, Scout's dark palette. The bar itself is dark
-  glass with light text on every site.
+  `--font-sans`. With neither, Scout's dark palette. `--scout-*` is the
+  standard set; the older names are read only so older themes keep working.
+- **The bar (0.2.0, Scout Core 1.11.0+):** dark glass with light text, unless
+  the theme's DESIGN.md has a `### Feature: call buttons` section. Keys it reads
+  (each optional; a color role name such as `accent_fill` or `line` works in
+  place of a color):
+
+  | Key | What it sets | Example |
+  |---|---|---|
+  | `bar` | The bar's background. A light color switches the icons' row to the theme's text color, a darker hover and a softer shadow | `rgba(251,249,246,.97)` |
+  | `bar_text` | Text on the bar, when the guess above is wrong | `text` |
+  | `bar_blur` | The glass blur | `10px` |
+  | `bar_line` | The bar's hairline | `line` |
+  | `bar_shadow` | The bar's shadow | `0 8px 24px rgba(0,0,0,.12)` |
+  | `primary_fill`, `primary_text` | The main button | `accent_fill`, `on_accent` |
+  | `secondary_border` | A hairline around Call and Text | `rgba(184,149,90,.55)` |
+  | `label_font`, `label_size`, `label_tracking`, `label_case` | The button labels. `label_font: label` also takes the label font's case and tracking | `label`, `11px`, `.2em`, `upper` |
+
+  Without the section nothing changes. The button wording is copy, not design:
+  it stays in Call buttons settings (a `primary_label` line is not read).
 - **Where it lands:** printed through `wp_footer()` and fixed to the bottom of
   the screen on phones (12px from the sides, 14px above the bottom plus the
   phone's safe area, `z-index: 9997`). Hidden from 761px up.
