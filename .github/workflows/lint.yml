@@ -133,6 +133,8 @@ jobs:
         run: php tools/tests/site-report.php
       - name: Today list on Home (no WordPress needed)
         run: php tools/tests/today.php
+      - name: Scout box on the WordPress Dashboard (no WordPress needed)
+        run: php tools/tests/dashboard-box.php
       - name: Inbox list (no WordPress needed)
         run: php tools/tests/inbox.php
       - name: Plans, picks and recommendations (no WordPress needed)
@@ -155,6 +157,8 @@ jobs:
         run: php tools/tests/reviews-from-theme.php
       - name: Daily Google check with an API key, stubbed, no real request (no WordPress needed)
         run: php tools/tests/reviews-places.php
+      - name: Direct answers recount pages that changed since their check (no WordPress needed)
+        run: php tools/tests/answer-scan.php
 
   slop-check:
     name: Code slop check
