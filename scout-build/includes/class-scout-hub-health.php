@@ -360,10 +360,12 @@ final class Scout_Hub_Health {
 			);
 		}
 		return array(
-			'label' => __( 'Search engines', 'scout-build' ),
-			'value' => $public ? __( 'Allowed', 'scout-build' ) : __( 'Hidden', 'scout-build' ),
-			'state' => $public ? 'good' : 'warn',
-			'note'  => $public ? __( 'Google can find the site.', 'scout-build' ) : __( 'Settings, Reading asks search engines to stay away. Right for staging, wrong for a live site.', 'scout-build' ),
+			'label'   => __( 'Search engines', 'scout-build' ),
+			'value'   => $public ? __( 'Allowed', 'scout-build' ) : __( 'Hidden', 'scout-build' ),
+			'state'   => $public ? 'good' : 'warn',
+			'note'    => $public ? __( 'Google can find the site.', 'scout-build' ) : __( 'Settings, Reading asks search engines to stay away. Right for staging, wrong for a live site.', 'scout-build' ),
+			// Hidden is right on a staging copy, so the Dashboard box lists it last.
+			'staging' => ! $public && self::is_staging(),
 		);
 	}
 

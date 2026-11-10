@@ -1,5 +1,17 @@
 # Scout Build changelog
 
+## 0.14.5 (2026-11-10)
+
+- **A calmer Scout box on the WordPress Dashboard (Joy, Nov 10: "a bit crowded").** A business owner should read it in five seconds. Top to bottom it is now:
+  - The status line, as before ("The site is fine. 4 things want a look.").
+  - The top two checks, one short line each ("Two-step login: Off for 2 admins"), then "And 2 more in Site status". The full notes stay in Site status. Fixes come first, then looks.
+  - The review chip, as before.
+  - One row of chips: updates this month, features on, and open requests when there are any. "Ready for AI search" and "Google email is on" left the box, since Site status lists both.
+  - "Need something changed?" with one primary button, Send request, and a quiet Open Scout link beside it. The Open Scout, Site status and Request a change buttons under it are gone: the box itself is the way to ask for a change, and Site status is one link above.
+- **One row for one setting on staging copies.** WordPress's own "discourage search engines" check is no longer listed under WordPress checks, because Scout's Search engines row already shows the same setting. Site status, the update report and the Dashboard box each show it once, so a staging copy with search engines hidden counts one look, not two.
+- **Staging-only rows go last.** Search engines: Hidden on a staging copy is right, so the box lists it after every real look and never names it over one. On a live site it stays a normal look.
+- `tools/tests/dashboard-box.php` checks the box (Lint workflow). Visitors notice nothing.
+
 ## 0.14.4 (2026-11-09)
 
 - **Direct answers counts FAQs added today (client staging, Nov 9).** Each page's FAQ check was kept for the whole day, so FAQs added after the morning check (a theme update, then Scout AEO answers) never counted: every page printed `FAQPage`, and Site status still said "0 of 11 pages, checked 5 minutes ago". Now a page's check stops counting as soon as the page is saved, its Scout AEO answers change, or the theme (or Scout AEO) is updated. The page leaves the count, the site loads it again in the background within a couple of minutes, and the next reload counts it. Pages that haven't changed are still checked at most once a day.

@@ -110,19 +110,21 @@ final class Scout_Hub_Dashboard {
 		<?php
 	}
 
+	/** How many checks the box names before "And N more". */
+	const SHOW = 2;
+
 	public static function render(): void {
 		$on = 0;
 		foreach ( array_keys( Scout_Hub_Catalog::features() ) as $slug ) {
 			$on += 'on' === Scout_Hub_Features::status( $slug )['state'] ? 1 : 0;
 		}
-		$ai     = Scout_Hub_Health::ai_checks();
 		$basics = array_merge( Scout_Hub_Health::checks(), Scout_Hub_Security::visible_rows() );
 		$fix    = array_values( array_filter( $basics, static fn( $c ) => 'bad' === $c['state'] ) );
 		$look   = array_values( array_filter( $basics, static fn( $c ) => 'warn' === $c['state'] ) );
-		$todo   = array_slice( array_merge( $fix, $look ), 0, 4 );
+		$todo   = self::ranked( array_merge( $fix, $look ) );
+		$shown  = array_slice( $todo, 0, self::SHOW );
+		$more   = count( $todo ) - count( $shown );
 		$open   = count( array_filter( Scout_Hub_Requests::all(), static fn( $p ) => 'done' !== get_post_meta( $p->ID, Scout_Hub_Requests::META_STATUS, true ) ) );
-		$mail   = class_exists( 'Scout_Hub_Mail' ) && Scout_Hub_Mail::ready();
-		$ready  = count( array_filter( $ai, static fn( $c ) => 'good' === $c['state'] ) );
 		if ( $fix ) {
 			$state = 'bad';
 			/* translators: %d: failing checks */
@@ -135,92 +137,105 @@ final class Scout_Hub_Dashboard {
 			$state = 'good';
 			$line  = __( 'The site is in good shape.', 'scout-build' );
 		}
-		// A short list instead of four stat cards: the same facts, one line each.
-		$facts = array(
-			/* translators: %d: features on */
-			array( sprintf( _n( '%d feature on', '%d features on', $on, 'scout-build' ), $on ), Scout_Hub_Admin::url( 'features' ) ),
-			/* translators: 1: checks passed, 2: total */
-			array( sprintf( __( 'Ready for AI search on %1$d of %2$d checks', 'scout-build' ), $ready, count( $ai ) ), Scout_Hub_Admin::url( 'health' ) . '#ai-search' ),
-			array( $mail ? __( 'Google email is on', 'scout-build' ) : __( 'Google email is off', 'scout-build' ), current_user_can( 'manage_options' ) && class_exists( 'Scout_Hub_Mail' ) ? Scout_Hub_Mail::url() : '' ),
+		// One short row of chips. AI search and Google email are left to Site status, which lists both.
+		$done    = 0;
+		$waiting = 0;
+		if ( class_exists( 'Scout_Hub_Log' ) ) {
+			$done    = (int) Scout_Hub_Log::query( array( 'client' => true, 'status' => 'done', 'month' => current_time( 'Y-m' ), 'per_page' => 1 ) )['total'];
+			$waiting = (int) Scout_Hub_Log::query( array( 'client' => true, 'status' => 'waiting', 'per_page' => 1 ) )['total'];
+		}
+		$chips = array();
+		if ( class_exists( 'Scout_Hub_Log' ) ) {
+			/* translators: %d: updates this month */
+			$chips[] = array( sprintf( _n( '%d update this month', '%d updates this month', $done, 'scout-build' ), $done ), Scout_Hub_Admin::url( 'log' ) );
+		}
+		/* translators: %d: features on */
+		$chips[] = array( sprintf( _n( '%d feature on', '%d features on', $on, 'scout-build' ), $on ), Scout_Hub_Admin::url( 'features' ) );
+		if ( $open ) {
 			/* translators: %d: open change requests */
-			array( sprintf( _n( '%d open change request', '%d open change requests', $open, 'scout-build' ), $open ), Scout_Hub_Admin::url( 'requests' ) ),
-		);
+			$chips[] = array( sprintf( _n( '%d open request', '%d open requests', $open, 'scout-build' ), $open ), Scout_Hub_Admin::url( 'requests' ) );
+		}
 		?>
 		<style>
 			#<?php echo esc_attr( self::ID ); ?> .hndle::before{content:""; display:inline-block; width:12px; height:15px; margin-right:8px; background:#0e8fe6; clip-path:polygon(58% 0,0 58%,42% 58%,30% 100%,100% 40%,54% 40%); vertical-align:-2px}
 			#<?php echo esc_attr( self::ID ); ?> .inside{margin:0;padding:0 12px 12px}
-			.sh.sd{--sh-fs-base:14px; max-width:none; margin:0; font-size:14px}
+			.sh.sd{--sh-fs-base:14px; max-width:none; margin:0; font-size:14px; display:grid; gap:var(--sh-space-3)}
+			.sd > *{margin:0}
 			.sd .sh-box{margin:12px 0 0; padding:12px 14px; border-radius:var(--sh-r-control)}
 			.sd .sh-status{font-size:14px}
-			.sd .sh-list{margin:12px 0; gap:6px; font-size:14px}
-			.sd .sh-list li{margin:0}
-			.sd-reviews{margin:0 0 12px; padding:10px 12px; border-radius:var(--sh-r-control); background:var(--sh-surface-2); color:var(--sh-text-2)}
+			.sd-todo{padding:0; list-style:none; display:grid; gap:var(--sh-space-1)}
+			.sd-todo li{display:flex; align-items:center; gap:var(--sh-space-2); margin:0; color:var(--sh-text-2)}
+			.sd-todo strong{color:var(--sh-text); font-weight:600}
+			.sd-todo .sh-dot{width:8px; height:8px}
+			.sd-todo .sd-more{padding-left:16px}
+			.sd a{color:var(--sh-accent-text); font-weight:500; text-decoration:none}
+			.sd-reviews{padding:10px 12px; border-radius:var(--sh-r-control); background:var(--sh-surface-2); color:var(--sh-text-2)}
 			.sd-stars{color:var(--sh-text); margin-right:4px}
-			.sd-todo{margin:0 0 12px; padding:0; list-style:none; display:grid; gap:6px}
-			.sd-todo li{display:grid; grid-template-columns:10px 1fr; gap:8px; align-items:start; margin:0}
-			.sd-todo .sh-dot{width:8px; height:8px; margin-top:6px}
-			.sd-ok{margin:0 0 12px; color:var(--sh-text-2)}
-			.sd-ask{display:grid; gap:6px; margin:0 0 12px; padding-top:12px; border-top:1px solid var(--sh-border)}
+			.sd-wait{color:var(--sh-text)}
+			.sd-chips{display:flex; flex-wrap:wrap; gap:var(--sh-space-2); padding:0; list-style:none}
+			.sd-chips li{margin:0}
+			.sd-chips a{display:inline-block; padding:4px 10px; border:1px solid var(--sh-border-strong); border-radius:var(--sh-r-pill); font-size:var(--sh-fs-note)}
+			.sd-chips a:hover{border-color:var(--sh-accent-line); background:var(--sh-glow)}
+			.sd-ask{display:grid; gap:var(--sh-space-2); padding-top:var(--sh-space-3); border-top:1px solid var(--sh-border)}
 			.sd-ask textarea{width:100%}
-			.sd-ask .button{justify-self:start}
-			.sd-links{display:flex; flex-wrap:wrap; gap:8px; margin:0}
+			.sd-send{margin:0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--sh-space-2)}
 		</style>
 		<div class="sh sd">
 		<?php Scout_Hub_Admin::status_line( $state, $line ); ?>
-		<ul class="sh-list">
-			<?php foreach ( $facts as $f ) : ?>
-				<li><?php if ( '' !== $f[1] ) : ?><a href="<?php echo esc_url( $f[1] ); ?>"><?php echo esc_html( $f[0] ); ?> &rsaquo;</a><?php else : ?><?php echo esc_html( $f[0] ); ?><?php endif; ?></li>
+		<?php if ( $shown ) : ?>
+			<ul class="sd-todo">
+				<?php foreach ( $shown as $c ) : ?>
+					<li class="sh-check is-<?php echo 'bad' === $c['state'] ? 'bad' : 'warn'; ?>"><span class="sh-dot" aria-hidden="true"></span><span><strong><?php echo esc_html( $c['label'] ); ?>:</strong> <?php echo esc_html( $c['value'] ); ?></span></li>
+				<?php endforeach; ?>
+				<li class="sd-more"><a href="<?php echo esc_url( Scout_Hub_Admin::url( 'health' ) ); ?>">
+					<?php
+					echo esc_html(
+						$more
+							/* translators: %d: checks not named in the box */
+							? sprintf( _n( 'And %d more in Site status', 'And %d more in Site status', $more, 'scout-build' ), $more )
+							: __( 'Details in Site status', 'scout-build' )
+					);
+					?>
+					&rsaquo;</a></li>
+			</ul>
+		<?php endif; ?>
+		<?php self::reviews(); ?>
+		<?php if ( $waiting ) : ?>
+			<p class="sd-wait"><strong>
+				<?php
+				/* translators: %d: items waiting on the client */
+				echo esc_html( sprintf( _n( '%d thing is waiting on your OK.', '%d things are waiting on your OK.', $waiting, 'scout-build' ), $waiting ) );
+				?>
+			</strong> <a href="<?php echo esc_url( Scout_Hub_Admin::url( 'log' ) ); ?>"><?php esc_html_e( 'See them', 'scout-build' ); ?> &rsaquo;</a></p>
+		<?php endif; ?>
+		<ul class="sd-chips">
+			<?php foreach ( $chips as $chip ) : ?>
+				<li><a href="<?php echo esc_url( $chip[1] ); ?>"><?php echo esc_html( $chip[0] ); ?> &rsaquo;</a></li>
 			<?php endforeach; ?>
 		</ul>
-		<?php self::reviews(); ?>
-		<?php if ( class_exists( 'Scout_Hub_Log' ) ) : ?>
-			<?php $n = Scout_Hub_Log::query( array( 'client' => true, 'status' => 'done', 'month' => current_time( 'Y-m' ), 'per_page' => 1 ) )['total']; ?>
-			<?php $w = Scout_Hub_Log::query( array( 'client' => true, 'status' => 'waiting', 'per_page' => 1 ) )['total']; ?>
-			<p class="sd-ok">
-				<?php
-				if ( $w ) {
-					/* translators: %d: items waiting on the client */
-					echo '<strong>' . esc_html( sprintf( _n( '%d thing is waiting on your OK.', '%d things are waiting on your OK.', $w, 'scout-build' ), $w ) ) . '</strong> ';
-				}
-				/* translators: %d: updates this month */
-				echo esc_html( sprintf( _n( '%d update to your site this month.', '%d updates to your site this month.', $n, 'scout-build' ), $n ) );
-				?>
-				<a href="<?php echo esc_url( Scout_Hub_Admin::url( 'log' ) ); ?>"><?php echo esc_html__( 'See what\'s new', 'scout-build' ); ?> &rsaquo;</a>
-			</p>
-		<?php endif; ?>
-		<?php if ( $todo ) : ?>
-			<ul class="sd-todo">
-				<?php foreach ( $todo as $c ) : ?>
-					<li class="sh-check is-<?php echo 'bad' === $c['state'] ? 'bad' : 'warn'; ?>"><span class="sh-dot" aria-hidden="true"></span><span><strong><?php echo esc_html( $c['label'] . ': ' . $c['value'] ); ?>.</strong> <?php echo esc_html( self::short( (string) $c['note'] ) ); ?></span></li>
-				<?php endforeach; ?>
-			</ul>
-		<?php else : ?>
-			<p class="sd-ok"><?php esc_html_e( 'Every site check passes.', 'scout-build' ); ?></p>
-		<?php endif; ?>
 		<form class="sd-ask" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Requests::ACTION ); ?>">
 			<input type="hidden" name="do" value="new">
 			<?php wp_nonce_field( Scout_Hub_Requests::ACTION ); ?>
 			<label for="sd-what"><strong><?php esc_html_e( 'Need something changed?', 'scout-build' ); ?></strong></label>
-			<textarea id="sd-what" name="what" rows="3" required placeholder="<?php esc_attr_e( 'Tell us what and where. We\'ll take it from here.', 'scout-build' ); ?>"></textarea>
-			<button type="submit" class="button button-primary"><?php esc_html_e( 'Send request', 'scout-build' ); ?></button>
+			<textarea id="sd-what" name="what" rows="2" required placeholder="<?php esc_attr_e( 'Tell us what and where. We\'ll take it from here.', 'scout-build' ); ?>"></textarea>
+			<p class="sd-send">
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Send request', 'scout-build' ); ?></button>
+				<a class="button sh-quiet" href="<?php echo esc_url( Scout_Hub_Admin::url( 'overview' ) ); ?>"><?php esc_html_e( 'Open Scout', 'scout-build' ); ?> &rsaquo;</a>
+			</p>
 		</form>
-		<p class="sd-links">
-			<a class="button" href="<?php echo esc_url( Scout_Hub_Admin::url( 'overview' ) ); ?>"><?php esc_html_e( 'Open Scout', 'scout-build' ); ?></a>
-			<a class="button" href="<?php echo esc_url( Scout_Hub_Admin::url( 'health' ) ); ?>"><?php esc_html_e( 'Site status', 'scout-build' ); ?></a>
-			<a class="button" href="<?php echo esc_url( Scout_Hub_Admin::url( 'requests' ) ); ?>"><?php esc_html_e( 'Request a change', 'scout-build' ); ?></a>
-		</p>
 		</div>
 		<?php
 	}
 
-	/** A long note cut to its first sentence; Site status has the rest. */
-	private static function short( string $note ): string {
-		$note = trim( $note );
-		if ( strlen( $note ) <= 160 ) {
-			return $note;
-		}
-		$parts = preg_split( '/(?<=[.;])\s+/u', $note, 2 );
-		return rtrim( (string) $parts[0], ';' ) . ( ';' === substr( (string) $parts[0], -1 ) ? '.' : '' );
+	/**
+	 * Fixes first, then looks. A row that is only there because this is a
+	 * staging copy (search engines hidden) goes last, so it never pushes a real
+	 * look out of the top two.
+	 */
+	public static function ranked( array $rows ): array {
+		$rank = static fn( array $c ): int => ( 'bad' === $c['state'] ? 0 : 1 ) + ( empty( $c['staging'] ) ? 0 : 2 );
+		usort( $rows, static fn( $a, $b ) => $rank( $a ) <=> $rank( $b ) );
+		return $rows;
 	}
 }
