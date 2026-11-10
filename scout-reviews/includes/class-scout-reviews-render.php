@@ -24,6 +24,7 @@ final class Scout_Reviews_Render {
 		add_shortcode( 'scout_reviews', array( __CLASS__, 'shortcode_reviews' ) );
 		add_shortcode( 'scout_review_summary', array( __CLASS__, 'shortcode_summary' ) );
 
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'design_inline' ), 5 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_early' ) );
 
 		register_block_type(
@@ -135,6 +136,50 @@ final class Scout_Reviews_Render {
 		if ( has_block( 'scout/reviews', $post ) || has_shortcode( $post->post_content, 'scout_reviews' ) || has_shortcode( $post->post_content, 'scout_review_summary' ) ) {
 			self::enqueue();
 		}
+	}
+
+	/**
+	 * Attach the DESIGN.md look to the stylesheet's handle, so it prints
+	 * wherever the stylesheet does (a shortcode, the block, a slot, or a theme
+	 * that enqueues 'scout-reviews' itself). Nothing when there is no section.
+	 */
+	public static function design_inline(): void {
+		$css = self::design_css();
+		if ( '' !== $css ) {
+			wp_add_inline_style( self::STYLE, $css );
+		}
+	}
+
+	/**
+	 * The stars and the quote font from the theme's DESIGN.md, "### Feature:
+	 * reviews" (Scout Core 1.11.0+). Empty when the theme has no such section,
+	 * so the stars stay amber and the quote keeps the page's font. Keys read:
+	 * star (the filled star color) and quote_font (the review text).
+	 *
+	 * @param array|null $f The section as scout_design_feature() returns it (for tests).
+	 */
+	public static function design_css( ?array $f = null ): string {
+		if ( null === $f ) {
+			if ( ! function_exists( 'scout_design_feature' ) ) {
+				return '';
+			}
+			$f = (array) scout_design_feature( 'reviews' );
+		}
+		if ( ! $f ) {
+			return '';
+		}
+		$v = static function ( string $key ) use ( $f ): string {
+			$value = isset( $f[ $key ] ) && is_scalar( $f[ $key ] ) ? trim( (string) $f[ $key ] ) : '';
+			return trim( (string) preg_replace( '/[^\w\s#,.()%"\'-]/', '', $value ) ); // Nothing that could close the style tag.
+		};
+		$rules = array();
+		if ( '' !== $v( 'star' ) ) {
+			$rules[] = '.scout-reviews,.scout-reviews-summary{--sr-star:' . $v( 'star' ) . '}';
+		}
+		if ( '' !== $v( 'quote_font' ) ) {
+			$rules[] = '.scout-review__text{font-family:' . $v( 'quote_font' ) . '}';
+		}
+		return implode( "\n", $rules );
 	}
 
 	public static function enqueue(): void {

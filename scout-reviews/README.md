@@ -164,28 +164,73 @@ the place ID.
 
 ## What this feature needs from the theme
 
-- **DESIGN.md:** on the site, the stylesheet reads the DESIGN.md roles
-  surface, line, muted text, accent (links, or `accent_text` when a DESIGN.md
-  adds it), the card corner and the label font, as `--scout-surface`,
-  `--scout-line`, `--scout-text-2`, `--scout-accent-text`, `--scout-accent`,
-  `--scout-radius-card` and `--scout-font-label`. These are the `--scout-*` variables `tools/design-build.php` writes to the theme's `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that file. The names it read
-  before still win when the theme sets them: `--surface`, `--line`,
-  `--text-2`, `--text-3`, `--accent-text`, `--font-mono`, `--r-card`. With
-  neither, it mixes shades from the page's text color, so it fits light and
-  dark themes. The stars are a fixed amber, `#fbb024`.
+- **DESIGN.md, the standard variables:** on the site, the stylesheet reads
+  the `--scout-*` variables `tools/design-build.php` writes to the theme's
+  `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that
+  file: `--scout-surface`, `--scout-line`, `--scout-text-2`,
+  `--scout-accent-text` (or `--scout-accent`), `--scout-radius-card` and
+  `--scout-font-label`. These are the standard set. For older themes, the
+  names it read before are still read first when the theme sets them:
+  `--surface`, `--line`, `--text-2`, `--text-3`, `--accent-text`,
+  `--font-mono`, `--r-card`. With neither, it mixes shades from the page's
+  text color, so it fits light and dark themes.
+- **DESIGN.md, `### Feature: reviews` (0.8.0, Scout Core 1.11.0+):** the
+  look changes only when the theme has this section, and only for the keys
+  it has. Without it (or with an older Scout Core) the stars are amber,
+  `#fbb024`, and the review text uses the page's font, as before.
+
+  ```
+  ### Feature: reviews
+  - star: accent
+  - quote_font: heading
+  ```
+
+  - `star`: the filled star color, in review cards and the rating summary.
+    A color role (`accent`) or a color.
+  - `quote_font`: the font of the review text. A font role (`heading`) or a
+    family name.
+  - **Not read yet:** `star_on_dark` (the stylesheet has no dark variant:
+    it mixes every shade from the surrounding text color, so there is no dark
+    context to hang a second star color on), `star_label`, `layout_home`,
+    `layout_page`, `quote_mark`, `name_style`, `photo_frame`,
+    `rotate_seconds`. Layout stays the `layout` option on the block,
+    shortcode or slot.
 - **Where it lands:** where the **Scout Reviews** block, `[scout_reviews]`,
   `[scout_review_summary]` or `scout_reviews_slot()` sits (Theme
   integration, above). A slot prints nothing when there is nothing to show,
   so the theme passes its section wrapper as `before` and `after`.
 - **The review page** (`/review/` and `/review/note/`) is its own page,
-  outside the theme's templates. Its look comes from Review settings
-  (`background`, `text_color`, `accent`, `heading_font`, `body_font`,
-  `label_font`), whose defaults a theme can set with the `scout_reviews_brand`
-  filter. The logo at the top is the site icon.
+  outside the theme's templates. The logo at the top is the site icon. Its
+  look comes from Ask for reviews > More options (`background`,
+  `text_color`, `accent`, `heading_font`, `body_font`, `label_font`), whose
+  defaults a theme can set with the `scout_reviews_brand` filter. From 0.8.0
+  (Scout Core 1.11.0+) the theme's DESIGN.md sets it instead:
+
+  ```
+  ### Feature: review page
+  - background: "#FBF9F6"
+  - text_color: text
+  - accent: accent
+  - heading_font: heading
+  - body_font: Mulish
+  - label_font: label
+  ```
+
+  Each of the six keys the section has wins over the saved setting, on the
+  review page and on the printed cards; the rest keep the setting. On the
+  settings screen those fields show the theme's value, greyed out, with a
+  note that it comes from DESIGN.md, and the saved value is kept for when the
+  theme stops setting it. Colors must be hex (a color role whose value is hex
+  counts), because the page works out its text and link shades from them.
+  Fonts are used as the stack Scout Core hands over (`"Marcellus", serif`).
+  A family on the plugin's font list (Mulish, Lora, Inter and the rest) also
+  loads from Google Fonts; any other family must be loaded by the theme
+  through the `scout_reviews_page_fonts_url` filter, or the page falls back
+  to the stack's generic font. Without the section, nothing changes.
 - **scout-setup.json:** the `reviews` section, filled in by Scout Build where
   the setting is blank: `business`, `headline`, `ask`, `photo`,
-  `card_headline`, `google_review_url`, and the look keys `background`,
-  `text_color`, `accent`, `heading_font`, `body_font`, `label_font`.
+  `card_headline`, `google_review_url`. Facts only: the look keys are not
+  read from it (Scout Build 0.15.0+), they go in DESIGN.md above.
 - **scout-setup.json, `google_place_id` (0.7.0):** the business's Google
   place ID for the daily Google check (above). Filled only when the field is
   blank. The API key is never read from the theme.
@@ -254,7 +299,7 @@ the place ID.
 | Public Google reviews of the business, copied from its Google Business Profile: the reviewer's name as Google shows it (or "A Google user"), the review text, star rating, date, and the address of the reviewer's Google profile photo (Only when Google is connected in the Reviews settings. Reviews with stars but no words are not copied.) | This website's database, as reviews. New ones arrive as drafts. | Until someone deletes it. A daily sync updates each one from Google. A review removed from Google is taken off the site and kept as a draft. | Nobody |
 | Reviews that site staff copy in by hand from other review sites (such as Yelp, Facebook or BBB): the reviewer's name, the review text, stars, date, a link to the review and an optional reviewer detail (When site staff add them.) | This website's database, as reviews | Until someone deletes it | Nobody |
 | The visitor's IP address and browser details, seen by Google when a review card shows a Google reviewer's photo (When a page shows a Google review that has a profile photo.) | Not kept by this website. The photo loads straight from Google's servers, without telling Google which page it is on. | Not kept by this website | Google |
-| The visitor's IP address and browser details, seen by Google Fonts when the review pages load their fonts (On the /review/ and /review/note/ pages, when a font from the list is chosen in the Reviews settings (Hanken Grotesk and Geist Mono are the defaults).) | Not kept by this website | Not kept by this website | Google Fonts |
+| The visitor's IP address and browser details, seen by Google Fonts when the review pages load their fonts (On the /review/ and /review/note/ pages, when a font from the list is chosen in the Reviews settings or named in the theme's DESIGN.md (Hanken Grotesk and Geist Mono are the defaults).) | Not kept by this website | Not kept by this website | Google Fonts |
 
 Deleting the plugin keeps the reviews, notes and visit totals unless "Remove all reviews and settings when the plugin is deleted" is ticked. The private note form asks for no email, so the site's privacy tools cannot find a note; staff delete one by hand in Reviews > New reviews.
 

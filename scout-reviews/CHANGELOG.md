@@ -1,5 +1,13 @@
 # Scout Reviews: Changelog
 
+## 0.8.0 (2026-11-10)
+
+- **Stars and the review font from the theme's DESIGN.md.** When DESIGN.md has a `### Feature: reviews` section, `star` sets the filled star color in review cards and the rating summary, and `quote_font` sets the font of the review text. Without the section the stars stay amber and the text keeps the page's font, exactly as before.
+- **The review page look from DESIGN.md.** When DESIGN.md has a `### Feature: review page` section, its `background`, `text_color`, `accent`, `heading_font`, `body_font` and `label_font` win over the saved settings, on `/review/`, `/review/note/` and the printed cards. Only the keys the section has change; the rest keep the setting. Colors must be hex. Fonts come as a full font stack, and a family on the plugin's font list still loads from Google Fonts.
+- **The settings screen says where the look comes from.** In Ask for reviews > More options, a field DESIGN.md sets shows the theme's value, greyed out, with a note to change it in DESIGN.md. The saved value is kept, so it applies again if the theme drops the line.
+- The look keys no longer belong in `scout-setup.json` (Scout Build 0.15.0 stops copying them). Values already saved on a site stay.
+- Needs Scout Core 1.11.0 for the DESIGN.md sections. With an older Core, or a theme without the sections, nothing changes. The README lists every key read and the ones not read yet. `tools/tests/reviews-design.php` checks it without WordPress.
+
 ## 0.7.1 (2026-11-09)
 
 - **A review with "&" in the name is no longer added twice.** WordPress can save "Mr. & Mrs. Sowinski" as "Mr. &amp; Mrs. Sowinski", so the theme's duplicate check missed it and Fill from theme added it again each run. The check now compares the names as plain text.

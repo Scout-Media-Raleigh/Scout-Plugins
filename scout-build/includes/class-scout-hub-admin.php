@@ -1565,7 +1565,7 @@ final class Scout_Hub_Admin {
 		$tools    = array(
 			array(
 				'title' => __( 'Fill from theme', 'scout-build' ),
-				'text'  => __( 'Copies facts from the theme\'s setup file into blank fields. Anything already set stays.', 'scout-build' ),
+				'text'  => trim( __( 'Copies facts from the theme\'s setup file into blank fields. Anything already set stays.', 'scout-build' ) . ' ' . Scout_Hub_Setup::look_notice() ),
 				'go'    => Scout_Hub_Setup::data() ? ( $operator ? Scout_Hub_Features::button( '', 'refill', __( 'Fill from theme', 'scout-build' ), 'button' ) : '' ) : '<span class="sh-note">' . esc_html__( 'This theme has no setup file.', 'scout-build' ) . '</span>',
 			),
 			array(

@@ -153,7 +153,7 @@ final class Scout_Hub_Features {
 			// Oct 15), so this lets it run again. It still fills blanks only.
 			delete_option( Scout_Hub_Setup::DONE );
 			Scout_Hub_Setup::run();
-			self::back( __( 'Filled in from the theme\'s setup file. Anything already set stayed as it was.', 'scout-build' ), 'success', 'updates' );
+			self::back( trim( __( 'Filled in from the theme\'s setup file. Anything already set stayed as it was.', 'scout-build' ) . ' ' . Scout_Hub_Setup::look_notice() ), 'success', 'updates' );
 		}
 		if ( ! isset( $features[ $slug ] ) ) {
 			self::back( __( 'That feature is not in the list.', 'scout-build' ), 'error' );

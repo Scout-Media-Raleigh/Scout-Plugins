@@ -48,7 +48,7 @@
       "where": "Not kept by this website",
       "kept": "Not kept by this website",
       "shared": "Google Fonts",
-      "when": "On the /review/ and /review/note/ pages, when a font from the list is chosen in the Reviews settings (Hanken Grotesk and Geist Mono are the defaults)."
+      "when": "On the /review/ and /review/note/ pages, when a font from the list is chosen in the Reviews settings or named in the theme's DESIGN.md (Hanken Grotesk and Geist Mono are the defaults)."
     }
   ],
   "cookies": [],

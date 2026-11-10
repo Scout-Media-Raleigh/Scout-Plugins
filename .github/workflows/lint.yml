@@ -143,6 +143,10 @@ jobs:
         run: php tools/tests/cards-people.php
       - name: Cards take over from a theme that made its own (no WordPress needed)
         run: php tools/tests/cards-theme-import.php
+      - name: Business cards follow DESIGN.md's cards section (no WordPress needed)
+        run: php tools/tests/cards-design.php
+      - name: The call bar follows DESIGN.md's call buttons section (no WordPress needed)
+        run: php tools/tests/contact-design.php
       - name: Privacy export and erase tools (no WordPress needed)
         run: php tools/tests/privacy-tools.php
       - name: Booking busy times from the owner's calendar (no WordPress needed)
@@ -155,6 +159,8 @@ jobs:
         run: php tools/tests/reviews-from-theme.php
       - name: Daily Google check with an API key, stubbed, no real request (no WordPress needed)
         run: php tools/tests/reviews-places.php
+      - name: Review stars, review font and the review page look from DESIGN.md (no WordPress needed)
+        run: php tools/tests/reviews-design.php
 
   slop-check:
     name: Code slop check
