@@ -1,5 +1,9 @@
 # Scout AI Search changelog
 
+## 0.2.12 (2026-11-09)
+
+- **Fix: quotes in page titles showed as code in the schema.** A page's FAQPage entry was named with HTML entities when its title had an apostrophe or quote (`New Year&#8217;s Eve`). It now uses the title as typed, as plain text. Release after Scout Core 1.10.5. Nothing visitors see changes.
+
 ## 0.2.11 (2026-11-05)
 
 - **Status line is a headline and one sentence.** Each switch already shows its own state, so the training, guide page, Bing and Q&A sentences came off the status line. The robots.txt note sits behind More. View the AI guide page and View search engine rules are two links, not a dot list. Shorter help.
