@@ -164,7 +164,7 @@ final class Scout_AEO_FAQ {
 			'@type'         => 'FAQPage',
 			'@id'           => $url . '#answers',
 			'url'           => $url,
-			'name'          => wp_strip_all_tags( get_the_title( $id ) ),
+			'name'          => self::title( $id ),
 			'isPartOf'      => array( '@id' => home_url( '/#website' ) ),
 			'about'         => array( '@id' => home_url( '/#business' ) ),
 			'datePublished' => get_the_date( 'c', $id ),
@@ -173,6 +173,15 @@ final class Scout_AEO_FAQ {
 		);
 		self::$in_graph[ $id ] = true;
 		return $graph;
+	}
+
+	/**
+	 * The page title as typed, as plain text for schema. get_the_title() runs
+	 * wptexturize, which would put "&#8217;" into the JSON instead of an apostrophe.
+	 */
+	private static function title( int $id ): string {
+		$title = html_entity_decode( (string) get_post_field( 'post_title', $id ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		return trim( wp_strip_all_tags( $title ) );
 	}
 
 	/** FAQPage schema for what was printed, when Scout Core's graph did not carry it. */

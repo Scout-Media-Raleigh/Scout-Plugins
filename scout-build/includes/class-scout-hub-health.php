@@ -12,41 +12,100 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Scout_Hub_Health {
 
-	const SCAN_KEY  = 'scout_hub_answer_scan_v2';
+	const SCAN_KEY  = 'scout_hub_answer_scan_v3'; // The last background run: when, and how many pages it tried and loaded. v3 (0.14.4): counts come from the page rows now.
 	const NAV_KEY   = 'scout_hub_nav_pages'; // Page IDs linked from the home page's menus, in order. // v2 (0.4.9): new page choice, so old counts are dropped.
 	const SCAN_HOOK = 'scout_hub_answer_scan';
-	const SEEN_KEY  = 'scout_hub_answer_seen';
+	const SEEN_KEY  = 'scout_hub_answer_seen'; // Page ID => array( f: has FAQPage, d: day checked, t: time checked, v: theme_stamp(), stale: set when the page's FAQs change ).
+	const FAQ_META  = '_scout_aeo_faqs'; // Scout AEO's answers (Scout_AEO_FAQ::META). Saving them doesn't touch post_modified.
 
 	/** Host suffixes that only ever serve a host's staging or temporary copy of a site. */
 	const STAGING_HOSTS = array( '.wpenginepowered.com', '.wpengine.com', '.kinsta.cloud', '.flywheelsites.com', '.pantheonsite.io', '.cloudwaysapps.com' );
 
+	/** @var string|null */
+	private static $stamp = null;
+
 	public static function boot(): void {
 		add_action( self::SCAN_HOOK, array( __CLASS__, 'run_scan' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'watch_page' ), 99 );
+		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $hook ) {
+			add_action( $hook, array( __CLASS__, 'meta_changed' ), 10, 3 );
+		}
+	}
+
+	/**
+	 * What every page check is tied to: the active theme (and its parent) and
+	 * Scout AEO, each with its version. A theme update changes what pages print,
+	 * so a check made before it no longer counts (client staging, Nov 9: a theme
+	 * update added FAQs and the morning checks kept saying 0 of 11).
+	 */
+	public static function theme_stamp(): string {
+		if ( null === self::$stamp ) {
+			$theme  = wp_get_theme();
+			$parent = $theme->parent();
+			$raw    = $theme->get_stylesheet() . '@' . $theme->get( 'Version' );
+			$raw   .= $parent ? '/' . $parent->get_stylesheet() . '@' . $parent->get( 'Version' ) : '';
+			$raw   .= defined( 'SCOUT_AEO_VERSION' ) ? '+aeo@' . SCOUT_AEO_VERSION : '';
+			self::$stamp = substr( md5( $raw ), 0, 10 );
+		}
+		return self::$stamp;
+	}
+
+	/**
+	 * Whether a page's saved check still describes the page: made with the
+	 * current theme, after the page was last saved, and before its FAQs changed.
+	 */
+	private static function row_fresh( $row, WP_Post $page ): bool {
+		return is_array( $row ) && ! empty( $row['t'] ) && empty( $row['stale'] )
+			&& self::theme_stamp() === ( $row['v'] ?? '' )
+			&& (int) get_post_modified_time( 'U', true, $page ) <= (int) $row['t'];
+	}
+
+	/** Scout AEO's answers on a page changed: its saved check no longer counts. */
+	public static function meta_changed( $meta_id, $object_id, $meta_key ): void {
+		if ( self::FAQ_META !== $meta_key ) {
+			return;
+		}
+		$seen = (array) get_option( self::SEEN_KEY, array() );
+		$id   = (int) $object_id;
+		if ( isset( $seen[ $id ] ) && is_array( $seen[ $id ] ) && empty( $seen[ $id ]['stale'] ) ) {
+			$seen[ $id ]['stale'] = true;
+			update_option( self::SEEN_KEY, $seen, false );
+		}
+	}
+
+	/** Save one page's check, reading the list fresh so a check running alongside isn't lost. */
+	private static function note_page( int $id, bool $faq ): void {
+		$seen        = (array) get_option( self::SEEN_KEY, array() );
+		$seen[ $id ] = array( 'f' => $faq, 'd' => gmdate( 'Y-m-d' ), 't' => time(), 'v' => self::theme_stamp() );
+		update_option( self::SEEN_KEY, $seen, false );
+	}
+
+	/** Whether a page's HTML carries FAQPage schema. */
+	private static function has_faq( string $html ): bool {
+		return (bool) preg_match( '/"@type"\s*:\s*(\[[^\]]*)?"FAQPage"/', $html );
 	}
 
 	/**
 	 * Many hosts and firewalls stop a site from loading its own pages, which
 	 * leaves the background scan stuck. So when a visitor opens a page, note
-	 * whether it carries FAQPage, at most once a day per page. The scan falls
-	 * back to these notes.
+	 * whether it carries FAQPage: at most once a day per page, and again as
+	 * soon as the page, its FAQs or the theme change.
 	 */
 	public static function watch_page(): void {
 		if ( is_admin() || ! is_page() || 'GET' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || is_preview() ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- compared only.
 			return;
 		}
-		$id    = (int) get_queried_object_id();
-		$seen  = (array) get_option( self::SEEN_KEY, array() );
-		$today = gmdate( 'Y-m-d' );
-		if ( ! $id || ( isset( $seen[ $id ]['d'] ) && $today === $seen[ $id ]['d'] ) ) {
+		$id   = (int) get_queried_object_id();
+		$page = $id ? get_post( $id ) : null;
+		$seen = (array) get_option( self::SEEN_KEY, array() );
+		$row  = $seen[ $id ] ?? null;
+		if ( ! $page instanceof WP_Post || ( gmdate( 'Y-m-d' ) === ( $row['d'] ?? '' ) && self::row_fresh( $row, $page ) ) ) {
 			return;
 		}
 		ob_start(
-			static function ( $html ) use ( $id, $today ) {
+			static function ( $html ) use ( $id ) {
 				if ( is_string( $html ) && false !== stripos( $html, '</html>' ) ) {
-					$seen        = (array) get_option( self::SEEN_KEY, array() );
-					$seen[ $id ] = array( 'f' => (bool) preg_match( '/"@type"\s*:\s*(\[[^\]]*)?"FAQPage"/', $html ), 'd' => $today, 't' => time() );
-					update_option( self::SEEN_KEY, $seen, false );
+					self::note_page( $id, self::has_faq( $html ) );
 					if ( (int) get_option( 'page_on_front' ) === $id ) {
 						self::note_nav( $html );
 					}
@@ -56,52 +115,62 @@ final class Scout_Hub_Health {
 		);
 	}
 
-	/** What visitors' page views showed in the last 30 days, or null when there are none. */
-	private static function seen_scan(): ?array {
-		$found   = 0;
-		$checked = 0;
-		$time    = 0;
-		$cut     = strtotime( '-30 days' );
-		$main    = array_map( 'intval', wp_list_pluck( self::main_pages(), 'ID' ) );
-		foreach ( (array) get_option( self::SEEN_KEY, array() ) as $id => $row ) {
-			$t = (int) ( $row['t'] ?? strtotime( (string) ( $row['d'] ?? '' ) ) );
-			if ( ! $t || $t < $cut || ! in_array( (int) $id, $main, true ) || 'publish' !== get_post_status( (int) $id ) ) {
-				continue;
-			}
-			++$checked;
-			$found += empty( $row['f'] ) ? 0 : 1;
-			$time   = max( $time, $t );
-		}
-		return $checked ? array( 'found' => $found, 'checked' => $checked, 'time' => $time ) : null;
-	}
-
 	/**
 	 * Which key pages print FAQ schema. Themes and plugins all do FAQs their
-	 * own way, so this looks at what the pages actually send: it loads up to
-	 * 15 of the main pages from the site itself (in the background, through
-	 * WP-Cron) and counts those carrying FAQPage. Cached for 12 hours.
+	 * own way, so this looks at what the pages actually send: each of up to 15
+	 * main pages is loaded by a visitor or by the site itself (in the background,
+	 * through WP-Cron), and the count is made fresh from those checks each time.
+	 * A page is checked at most once a day while it stays the same; a page that
+	 * changed (saved, FAQs edited, theme updated) is left out of the count and
+	 * checked again within a few minutes.
 	 *
-	 * @return array{found:int, checked:int, time:int}|null Null while the first scan runs.
+	 * @return array{found:int, checked:int, time:int, oldest:int, changed:int, blocked:bool}|null Null while the first checks run.
 	 */
 	public static function answer_scan(): ?array {
-		$scan = get_transient( self::SCAN_KEY );
-		if ( is_array( $scan ) && ! empty( $scan['checked'] ) ) {
-			return $scan;
+		$seen  = (array) get_option( self::SEEN_KEY, array() );
+		$today = gmdate( 'Y-m-d' );
+		$cut   = time() - 30 * DAY_IN_SECONDS;
+		$out   = array( 'found' => 0, 'checked' => 0, 'time' => 0, 'oldest' => 0, 'changed' => 0 );
+		$due   = false; // A page changed or has no recent check.
+		$old   = false; // A page was last checked before today.
+		foreach ( self::main_pages() as $p ) {
+			$row = $seen[ (int) $p->ID ] ?? null;
+			if ( ! self::row_fresh( $row, $p ) ) {
+				$due             = true;
+				$out['changed'] += is_array( $row ) ? 1 : 0;
+				continue;
+			}
+			$t = (int) $row['t'];
+			if ( $t < $cut ) {
+				$due = true;
+				continue;
+			}
+			$old            = $old || $today !== ( $row['d'] ?? '' );
+			++$out['checked'];
+			$out['found']  += empty( $row['f'] ) ? 0 : 1;
+			$out['time']    = max( $out['time'], $t );
+			$out['oldest']  = $out['oldest'] ? min( $out['oldest'], $t ) : $t;
 		}
-		$seen = self::seen_scan();
-		if ( $seen ) {
-			return $seen;
+
+		// The last background run. Kept 12 hours when it could load pages, 30
+		// minutes when it couldn't (often a staging password).
+		$run    = get_transient( self::SCAN_KEY );
+		$failed = is_array( $run ) && ! empty( $run['tried'] ) && empty( $run['loaded'] );
+		$again  = is_array( $run ) && ! $failed && time() - (int) ( $run['time'] ?? 0 ) >= 2 * MINUTE_IN_SECONDS;
+		if ( ( ( $due || $old ) && ! is_array( $run ) ) || ( $due && $again ) ) {
+			if ( ! wp_next_scheduled( self::SCAN_HOOK ) ) {
+				wp_schedule_single_event( time(), self::SCAN_HOOK );
+				spawn_cron();
+			}
 		}
-		if ( is_array( $scan ) ) {
-			return $scan;
+		$out['blocked'] = $failed; // The site couldn't load its own pages: only visitors' views check them now.
+		if ( ! $out['checked'] ) {
+			return $failed ? $out : null;
 		}
-		if ( ! wp_next_scheduled( self::SCAN_HOOK ) ) {
-			wp_schedule_single_event( time(), self::SCAN_HOOK );
-			spawn_cron();
-		}
-		return null;
+		return $out;
 	}
 
+	/** Check again: the next look at Site status starts a background run for every page that is due. */
 	public static function forget_scan(): void {
 		delete_transient( self::SCAN_KEY );
 	}
@@ -200,25 +269,30 @@ final class Scout_Hub_Health {
 	}
 
 	public static function run_scan(): void {
-		$home  = wp_remote_get( home_url( '/' ), array( 'timeout' => 8, 'redirection' => 2, 'sslverify' => false, 'headers' => array( 'Cache-Control' => 'no-cache' ) ) );
+		$args = array( 'timeout' => 8, 'redirection' => 2, 'sslverify' => false, 'headers' => array( 'Cache-Control' => 'no-cache' ) );
+		$home  = wp_remote_get( home_url( '/' ), $args );
 		if ( ! is_wp_error( $home ) && 200 === (int) wp_remote_retrieve_response_code( $home ) ) {
 			self::note_nav( (string) wp_remote_retrieve_body( $home ) );
 		}
-		$pages = self::main_pages();
-
-		$found   = 0;
-		$checked = 0;
-		foreach ( $pages as $p ) {
-			$r = wp_remote_get( get_permalink( $p ), array( 'timeout' => 8, 'redirection' => 2, 'sslverify' => false, 'headers' => array( 'Cache-Control' => 'no-cache' ) ) );
+		$seen   = (array) get_option( self::SEEN_KEY, array() );
+		$today  = gmdate( 'Y-m-d' );
+		$tried  = 0;
+		$loaded = 0;
+		foreach ( self::main_pages() as $p ) {
+			$row = $seen[ (int) $p->ID ] ?? null;
+			if ( $today === ( $row['d'] ?? '' ) && self::row_fresh( $row, $p ) ) {
+				continue; // Unchanged and already checked today.
+			}
+			++$tried;
+			// A throwaway query string gets past page caches that would hand back the page as it was before the change.
+			$r = wp_remote_get( add_query_arg( 'scout_check', time(), get_permalink( $p ) ), $args );
 			if ( is_wp_error( $r ) || 200 !== (int) wp_remote_retrieve_response_code( $r ) ) {
 				continue;
 			}
-			++$checked;
-			if ( preg_match( '/"@type"\s*:\s*(\[[^\]]*)?"FAQPage"/', (string) wp_remote_retrieve_body( $r ) ) ) {
-				++$found;
-			}
+			++$loaded;
+			self::note_page( (int) $p->ID, self::has_faq( (string) wp_remote_retrieve_body( $r ) ) );
 		}
-		set_transient( self::SCAN_KEY, array( 'found' => $found, 'checked' => $checked, 'time' => time() ), $checked ? 12 * HOUR_IN_SECONDS : 30 * MINUTE_IN_SECONDS );
+		set_transient( self::SCAN_KEY, array( 'time' => time(), 'tried' => $tried, 'loaded' => $loaded ), $tried && ! $loaded ? 30 * MINUTE_IN_SECONDS : 12 * HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -805,14 +879,28 @@ final class Scout_Hub_Health {
 				/* translators: %d: FAQ count */
 				$bits[] = sprintf( _n( '%d FAQ', '%d FAQs', $hub, 'scout-build' ), $hub );
 			}
-			/* translators: %s: time since the check */
-			$bits[] = sprintf( __( 'checked %s ago', 'scout-build' ), human_time_diff( (int) $scan['time'] ) );
+			// When each page was checked, not when the count was made: the count is
+			// made fresh every time, so "5 minutes ago" alone hid checks from the morning.
+			$newest = human_time_diff( (int) $scan['time'] );
+			$oldest = human_time_diff( (int) ( $scan['oldest'] ?? $scan['time'] ) );
+			/* translators: 1: time since the newest page check, 2: time since the oldest */
+			$bits[] = $newest === $oldest ? sprintf( __( 'pages checked %s ago', 'scout-build' ), $newest ) : sprintf( __( 'pages checked %1$s to %2$s ago', 'scout-build' ), $newest, $oldest );
+			$redo   = (int) ( $scan['changed'] ?? 0 );
+			if ( ! $redo ) {
+				$again = '';
+			} elseif ( empty( $scan['blocked'] ) ) {
+				/* translators: %d: pages being checked again */
+				$again = ' ' . sprintf( _n( '%d page changed and is being checked again.', '%d pages changed and are being checked again.', $redo, 'scout-build' ), $redo );
+			} else {
+				/* translators: %d: pages waiting for a visit */
+				$again = ' ' . sprintf( _n( '%d page changed. The site can\'t load its own pages, so it is checked again the next time someone opens it.', '%d pages changed. The site can\'t load its own pages, so each is checked again the next time someone opens it.', $redo, 'scout-build' ), $redo );
+			}
 			$out[]  = array(
 				'label' => __( 'Direct answers', 'scout-build' ),
 				/* translators: 1: pages with answers, 2: pages checked */
 				'value' => sprintf( __( '%1$d of %2$d pages', 'scout-build' ), $scan['found'], $scan['checked'] ),
 				'state' => $good ? 'good' : 'warn',
-				'note'  => ucfirst( implode( ', ', $bits ) ) . '.' . ( $good ? '' : ' ' . __( 'AI tools quote short, direct answers. Add questions to the pages that bring in business.', 'scout-build' ) ),
+				'note'  => ucfirst( implode( ', ', $bits ) ) . '.' . $again . ( $good ? '' : ' ' . __( 'AI tools quote short, direct answers. Add questions to the pages that bring in business.', 'scout-build' ) ),
 			) + ( $good ? array() : array( 'link' => $set, 'link_text' => $set_tx ) );
 		}
 

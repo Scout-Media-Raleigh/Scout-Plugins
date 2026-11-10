@@ -105,6 +105,8 @@ jobs:
         run: php tools/tests/core-hreflang.php
       - name: Scout Core select fields keep their value on every write path (no WordPress needed)
         run: php tools/tests/core-select-meta.php
+      - name: Schema names are plain text, never HTML entities (no WordPress needed)
+        run: php tools/tests/core-schema-plain-text.php
       - name: Every plugin lists the visitor data it keeps (Site Standard rule 24)
         run: php tools/visitor-data.php --check
       - name: Every plugin README says what it needs from the theme (Site Standard rule 4)
@@ -153,6 +155,8 @@ jobs:
         run: php tools/tests/reviews-from-theme.php
       - name: Daily Google check with an API key, stubbed, no real request (no WordPress needed)
         run: php tools/tests/reviews-places.php
+      - name: Direct answers recount pages that changed since their check (no WordPress needed)
+        run: php tools/tests/answer-scan.php
 
   slop-check:
     name: Code slop check

@@ -1,6 +1,6 @@
 # Scout Build changelog
 
-## 0.14.4 (2026-11-10)
+## 0.14.5 (2026-11-10)
 
 - **A calmer Scout box on the WordPress Dashboard (Joy, Nov 10: "a bit crowded").** A business owner should read it in five seconds. Top to bottom it is now:
   - The status line, as before ("The site is fine. 4 things want a look.").
@@ -11,6 +11,12 @@
 - **One row for one setting on staging copies.** WordPress's own "discourage search engines" check is no longer listed under WordPress checks, because Scout's Search engines row already shows the same setting. Site status, the update report and the Dashboard box each show it once, so a staging copy with search engines hidden counts one look, not two.
 - **Staging-only rows go last.** Search engines: Hidden on a staging copy is right, so the box lists it after every real look and never names it over one. On a live site it stays a normal look.
 - `tools/tests/dashboard-box.php` checks the box (Lint workflow). Visitors notice nothing.
+
+## 0.14.4 (2026-11-09)
+
+- **Direct answers counts FAQs added today (client staging, Nov 9).** Each page's FAQ check was kept for the whole day, so FAQs added after the morning check (a theme update, then Scout AEO answers) never counted: every page printed `FAQPage`, and Site status still said "0 of 11 pages, checked 5 minutes ago". Now a page's check stops counting as soon as the page is saved, its Scout AEO answers change, or the theme (or Scout AEO) is updated. The page leaves the count, the site loads it again in the background within a couple of minutes, and the next reload counts it. Pages that haven't changed are still checked at most once a day.
+- The background check loads only pages that changed or weren't checked today, with a throwaway query string so a page cache can't hand back the old page. Visitors' page views refresh changed pages the same way, for sites that can't load their own pages.
+- **The note says when the pages were checked,** not when the count was made: "pages checked 5 minutes to 9 hours ago", plus "2 pages changed and are being checked again." while they wait. When the site can't load its own pages (often a staging password), it says the changed pages are checked the next time someone opens them instead. Checks saved before this release are made again once. `tools/tests/answer-scan.php` checks it.
 
 ## 0.14.3 (2026-11-09)
 

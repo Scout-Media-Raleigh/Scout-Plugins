@@ -2,7 +2,7 @@
 // Scout Build: the Scout box on the WordPress Dashboard. Runs without WordPress:
 //   php tools/tests/dashboard-box.php
 // It loads the real box and the real WordPress checks row, with the Scout
-// classes the box reads stubbed out, and checks the calm layout (0.14.4).
+// classes the box reads stubbed out, and checks the calm layout (0.14.5).
 $fail = 0;
 function ok( $cond, $msg ) { global $fail; echo ( $cond ? 'PASS ' : 'FAIL ' ) . $msg . "\n"; if ( ! $cond ) { $fail++; } }
 define( 'ABSPATH', __DIR__ . '/' );
