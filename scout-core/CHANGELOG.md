@@ -1,5 +1,12 @@
 # Scout Core — Changelog
 
+## 1.12.1 (2026-11-11)
+
+- **The blog list uses the posts page's SEO title and description.** With a page set as the posts page (Settings, Reading), the blog list printed the site tagline as its description and WordPress's default title, even when that page had its own. It now reads that page's SEO title, description, excerpt or text, the same way a page does. Found on a client's staging, where /blog/ carried the tagline.
+- **Page 2 and on of a list point at themselves.** Blog and topic pages past the first printed page one's canonical, which tells Google to drop them and the older posts they list. Each now names its own address (`/page/2/`, or `?paged=2` without pretty links), and the posts page title adds ", page 2".
+- **Not-found and search pages print no canonical.** They pointed at the home page. They are already hidden from search; now they don't claim to be the home page either (og:url goes with it).
+- Tests: `tools/tests/core-seo-head.php` (in the Lint workflow).
+
 ## 1.12.0 (2026-11-10)
 
 Site Sync can carry a list in a page field, so a theme can give Scout AI Search its questions. Every text field syncs exactly as before.

@@ -103,6 +103,8 @@ jobs:
         run: php tools/tests/core-empty-search.php
       - name: Language versions (no WordPress needed)
         run: php tools/tests/core-hreflang.php
+      - name: Scout Core head on lists and error pages (no WordPress needed)
+        run: php tools/tests/core-seo-head.php
       - name: Scout Core select fields keep their value on every write path (no WordPress needed)
         run: php tools/tests/core-select-meta.php
       - name: Schema names are plain text, never HTML entities (no WordPress needed)
