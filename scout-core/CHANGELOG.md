@@ -1,5 +1,18 @@
 # Scout Core — Changelog
 
+## 1.11.0 (2026-11-10)
+
+Design tokens the Client Design Playbook settled, and Site Sync can hide a page from search. A site whose DESIGN.md uses none of the new keys looks exactly the same.
+
+- **Site Sync: `"noindex"` on a page entry.** `"noindex": true` ticks Hide from search in the Scout SEO box (a `/style-guide/` page, a thank-you page), `false` clears a tick the sync set, and leaving it out leaves the box alone. The `fields` form takes `{"seo": "noindex", "value": true}`. A tick someone set by hand is a conflict for review, never cleared on its own.
+- **Feature sections are usable.** New `scout_design_feature( 'call buttons' )` returns one `### Feature:` section, or `[]` when the theme has none, so a plugin keeps its own look until the theme asks. Values naming a color role (`accent_fill`, `line`) arrive as the color, and `*_font` lines naming a role or a family arrive as a font stack.
+- **Fix: a Feature line could overwrite a color with a word.** `scout_design( 'events' )` with `line: line` set the line color to the text "line", and `accent: accent_text` set the accent to "accent_text". Role names are now resolved before they override a token.
+- **Fix: serif headings fell back to sans-serif.** `--scout-font-*` stacks now end in the font's `generic` key (`serif`, `sans-serif`, `monospace`) from DESIGN.md, or a guess from the name ("Noto Serif" is serif). A serif whose name does not say so, such as Marcellus, needs `generic: serif`. `tools/design-build.php` uses the same rule for theme.json and `design-tokens.css`.
+- **Scales.** `type_scale`, `space` and `motion` in DESIGN.md become `--scout-type-*`, `--scout-space-*` and `--scout-motion-*`, in `scout_design_css()` and `design-tokens.css`. A `"38px 72px"` size becomes `clamp(38px, 5.6vw, 72px)`. Block themes also get them under `custom.scout` in theme.json.
+- **New color keys checked.** When DESIGN.md has them, `on_night` on `night` and `highlight_text` on `highlight` must reach 4.5:1 (the build fails otherwise); `on_night_2` on `night` and `good`, `warn`, `bad` on the page warn under 4.5:1. They join the theme.json palette for block themes.
+- **For theme repos:** a theme whose DESIGN.md uses `type_scale`, `space`, `motion`, a font named "... Serif", or the new colors gets a different `design-tokens.css` from this builder. Run `php tools/design-build.php <theme>` once and commit the result, or the Site Standard check reports the file as out of date.
+- Tests: `tools/tests/core-design-tokens.php` (no WordPress needed) and `tools/tests/sync-noindex.php` (fresh WordPress), both in the Lint workflow.
+
 ## 1.10.5 (2026-11-09)
 
 - **Fix: quotes in page titles showed as code in the schema.** Titles with an apostrophe or quote reached Google as HTML entities, so a page titled "New Year's Eve" was named `New Year&#8217;s Eve` in its JSON-LD. Every schema name now uses the title as typed, as plain text: the WebPage name, FAQ questions on the FAQ page, and the blog post headline. FAQ answers, descriptions and breadcrumb names are decoded the same way. Nothing visitors see changes.

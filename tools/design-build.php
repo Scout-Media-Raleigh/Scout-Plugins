@@ -91,6 +91,15 @@ if ( $is_block ) {
 		'accent'      => 'Accent',
 		'accent_fill' => 'Accent fill',
 		'on_accent'   => 'On accent',
+		// Added only when DESIGN.md has them.
+		'night'          => 'Night',
+		'on_night'       => 'On night',
+		'on_night_2'     => 'Muted on night',
+		'highlight'      => 'Highlight',
+		'highlight_text' => 'On highlight',
+		'good'           => 'Success',
+		'warn'           => 'Warning',
+		'bad'            => 'Error',
 	);
 	$palette = (array) ( $tj['settings']['color']['palette'] ?? array() );
 	$by_slug = array();
@@ -122,11 +131,10 @@ if ( $is_block ) {
 		if ( empty( $f['family'] ) ) {
 			continue;
 		}
-		$generic = ( false !== stripos( (string) $f['family'], 'mono' ) ) ? 'monospace' : ( preg_match( '/serif/i', (string) $f['family'] ) && ! preg_match( '/sans/i', (string) $f['family'] ) ? 'serif' : 'sans-serif' );
-		$entry   = array(
+		$entry = array(
 			'slug'       => $role,
 			'name'       => ucfirst( $role ) . ': ' . $f['family'],
-			'fontFamily' => '"' . $f['family'] . '", ' . $generic,
+			'fontFamily' => '"' . $f['family'] . '", ' . Scout_Core_Design::generic( $f ),
 		);
 		if ( ! empty( $f['file'] ) ) {
 			$entry['fontFace'] = array(
@@ -153,6 +161,11 @@ if ( $is_block ) {
 		'logo'   => (string) ( $tokens['logo'] ?? '' ),
 		'mark'   => (string) ( $tokens['mark'] ?? '' ),
 	);
+	foreach ( array( 'type_scale', 'space', 'motion' ) as $map ) {
+		if ( ! empty( $tokens[ $map ] ) && is_array( $tokens[ $map ] ) ) {
+			$tj['settings']['custom']['scout'][ $map ] = $tokens[ $map ];
+		}
+	}
 
 	$new_json = json_encode( $tj, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n";
 	$old      = file_exists( $tj_path ) ? json_decode( (string) file_get_contents( $tj_path ), true ) : null;
@@ -184,13 +197,13 @@ foreach ( (array) $tokens['radius'] as $k => $v ) {
 }
 foreach ( (array) $tokens['fonts'] as $role => $f ) {
 	if ( ! empty( $f['family'] ) ) {
-		$generic = ( false !== stripos( (string) $f['family'], 'mono' ) ) ? 'monospace' : 'sans-serif';
-		$vars[ '--scout-font-' . $role ] = '"' . str_replace( '"', '', (string) $f['family'] ) . '", ' . $generic;
+		$vars[ '--scout-font-' . $role ] = Scout_Core_Design::font_stack( (array) $f );
 	}
 	if ( ! empty( $f['weight'] ) ) {
 		$vars[ '--scout-weight-' . $role ] = (string) (int) $f['weight'];
 	}
 }
+$vars                 = array_merge( $vars, Scout_Core_Design::scale_vars( $tokens ) );
 $vars['--scout-mode'] = (string) $tokens['mode'];
 $css  = "/* Generated from DESIGN.md by Scout-Plugins/tools/design-build.php. Edit DESIGN.md, not this file. */\n:root {\n";
 foreach ( $vars as $name => $value ) {

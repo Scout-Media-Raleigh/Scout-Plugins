@@ -107,6 +107,8 @@ jobs:
         run: php tools/tests/core-select-meta.php
       - name: Schema names are plain text, never HTML entities (no WordPress needed)
         run: php tools/tests/core-schema-plain-text.php
+      - name: DESIGN.md Feature sections, font fallbacks, scales and new color pairs (no WordPress needed)
+        run: php tools/tests/core-design-tokens.php
       - name: Every plugin lists the visitor data it keeps (Site Standard rule 24)
         run: php tools/visitor-data.php --check
       - name: Every plugin README says what it needs from the theme (Site Standard rule 4)
@@ -207,3 +209,6 @@ jobs:
 
       - name: Select fields keep their value
         run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/select-meta.php"
+
+      - name: Site Sync can hide a page from search
+        run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/sync-noindex.php"

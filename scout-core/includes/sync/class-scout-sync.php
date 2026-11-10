@@ -151,6 +151,11 @@ final class Scout_Sync {
 			if ( isset( $page['description'] ) ) {
 				$items[] = array( 'kind' => 'post', 'post_type' => $type, 'slug' => $slug, 'field' => 'seo:desc', 'value' => (string) $page['description'], 'new' => $new );
 			}
+			// 1.11.0: "noindex": true ticks Hide from search in the Scout SEO box (a style guide,
+			// a thank-you page); false clears it. Left out, the box is not touched.
+			if ( isset( $page['noindex'] ) ) {
+				$items[] = array( 'kind' => 'post', 'post_type' => $type, 'slug' => $slug, 'field' => 'seo:noindex', 'value' => self::flag( $page['noindex'] ), 'new' => $new );
+			}
 		}
 		// Identity (1.6.5): the site title, tagline and Business info, written once from the repo.
 		$identity = (array) ( $manifest['identity'] ?? array() );
@@ -170,7 +175,10 @@ final class Scout_Sync {
 			if ( isset( $f['field'] ) ) {
 				$field = 'field:' . sanitize_key( $f['field'] );
 			} elseif ( isset( $f['seo'] ) ) {
-				$field = 'seo:' . ( 'title' === $f['seo'] ? 'title' : 'desc' );
+				$field = 'seo:' . ( in_array( $f['seo'], array( 'title', 'noindex' ), true ) ? $f['seo'] : 'desc' );
+				if ( 'seo:noindex' === $field && isset( $f['value'] ) ) {
+					$f['value'] = self::flag( $f['value'] );
+				}
 			} elseif ( isset( $f['meta'] ) ) {
 				// With "key", one key inside an array meta value, so the rest is left alone.
 				$field = 'meta:' . (string) $f['meta'] . ( isset( $f['key'] ) ? '.' . sanitize_key( $f['key'] ) : '' );
@@ -432,6 +440,12 @@ final class Scout_Sync {
 		return false === $dot ? '' : substr( $field, $dot + 1 );
 	}
 
+	/** A manifest yes/no as the SEO box stores it: '1' or ''. */
+	private static function flag( $value ): string {
+		$on = is_string( $value ) ? in_array( strtolower( trim( $value ) ), array( '1', 'true', 'yes', 'on' ), true ) : (bool) $value;
+		return $on ? '1' : '';
+	}
+
 	private static function meta_key( $field ) {
 		if ( 0 === strpos( $field, 'field:' ) ) {
 			return scout_core_meta_key( substr( $field, 6 ) );
@@ -441,6 +455,9 @@ final class Scout_Sync {
 		}
 		if ( 'seo:desc' === $field ) {
 			return SCOUT_SEO_META_DESC;
+		}
+		if ( 'seo:noindex' === $field ) {
+			return SCOUT_SEO_META_NOINDEX;
 		}
 		$key = substr( $field, 5 );
 		$dot = strpos( $key, '.' );
