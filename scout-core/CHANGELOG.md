@@ -1,5 +1,12 @@
 # Scout Core — Changelog
 
+## 1.10.5 (2026-11-10)
+
+- **The blog list uses the posts page's SEO title and description.** With a page set as the posts page (Settings, Reading), the blog list printed the site tagline as its description and WordPress's default title, even when that page had its own. It now reads that page's SEO title, description, excerpt or text, the same way a page does. Found on a client's staging, where /blog/ carried the tagline.
+- **Page 2 and on of a list point at themselves.** Blog and topic pages past the first printed page one's canonical, which tells Google to drop them and the older posts they list. Each now names its own address (`/page/2/`, or `?paged=2` without pretty links), and the posts page title adds ", page 2".
+- **Not-found and search pages print no canonical.** They pointed at the home page. They are already hidden from search; now they don't claim to be the home page either (og:url goes with it).
+- Tests: `tools/tests/core-seo-head.php` (in the Lint workflow).
+
 ## 1.10.4 (2026-11-09)
 
 - **Fields reach the block editor and REST.** WordPress only includes a post's `meta` in `/wp/v2/<type>`, and only saves `meta` sent to it, when the type supports custom fields. No Scout type did, so every field was missing over REST and REST writes were dropped without an error. Every Scout type with fields (testimonials, the RV park types, any companion type) now supports custom fields. Types with no fields (FAQ) are unchanged.
