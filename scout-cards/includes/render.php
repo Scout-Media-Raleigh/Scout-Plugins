@@ -14,6 +14,122 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Scout_Cards_Render {
 
+	/**
+	 * The card look: mode, page color and the inline <style> block. Without a
+	 * "### Feature: cards" section in the theme's DESIGN.md (or without Scout Core
+	 * 1.11.0), it is the saved mode, accent and font, printed exactly as before.
+	 * With one, the section's mode, accent and font win for the keys it has, and
+	 * the page takes the theme's colors, on-accent color, corners and fonts from
+	 * scout_design(). Every DESIGN.md value is stripped to CSS characters, so
+	 * nothing can close the style tag.
+	 *
+	 * @param array      $s      Scout_Cards_Settings::get().
+	 * @param array|null $f      The feature section (null reads it from Scout Core).
+	 * @param array|null $tokens scout_design() tokens (null reads them from Scout Core).
+	 * @return array{mode:string,bg:string,style:string}
+	 */
+	public static function look( array $s, ?array $f = null, ?array $tokens = null ): array {
+		if ( null === $f ) {
+			$f      = function_exists( 'scout_design_feature' ) ? (array) scout_design_feature( 'cards' ) : array();
+			$tokens = $f && function_exists( 'scout_design' ) ? (array) scout_design( 'cards' ) : array();
+		}
+		$mode   = 'light' === $s['mode'] ? 'light' : 'dark';
+		$accent = sanitize_hex_color( $s['accent'] ) ? sanitize_hex_color( $s['accent'] ) : '#0E8FE6';
+		if ( ! $f ) {
+			$font = $s['font'] ? $s['font'] : 'inherit';
+			return array(
+				'mode'  => $mode,
+				'bg'    => 'light' === $mode ? '#F5F5F7' : '#0B0B0B',
+				'style' => '<style>.scc{--scc-accent:' . esc_html( $accent ) . ';--scc-font:' . esc_html( $font ) . '}</style>',
+			);
+		}
+
+		$css = static function ( $value ): string {
+			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+			return trim( (string) preg_replace( '/[^\w\s#,.()%"\'-]/', '', $value ) ); // Nothing that could close the style tag.
+		};
+		$tokens = (array) $tokens;
+		$colors = (array) ( $tokens['colors'] ?? array() );
+		$c      = static function ( string $key ) use ( $colors, $css ): string {
+			return $css( $colors[ $key ] ?? '' );
+		};
+		$stack  = static function ( $font ) use ( $css ): string {
+			if ( ! is_array( $font ) || '' === trim( (string) ( $font['family'] ?? '' ) ) ) {
+				return '';
+			}
+			$stack = class_exists( 'Scout_Core_Design' ) ? Scout_Core_Design::font_stack( $font ) : '"' . str_replace( '"', '', (string) $font['family'] ) . '", sans-serif';
+			return $css( $stack );
+		};
+
+		if ( in_array( $css( $f['mode'] ?? '' ), array( 'light', 'dark' ), true ) ) {
+			$mode = $css( $f['mode'] );
+		}
+		$accent = '' !== $css( $f['accent'] ?? '' ) ? $css( $f['accent'] ) : $accent;
+		$font   = $css( $f['font'] ?? '' );
+		$fonts  = (array) ( $tokens['fonts'] ?? array() );
+		$head   = '';
+		if ( '' === $font && '' !== $css( $s['font'] ) ) {
+			$font = $css( $s['font'] );
+		} elseif ( '' === $font ) {
+			$font = $stack( $fonts['body'] ?? null );
+			$head = $stack( $fonts['heading'] ?? null );
+			$head = $head === $font ? '' : $head;
+		}
+		$font = '' !== $font ? $font : 'inherit';
+
+		$vars = array();
+		if ( 'light' === $mode ) {
+			foreach ( array( 'bg' => 'bg', 'surface' => 'surface', 'surface-2' => 'surface_2', 'text' => 'text', 'text-2' => 'text_2', 'line' => 'line' ) as $var => $key ) {
+				$vars[ $var ] = $c( $key );
+			}
+			$vars['text-3'] = '' !== $c( 'text_3' ) ? $c( 'text_3' ) : $c( 'text_2' );
+		} elseif ( '' !== $c( 'night' ) ) {
+			$night = $c( 'night' );
+			$ink   = '' !== $c( 'on_night' ) ? $c( 'on_night' ) : '#F5F5F7';
+			$vars  = array(
+				'bg'        => $night,
+				'surface'   => 'color-mix(in srgb, ' . $ink . ' 6%, ' . $night . ')',
+				'surface-2' => 'color-mix(in srgb, ' . $ink . ' 10%, ' . $night . ')',
+				'text'      => $c( 'on_night' ),
+				'text-2'    => $c( 'on_night_2' ),
+				'text-3'    => $c( 'on_night_2' ),
+				'line'      => 'color-mix(in srgb, ' . $ink . ' 12%, transparent)',
+			);
+		}
+		$vars['on-accent'] = $c( 'on_accent' );
+		// Corners: only what the theme changed from the Scout defaults, so a theme without a radius map keeps today's.
+		$base = class_exists( 'Scout_Core_Design' ) ? (array) ( Scout_Core_Design::defaults()['radius'] ?? array() ) : array();
+		foreach ( array( 'card', 'control', 'pill', 'chip' ) as $r ) {
+			$value = $css( $tokens['radius'][ $r ] ?? '' );
+			if ( '' !== $value && $value !== (string) ( $base[ $r ] ?? '' ) ) {
+				$vars[ 'radius-' . $r ] = $value;
+			}
+		}
+		if ( '' !== $head ) {
+			$vars['font-heading'] = $head;
+		}
+		$decl = array();
+		foreach ( $vars as $var => $value ) {
+			if ( '' !== $value ) {
+				$decl[] = '--scc-' . $var . ':' . $value;
+			}
+		}
+		$bg    = '' !== ( $vars['bg'] ?? '' ) ? $vars['bg'] : ( 'light' === $mode ? '#F5F5F7' : '#0B0B0B' );
+		$style = '<style>.scc{--scc-accent:' . $accent . ';--scc-font:' . $font . '}';
+		// cards.css loads after this block, so these rules outrank its .scc and .scc[data-mode="light"] ones.
+		if ( $decl ) {
+			$style .= 'html .scc[data-mode]{' . implode( ';', $decl ) . '}';
+		}
+		if ( '' !== ( $vars['bg'] ?? '' ) ) {
+			$style .= 'html body.scc-page{background:' . $bg . '}html body.scc-page:has(.scc[data-mode]){background:' . $bg . '}';
+		}
+		return array(
+			'mode'  => $mode,
+			'bg'    => $bg,
+			'style' => $style . '</style>',
+		);
+	}
+
 	/** Open the document. $meta: title, desc, canonical, app (manifest URL for share mode). */
 	private static function open( array $meta, $body_class ) {
 		$s = Scout_Cards_Settings::get();
@@ -36,9 +152,8 @@ final class Scout_Cards_Render {
 		);
 		wp_enqueue_style( 'scout-cards', SCOUT_CARDS_URL . 'assets/cards.css', array(), SCOUT_CARDS_VERSION );
 
-		$bg     = 'light' === $s['mode'] ? '#F5F5F7' : '#0B0B0B';
-		$accent = sanitize_hex_color( $s['accent'] ) ? sanitize_hex_color( $s['accent'] ) : '#0E8FE6';
-		$font   = $s['font'] ? $s['font'] : 'inherit';
+		$look = self::look( $s );
+		$bg   = $look['bg'];
 		?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -69,11 +184,11 @@ final class Scout_Cards_Render {
 <link rel="apple-touch-icon" href="<?php echo esc_url( get_site_icon_url( 180 ) ); ?>">
 <?php endif; ?>
 <?php endif; ?>
-<style>.scc{--scc-accent:<?php echo esc_html( $accent ); ?>;--scc-font:<?php echo esc_html( $font ); ?>}</style>
+<?php echo $look['style']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped or stripped to CSS characters in look(). ?>
 <?php wp_head(); ?>
 </head>
 <body <?php body_class( 'scc-page ' . $body_class ); ?>>
-<main class="scc" data-mode="<?php echo esc_attr( 'light' === $s['mode'] ? 'light' : 'dark' ); ?>">
+<main class="scc" data-mode="<?php echo esc_attr( $look['mode'] ); ?>">
   <div class="scc-wrap">
   <a class="scc-brand" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( $s['name'] ); ?></a>
 		<?php
@@ -443,7 +558,7 @@ final class Scout_Cards_Render {
 
 	public static function manifest( array $p ) {
 		$s     = Scout_Cards_Settings::get();
-		$bg    = 'light' === $s['mode'] ? '#F5F5F7' : '#0B0B0B';
+		$bg    = self::look( $s )['bg'];
 		$icons = array();
 		foreach ( array( 192, 512 ) as $size ) {
 			$u = get_site_icon_url( $size );

@@ -333,6 +333,30 @@ final class Scout_Cards_Admin {
 		}
 	}
 
+	/**
+	 * A short line under Look when the theme's DESIGN.md has "### Feature: cards"
+	 * (Scout Core 1.11.0 and later): which of mode, accent color and font it sets,
+	 * since those win over the fields below. '' without the section.
+	 */
+	private static function design_note() {
+		$f = function_exists( 'scout_design_feature' ) ? (array) scout_design_feature( 'cards' ) : array();
+		if ( ! $f ) {
+			return '';
+		}
+		$set = array();
+		foreach ( array( 'mode' => 'the mode', 'accent' => 'the accent color', 'font' => 'the font' ) as $k => $label ) {
+			if ( isset( $f[ $k ] ) && '' !== trim( (string) $f[ $k ] ) ) {
+				$set[] = $label;
+			}
+		}
+		$last = array_pop( $set );
+		$what = $set ? implode( ', ', $set ) . ' and ' . $last : (string) $last;
+		$text = '' !== $what
+			? sprintf( 'Your theme\'s DESIGN.md sets %1$s for the cards, so it wins over %2$s below. The rest of the card look follows the theme\'s design too.', $what, $set ? 'the fields' : 'the field' )
+			: 'Your theme\'s DESIGN.md styles the cards, so the card look follows the theme\'s design.';
+		return '<p class="description">' . esc_html( $text ) . '</p>';
+	}
+
 	/** The main card's extras: the heading above the people and the Spotlight. */
 	private static function team_extras( $n, array $s ) {
 		self::field( "{$n}[pick_heading]", $s['pick_heading'], 'Heading above the people' );
@@ -606,7 +630,9 @@ final class Scout_Cards_Admin {
 
 		// Rarely changed: look, main card words, business detail overrides, addresses.
 		self::fold_open( 'More options' );
-		echo '<h3 class="scc-sub">Look</h3><table class="form-table" role="presentation">';
+		echo '<h3 class="scc-sub">Look</h3>';
+		echo self::design_note(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts.
+		echo '<table class="form-table" role="presentation">';
 		echo '<tr><th scope="row">Mode</th><td><label><input type="radio" name="' . esc_attr( $n ) . '[mode]" value="dark"' . checked( $s['mode'], 'dark', false ) . '> Dark</label> &nbsp; <label><input type="radio" name="' . esc_attr( $n ) . '[mode]" value="light"' . checked( $s['mode'], 'light', false ) . '> Light</label></td></tr>';
 		echo '<tr><th scope="row"><label for="scc-accent">Accent color</label></th><td><input type="color" id="scc-accent" name="' . esc_attr( $n ) . '[accent]" value="' . esc_attr( $s['accent'] ) . '"><p class="description">The brand color for buttons, links, and tags on the card.</p></td></tr>';
 		self::field( "{$n}[font]", $s['font'], 'Font (optional)', 'text', 'Leave blank to use the site\'s own font. Or a CSS font list, e.g. "Hanken Grotesk", sans-serif.' );

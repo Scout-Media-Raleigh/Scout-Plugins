@@ -19,6 +19,7 @@ $tokens = Scout_Core_Design::merge(
 );
 
 ok( '' === $C::design_css( array(), $tokens ), 'no Feature section: nothing is added, the bar stays dark glass' );
+ok( 0 === preg_match( '/(^|})\.scc-(btn|main)/', $C::design_css( array( 'bar' => '#FFFFFF', 'primary_fill' => '#000000', 'secondary_border' => '#111111', 'label_size' => '11px' ), $tokens ) ), 'every rule sits under .scc-bar, so it never reaches Scout Cards, which also uses .scc-btn' );
 
 // A porcelain bar, values as scout_design_feature() hands them over (roles resolved).
 $css = $C::design_css(
@@ -37,12 +38,12 @@ $css = $C::design_css(
 	$tokens
 );
 ok( false !== strpos( $css, '.scc-bar{background:rgba(251,249,246,.97);box-shadow:0 8px 24px rgba(0,0,0,.12)}' ), 'a light bar, with a softer shadow' );
-ok( false !== strpos( $css, '.scc-btn,.scc-btn:hover,.scc-btn:focus-visible{color:#23212A}' ), 'a light bar gets the ink text color, not light text' );
+ok( false !== strpos( $css, '.scc-bar .scc-btn,.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{color:#23212A}' ), 'a light bar gets the ink text color, not light text' );
 ok( false !== strpos( $css, 'background:rgba(0,0,0,.05)' ), 'hover darkens on a light bar' );
 ok( false !== strpos( $css, 'backdrop-filter:blur(10px)' ) && false !== strpos( $css, '.scc-bar{border-color:rgba(35,33,42,.12)}' ), 'blur and hairline' );
-ok( false !== strpos( $css, '.scc-main{background:#23212A;color:#FBF9F6}' ), 'the primary button fill and text' );
+ok( false !== strpos( $css, '.scc-bar .scc-main{background:#23212A;color:#FBF9F6}' ), 'the primary button fill and text' );
 ok( false !== strpos( $css, 'box-shadow:inset 0 0 0 1px rgba(184,149,90,.55)' ), 'the secondary border without changing the button size' );
-ok( false !== strpos( $css, '.scc-btn span,.scc-main{font-family:"Mulish", sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase}' ), 'label font from the label role, with its case and the section\'s tracking' );
+ok( false !== strpos( $css, '.scc-bar .scc-btn span,.scc-bar .scc-main{font-family:"Mulish", sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase}' ), 'label font from the label role, with its case and the section\'s tracking' );
 ok( false === strpos( $css, 'Check your date' ), 'copy (primary_label) is not design: the button label stays in Call buttons settings' );
 
 // A dark bar keeps light text.

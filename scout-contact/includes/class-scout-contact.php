@@ -179,10 +179,10 @@ final class Scout_Contact {
 			$hover  = $light ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.08)';
 			$shadow = '' !== $v( 'bar_shadow' ) ? $v( 'bar_shadow' ) : ( $light ? '0 8px 24px rgba(0,0,0,.12)' : '' );
 			$rules[] = '.scc-bar{background:' . $bar . ( '' !== $shadow ? ';box-shadow:' . $shadow : '' ) . '}';
-			$rules[] = '.scc-btn,.scc-btn:hover,.scc-btn:focus-visible{color:' . $text . '}';
-			$rules[] = '.scc-btn:hover,.scc-btn:focus-visible{background:' . $hover . '}';
+			$rules[] = '.scc-bar .scc-btn,.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{color:' . $text . '}';
+			$rules[] = '.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{background:' . $hover . '}';
 		} elseif ( '' !== $v( 'bar_text' ) ) {
-			$rules[] = '.scc-btn,.scc-btn:hover,.scc-btn:focus-visible{color:' . $v( 'bar_text' ) . '}';
+			$rules[] = '.scc-bar .scc-btn,.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{color:' . $v( 'bar_text' ) . '}';
 		}
 		if ( '' !== $v( 'bar_blur' ) ) {
 			$rules[] = '.scc-bar{-webkit-backdrop-filter:blur(' . $v( 'bar_blur' ) . ');backdrop-filter:blur(' . $v( 'bar_blur' ) . ')}';
@@ -198,10 +198,10 @@ final class Scout_Contact {
 			$main[] = 'color:' . $v( 'primary_text' );
 		}
 		if ( $main ) {
-			$rules[] = '.scc-main{' . implode( ';', $main ) . '}';
+			$rules[] = '.scc-bar .scc-main{' . implode( ';', $main ) . '}';
 		}
 		if ( '' !== $v( 'secondary_border' ) ) {
-			$rules[] = '.scc-btn{box-shadow:inset 0 0 0 1px ' . $v( 'secondary_border' ) . '}'; // A border would change the button size.
+			$rules[] = '.scc-bar .scc-btn{box-shadow:inset 0 0 0 1px ' . $v( 'secondary_border' ) . '}'; // A border would change the button size.
 		}
 		$label = array();
 		$font  = $v( 'label_font' );
@@ -225,7 +225,7 @@ final class Scout_Contact {
 			$label[] = 'text-transform:' . ( 'lower' === strtolower( $case ) ? 'lowercase' : strtolower( $case ) );
 		}
 		if ( $label ) {
-			$rules[] = '.scc-btn span,.scc-main{' . implode( ';', $label ) . '}';
+			$rules[] = '.scc-bar .scc-btn span,.scc-bar .scc-main{' . implode( ';', $label ) . '}';
 		}
 		return implode( '', $rules );
 	}
