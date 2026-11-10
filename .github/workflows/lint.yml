@@ -129,6 +129,8 @@ jobs:
         run: php tools/tests/site-report.php
       - name: Today list on Home (no WordPress needed)
         run: php tools/tests/today.php
+      - name: Scout box on the WordPress Dashboard (no WordPress needed)
+        run: php tools/tests/dashboard-box.php
       - name: Inbox list (no WordPress needed)
         run: php tools/tests/inbox.php
       - name: Plans, picks and recommendations (no WordPress needed)

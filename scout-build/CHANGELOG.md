@@ -1,5 +1,17 @@
 # Scout Build changelog
 
+## 0.14.4 (2026-11-10)
+
+- **A calmer Scout box on the WordPress Dashboard (Joy, Nov 10: "a bit crowded").** A business owner should read it in five seconds. Top to bottom it is now:
+  - The status line, as before ("The site is fine. 4 things want a look.").
+  - The top two checks, one short line each ("Two-step login: Off for 2 admins"), then "And 2 more in Site status". The full notes stay in Site status. Fixes come first, then looks.
+  - The review chip, as before.
+  - One row of chips: updates this month, features on, and open requests when there are any. "Ready for AI search" and "Google email is on" left the box, since Site status lists both.
+  - "Need something changed?" with one primary button, Send request, and a quiet Open Scout link beside it. The Open Scout, Site status and Request a change buttons under it are gone: the box itself is the way to ask for a change, and Site status is one link above.
+- **One row for one setting on staging copies.** WordPress's own "discourage search engines" check is no longer listed under WordPress checks, because Scout's Search engines row already shows the same setting. Site status, the update report and the Dashboard box each show it once, so a staging copy with search engines hidden counts one look, not two.
+- **Staging-only rows go last.** Search engines: Hidden on a staging copy is right, so the box lists it after every real look and never names it over one. On a live site it stays a normal look.
+- `tools/tests/dashboard-box.php` checks the box (Lint workflow). Visitors notice nothing.
+
 ## 0.14.3 (2026-11-09)
 
 - **Site status knows about the daily Google check** (Scout Reviews 0.7.0). When it is on and working, the Review totals row says "Google is checked every day." When it has failed for three days, the row is a look ("Google check failing") with the reason and a link to Review settings. Sites without it look the same as before.
