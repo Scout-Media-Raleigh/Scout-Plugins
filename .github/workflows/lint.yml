@@ -165,6 +165,8 @@ jobs:
         run: php tools/tests/reviews-design.php
       - name: Direct answers recount pages that changed since their check (no WordPress needed)
         run: php tools/tests/answer-scan.php
+      - name: Site Sync carries lists in post meta, such as FAQ rows (no WordPress needed)
+        run: php tools/tests/sync-array-meta-unit.php
 
   slop-check:
     name: Code slop check
@@ -208,13 +210,16 @@ jobs:
           wp core download --quiet
           wp config create --dbname=wp --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check
           wp core install --url=http://localhost --title=Scout --admin_user=admin --admin_password=admin --admin_email=ci@example.com --skip-email
-          cp -r "$GITHUB_WORKSPACE/scout-core" wp-content/plugins/
+          cp -r "$GITHUB_WORKSPACE/scout-core" "$GITHUB_WORKSPACE/scout-aeo" wp-content/plugins/
           mkdir -p wp-content/mu-plugins
           cp "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset.php" "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset-register.php" wp-content/mu-plugins/
-          wp plugin activate scout-core
+          wp plugin activate scout-core scout-aeo
 
       - name: Select fields keep their value
         run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/select-meta.php"
 
       - name: Site Sync can hide a page from search
         run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/sync-noindex.php"
+
+      - name: Site Sync writes FAQ rows as an array, and Scout AI Search prints FAQPage from them
+        run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/sync-array-meta.php"

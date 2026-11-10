@@ -39,6 +39,14 @@ business. Copy follows each client's claims rules (bar rules for law firms).
   an H2 ("Common questions" unless the page names its own) and one
   `<details>` per question, the question as an H3. The theme prints the title
   as the H1 and calls `the_content()`, `wp_head()` and `wp_footer()`.
+- **Questions from the theme:** a theme that shows FAQs on its pages carries
+  no schema (Site Standard rule 7), so it hands the questions to this plugin
+  through Site Sync (Scout Core 1.12.0 or later). In `scout-sync.json`, one
+  `fields` entry per page: `{"post_type": "page", "slug": "menu", "meta":
+  "_scout_aeo_faqs", "value": [{"q": "...", "a": "..."}]}`. At most 8 per
+  page; the rest are not printed. Edits made in WordPress are kept and wait on
+  Page copy, as for any synced field. On an older Scout Core the list arrives
+  as the word "Array", so release Core first.
 - `/llms.txt`, `robots.txt` and IndexNow need nothing from the theme.
 - **scout-setup.json:** nothing.
 

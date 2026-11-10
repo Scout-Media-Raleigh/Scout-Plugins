@@ -139,6 +139,20 @@ and the site lacks is created when its entry says `"create": true` (pages
 publish, `posts` arrive as drafts, 1.6.5). Every sync can be undone. A
 theme without the file gets the screen in status-only mode.
 
+A `meta` or `field` entry may carry a list (1.12.0). That is how a theme seeds
+Scout AI Search's questions, which it prints as FAQPage in the schema graph:
+
+```json
+"fields": [
+  { "post_type": "page", "slug": "menu", "meta": "_scout_aeo_faqs",
+    "value": [ { "q": "Do you take reservations?", "a": "Yes, by phone or online." } ] }
+]
+```
+
+The list is compared as canonical JSON (key order inside a row never counts
+as an edit) and written as a real array; keep, take and undo work as for text.
+Scout AI Search prints at most 8 questions per page.
+
 Manifest format, states and write safety: `docs/site-sync-spec.md`
 ("As built"). Command line: `wp scout sync status`, `wp scout sync run
 --dry-run`. Test: `tools/tests/site-sync.php` against a disposable WordPress.

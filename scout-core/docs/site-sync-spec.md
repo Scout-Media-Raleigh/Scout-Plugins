@@ -263,3 +263,23 @@ Site Sync makes the pages and posts the bundle names (Site Standard §6: the rep
 - **State `create`** ("Will be created"). A safe write: the automatic run and "Sync these now" make the page; it never waits for review. After the run its rows read `current`. Undo trashes the pages the run created and puts the front-page settings back.
 - **`posts`.** The same entries as `pages`, with `post_type` `post` and `create` defaulting to a draft, so a new post from the repo waits to be published.
 - **Aliases, so every theme's manifest reads the same way:** `file` is `source`; `seo_title` and `description` on a page entry are its `seo` fields, and `noindex` (1.11.0) is its Hide from search box: `"noindex": true` keeps a page such as `/style-guide/` out of search and the sitemap, `false` clears a hand tick, and leaving it out leaves the box alone; `identity.title` and `identity.tagline` are the `blogname` and `blogdescription` options; `identity.business.<key>` is `scout_business` key by key (empty values are skipped). A companion importer is still needed only for a client's own post types.
+
+## Added in Scout Core 1.12.0: list and object values
+
+A `fields` entry with `meta` or `field` may carry a list or an object as its `value`. Before 1.12.0 the value was cast to text, so the list was stored and compared as the word "Array".
+
+```json
+"fields": [
+  { "post_type": "page", "slug": "menu", "meta": "_scout_aeo_faqs", "value": [
+    { "q": "Do you take reservations?", "a": "Yes, by phone or online." }
+  ] }
+]
+```
+
+- **Compared as canonical JSON.** Object keys are sorted at every level and list order is kept, so rows saved with their keys in another order still read `current`, and moving a question is an edit. An empty list counts the same as no field.
+- **Written as a real array** with `update_post_meta`, in the order the theme gives it. With `"key"`, the list goes under that one key and the rest of the array is left alone.
+- **Shown readably.** The Page copy screen lists one line per entry instead of raw JSON.
+- **Keep, take and undo** work as for text. Undo puts back the rows that were there, removes a field the sync added, and puts back plain text if that is what was saved.
+- `seo`, `post_field`, `settings`, `options` and `users` take text only. A list there is reported and left out.
+- `previous` on an array entry is a list of earlier values, each compared as canonical JSON.
+- Tests: `tools/tests/sync-array-meta-unit.php` (no WordPress needed) and `tools/tests/sync-array-meta.php` (fresh WordPress, with the FAQPage check when Scout AI Search is active).

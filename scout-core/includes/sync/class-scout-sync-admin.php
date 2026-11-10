@@ -197,12 +197,35 @@ final class Scout_Sync_Admin {
 				'<td><strong>%s</strong>%s</td><td>%s</td><td>%s</td>',
 				esc_html( Scout_Sync::label( $row ) ),
 				Scout_Sync::CONFLICT === $row['state'] ? '<br><span class="sh-tag">' . esc_html( empty( $row['synced'] ) ? 'Never synced, and different' : 'Changed in both' ) . '</span>' : ( Scout_Sync::CREATE === $row['state'] ? '<br><span class="sh-tag is-update">' . esc_html( 'New: ' . ( 'draft' === ( $row['new']['status'] ?? '' ) ? 'arrives as a draft' : 'will be published' ) ) . '</span>' : '' ),
-				esc_html( self::preview( $row, $row['raw'] ?? '' ) ),
-				esc_html( self::preview( $row, $row['theme'] ) )
+				self::cell( $row, $row['raw'] ?? '' ),
+				self::cell( $row, $row['theme'] )
 			);
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
+	}
+
+	/** One table cell, escaped. A list (FAQ rows) shows one line per entry instead of raw JSON. */
+	private static function cell( array $row, $text ) {
+		if ( empty( $row['array'] ) ) {
+			return esc_html( self::preview( $row, $text ) );
+		}
+		$data = json_decode( (string) $text, true );
+		if ( ! is_array( $data ) ) {
+			return esc_html( self::preview( $row, $text ) );
+		}
+		$lines = array();
+		foreach ( array_is_list( $data ) ? $data : array( $data ) as $entry ) {
+			$parts = array();
+			foreach ( is_array( $entry ) ? $entry : array( $entry ) as $key => $value ) {
+				$value = is_array( $value ) ? Scout_Sync::json( $value ) : (string) $value;
+				$parts[] = is_string( $key ) && ! in_array( $key, array( 'q', 'a' ), true ) ? $key . ': ' . $value : $value;
+			}
+			$line    = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( implode( ' / ', $parts ) ) ) );
+			$lines[] = '<li>' . esc_html( mb_strlen( $line ) > 160 ? mb_substr( $line, 0, 160 ) . '...' : $line ) . '</li>';
+		}
+		/* translators: %d: entries in a list field */
+		return '<p>' . esc_html( sprintf( _n( '%d entry', '%d entries', count( $lines ), 'scout-core' ), count( $lines ) ) ) . '</p><ol class="sh-list">' . implode( '', $lines ) . '</ol>';
 	}
 
 	private static function preview( array $row, $text ) {
