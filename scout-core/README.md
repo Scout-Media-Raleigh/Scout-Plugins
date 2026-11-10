@@ -26,8 +26,9 @@ instead of a data-loss event.
 
 1. Copy `scout-core/` into `wp-content/plugins/`.
 2. Activate it. On activation it registers the types and flushes rewrite rules.
-3. Fill in the business identity from the Scout admin screen: name, address,
-   phone, email, hours, profiles.
+3. Fill in the business identity from the Scout admin screen (Business info):
+   name, address, phone, email, the address that gets notices, profiles.
+   Weekly hours live in Scout Hours.
 4. (Per client) add a companion plugin for that client's own types. See
    [`../scout-rvpark`](../scout-rvpark) for the worked example.
 
@@ -44,17 +45,39 @@ Requires WordPress 6.5+ (for Block Bindings) and PHP 8.0+.
 | `testimonial` | Author name | The quote | location, rating, source, source URL, date, plus a featured image for handwritten scans |
 | `faq` | The question | The answer | none (title + content is all FAQPage needs) |
 
-**Business identity.** Name, legal name, schema type, phone, email, full
-address, price range, geo, hours, and profile URLs. One option, read everywhere,
-typed in once.
+**Business identity.** Name, legal name, type of business (the schema type),
+phone, email, "Send notices to", full address, price range, geo, and profile
+URLs. One option, read everywhere, typed in once. The old "Hours (one line per
+day)" box is no longer shown (2026-11-05); a site's saved text under the
+`hours` key is kept and still readable through the `scout/business` binding.
+
+**One notice address.** `scout_core_notice_email(): string` returns Business
+info's "Send notices to" when set, else Business info's email, else the
+WordPress admin email. Form, booking and chat plugins call it guarded,
+`function_exists( 'scout_core_notice_email' ) ? scout_core_notice_email() : <their old default>`,
+and keep their own "send notices to" field as an optional override.
 
 **Schema.** One JSON-LD `@graph` in `wp_head`: LocalBusiness (or the configured
-subtype), WebSite, FAQPage, Review and AggregateRating from testimonials, and
-BlogPosting on posts. Stable `@id`s throughout.
+subtype), WebSite, FAQPage and BlogPosting on posts. Stable `@id`s throughout.
+No star rating or Review entries are built from testimonials (removed
+2026-11-05: hand-picked quotes are not a platform's full count). A plugin with
+real platform totals adds an AggregateRating through the
+`scout_schema_aggregate_rating` filter (default empty). Scout AI Search adds a
+page's questions and answers to this graph through `scout_schema_graph`.
 
 **SEO.** Titles, meta descriptions, canonicals, Open Graph and Twitter tags,
 robots control, an editor snippet preview with live character counts, global
 defaults, and tuning of WordPress core's own XML sitemap. The Yoast replacement.
+
+**Spam protection (1.6.0+).** Both on by default, switched under **Scout →
+Spam protection**. The email guard codes every email address on the finished
+page (one output buffer, so theme, bindings, plugins and schema are all
+covered); visitors see and click it as usual, and the JSON-LD keeps the same
+value with `@` written as `\u0040`. Closing comments makes `comments_open` and
+`pings_open` false outside wp-admin, drops the `X-Pingback` header and the
+pingback XML-RPC methods, and deletes nothing. Filters:
+`scout_core_email_guard`, `scout_core_close_comments`. Test:
+`php tools/tests/email-guard.php`.
 
 ---
 
@@ -103,6 +126,22 @@ scout_core_register_settings_group( 'site', array(
 Keep fieldsets to what actually changes. A page of forty fields is still
 better than a page builder, but a paragraph nobody will ever edit can stay in
 the template.
+
+## Site Sync: theme copy in, hand edits kept (1.4.0+)
+
+A theme lists the copy it bundles in `scout-sync.json` at its root: page
+content, page fields, SEO, shared settings, site title and tagline. Scout
+compares each item with what WordPress holds and with what was there at the
+last sync. Pages nobody edited update on their own after a theme update;
+anything changed in WordPress waits on **Scout → Scout tools → Page copy** for
+"Keep the WordPress copy" or "Use the theme copy". A page the bundle names
+and the site lacks is created when its entry says `"create": true` (pages
+publish, `posts` arrive as drafts, 1.6.5). Every sync can be undone. A
+theme without the file gets the screen in status-only mode.
+
+Manifest format, states and write safety: `docs/site-sync-spec.md`
+("As built"). Command line: `wp scout sync status`, `wp scout sync run
+--dry-run`. Test: `tools/tests/site-sync.php` against a disposable WordPress.
 
 ## Adding a client's own types (the companion pattern)
 
@@ -161,6 +200,110 @@ Plugins screen. See [`../RELEASING.md`](../RELEASING.md).
 
 ---
 
+## The site's design: `scout_design()` (1.6.3+)
+
+The theme's `DESIGN.md` is the one design source for the site, plugins
+included (Scout Site Standard §4). Scout Core reads its front matter and hands
+every plugin the same tokens, so no plugin carries a color picker for what the
+theme already says:
+
+```php
+$d = scout_design();                       // mode, colors, fonts, radius, logo, mark (+ logo_url, mark_url)
+$d = scout_design( 'call buttons' );       // the "## Feature: call buttons" section laid over the tokens
+echo '<style>' . scout_design_css() . '</style>';   // :root{--scout-bg:...;--scout-accent-fill:...;--scout-radius-card:...}
+scout_design_issues();                     // contrast pairs that fail 4.5:1 (Scout Build shows them in Site status)
+```
+
+Order of truth: Scout's defaults, then the active theme's `theme.json`
+palette and fonts, then the parent theme's `DESIGN.md`, then the child's. A
+theme without DESIGN.md still gets sensible tokens.
+
+`scout_core_owns( 'hours' )` tells a theme whether a plugin does a job on this
+site, for the few fallbacks the standard allows (rule 6): the theme's own hours
+line runs only while `! scout_core_owns( 'hours' )`.
+
+## What this feature needs from the theme
+
+- **DESIGN.md:** Scout Core is the reader for every plugin. From the front
+  matter it takes `design`, `name`, `mode`, `colors` (`bg`, `surface`,
+  `surface_2`, `text`, `text_2`, `line`, `accent`, `accent_fill`,
+  `on_accent`), `fonts` (`heading`, `body`, `label`, each with `family`,
+  `weight` and `file`, and `case` and `tracking` on `label`), `radius`
+  (`pill`, `card`, `control`, `chip`), `logo` and `mark`, plus every
+  `## Feature: <name>` section. Core's own output on the site uses none of it.
+- **Head and schema:** printed through `wp_head()`. The theme prints no title,
+  description, canonical, Open Graph or JSON-LD of its own, breadcrumbs
+  excepted (rule 7).
+- **Business facts:** the theme shows them through `scout_core_business()` or
+  the `scout/business` binding, never typed.
+- **Page fields:** the theme's templates place them with `scout_core_field()`,
+  `scout_core_image()`, `scout_core_setting()` or the `scout/field` binding.
+- **Breadcrumbs:** a theme with `add_theme_support( 'scout-breadcrumbs' )`
+  calls `scout_core_breadcrumbs()` where the links go. It prints
+  `<nav class="scout-breadcrumbs" aria-label="Breadcrumb"><ol>` with no styles
+  of its own; the trail's look is the theme's.
+- **Site Sync:** `scout-sync.json` and the `sync/` folder at the root of the
+  active theme (the child theme on a child theme).
+- **Images:** the share image is the page's featured image, else the Default
+  share image URL in Search settings, else the site icon. The schema logo is
+  the site icon. Neither reads DESIGN.md's `logo` or `mark`, or
+  `scout-setup.json`, yet.
+- **The email guard** rewrites addresses on the finished page. The theme does
+  nothing for it.
+
+## Breadcrumbs, verification, thank-you pages, hardening and cache purge (1.8.0+)
+
+- **Breadcrumbs:** a theme declares `add_theme_support( 'scout-breadcrumbs' )` and calls
+  `scout_core_breadcrumbs()` where the links go. Core then adds the matching
+  `BreadcrumbList` schema. Remove the theme's own breadcrumb schema in the same release.
+  Adjust the trail with `scout_core_breadcrumb_trail`, for example to put a page that acts
+  as an archive (Work, Services) before its items.
+- **Verification:** Search & analytics → Search settings, "Google Search Console verification code" and
+  "Bing Webmaster Tools verification code". The tags print on the front page only.
+- **Thank-you pages:** `noindex` and out of the sitemap. These are Gravity Forms
+  confirmation pages, plus the addresses thank-you and thanks. Add more with
+  `scout_core_thanks_pages`.
+- **Hardening:** switches under spam protection (`hide_users`, `xmlrpc_off`,
+  `browser_headers`). Filters: `scout_core_hide_users`, `scout_core_xmlrpc_needed`,
+  `scout_core_browser_headers`. Themes and companions stop doing this themselves.
+- **Staging guard:** on a staging copy, email goes only to Scout and calls to newsletter,
+  texting and payment services are refused (`scout_core_staging_mail_to`,
+  `scout_core_staging_blocked_hosts`, `SCOUT_STAGING`).
+- **Cache purge:** after the active theme or a Scout plugin updates, WP Engine and WP
+  Rocket caches purge by themselves (`scout_core_purge_after_update`). Cloudflare is
+  still purged by hand.
+
+## Language versions (hreflang, unreleased)
+
+For a site with the same page in two languages, such as a Spanish copy of a
+service page. Without links between them, Google treats the two as duplicates
+or shows the wrong one.
+
+- **Where:** the Scout SEO box on a page or post, under "Other language
+  versions". Set the page's own language (blank means the site language), then
+  pick each other version with its language code: es, en, fr, pt, zh, vi, ko,
+  or any simple BCP 47 code such as pt-BR or zh-Hant.
+- **Both ways:** saving on one page writes the same group onto every linked
+  page. Taking a page out of the group, on any page, takes it out everywhere.
+  Deleting a page takes it out too.
+- **Stored:** `_scout_hreflang` (language => post ID, the other pages in the
+  group) and `_scout_lang` (the page's own language) on each post.
+- **Head:** on a linked page, one `<link rel="alternate" hreflang>` for the
+  page and each version that is published and not hidden from search, plus
+  `x-default` for the version in the site language. Pages nobody has linked
+  print nothing new. The tags print even when the theme writes its own head.
+- **`<html lang>`:** a page whose own language is not the site's gets that
+  language in the attribute. Pages in the site language keep WordPress's.
+- **Google checks:** a "Language versions" row shows once any page is linked.
+  It asks for a look and names the pages when a version is not live, is hidden
+  from search, or does not link back.
+- **Translation plugins:** with WPML, Polylang, TranslatePress or Weglot active,
+  Core prints nothing, shows no check and the box only says the plugin handles
+  it. A site can also stand down with `scout_core_hreflang_stand_down`.
+- **Sitemap:** not changed. WordPress's own sitemap has no place for
+  alternates, and the head tags are what Google needs.
+- Test: `php tools/tests/core-hreflang.php`.
+
 ## APIs other plugins depend on
 
 These are a contract. Renaming or removing one breaks the plugin that uses it on
@@ -170,8 +313,10 @@ every client site at the next automatic update. CI checks them
 | API | Used by | For |
 |---|---|---|
 | `Scout_Core_Business::get()` (keys `name`, `phone`, `email`, `city`, `region`, `postal`, `same_as`) | scout-cards | Business details on the cards and in the saved contact |
-| The `scout` admin menu slug | scout-cards | Puts Cards & Links inside the Scout menu |
+| The `scout` admin menu slug | scout-cards | Puts Cards and links inside the Scout menu |
 | `Scout_SEO_Head::output` on `wp_head` priority 1 | scout-cards | Removed on card pages, which print their own tags |
+| `scout_design()`, `scout_design_css()`, `scout_design_issues()` | scout-build and every plugin with a front-end look | The site's colors, fonts, corners, logo and mark from the theme's DESIGN.md |
+| `scout_core_owns( $job )` | every Scout theme (via the theme kit) | Whether a plugin does a job here, so a theme fallback stands down |
 
 ## Versioning ritual
 
@@ -180,3 +325,16 @@ Every change to this plugin:
 1. Bumps the `Version:` header in `scout-core.php`.
 2. Bumps `SCOUT_CORE_VERSION`.
 3. Adds a dated entry to `CHANGELOG.md`.
+
+<!-- visitor-data:start -->
+## Visitor data
+
+| What | Where it is kept | How long | Shared with |
+|---|---|---|---|
+| Words typed into the site's own search box when the search finds nothing, with how many times each was searched and the first and last day it was seen. Nothing that points to a person is kept: no IP address, browser or time of the search. Words that look like an email address, a phone number or a web address are not kept. (only while the list of searches that found nothing is on in Search settings, which it is by default, and not for people logged in to edit the site) | This website's database, as one list | 90 days after the words were last searched, or until someone clears the list. At most 200 searches are kept. | Nobody |
+| A scrambled (hashed) copy of the search words and the visitor's IP address, so one visitor's repeat searches count once (only while the search words are kept) | A temporary record in this website's database | 30 minutes | Nobody |
+
+Scout Core sets no cookies. Its email guard only changes how email addresses are written into the page, and it stores nothing. The dashboard remembers which sections a staff member opened, in their own browser (scoutSections), which never touches visitors.
+
+Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
+<!-- visitor-data:end -->

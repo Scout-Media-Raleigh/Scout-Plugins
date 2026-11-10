@@ -21,11 +21,20 @@ delete_transient( 'scout_updater_scout-reviews' );
 wp_clear_scheduled_hook( 'scout_reviews_google_sync' );
 delete_transient( 'scout_reviews_google_token' );
 delete_option( 'scout_reviews_google' );
+// The Google API key and place ID for the daily Google check go too.
+wp_clear_scheduled_hook( 'scout_reviews_places_check' );
+delete_option( 'scout_reviews_places_key' );
+delete_option( 'scout_reviews_places' );
+delete_option( 'scout_reviews_request_routes' );
+delete_option( 'scout_reviews_build_parent' );
 
 $scout_reviews_settings = get_option( 'scout_reviews_settings', array() );
 if ( ! is_array( $scout_reviews_settings ) || empty( $scout_reviews_settings['purge_on_uninstall'] ) ) {
 	return;
 }
+
+delete_option( 'scout_reviews_requests' );
+delete_option( 'scout_reviews_request_stats' );
 
 $scout_reviews_ids = get_posts(
 	array(
@@ -49,4 +58,5 @@ if ( is_array( $scout_reviews_terms ) ) {
 }
 
 delete_option( 'scout_reviews_settings' );
+delete_option( 'scout_reviews_totals_updated' );
 delete_option( 'scout_reviews_seen_slots' );

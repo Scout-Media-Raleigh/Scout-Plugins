@@ -1,0 +1,82 @@
+# Scout Hours changelog
+
+## 0.1.15 (2026-11-05)
+
+- **Colors and fonts from DESIGN.md (Site Standard rule 3):** the hours table and the notice bar now read the theme's DESIGN.md line, surface 2, accent fill and on accent (from `design-tokens.css`) when the theme does not set `--scout-hours-*`. Sites that set them, or set neither, look exactly the same.
+- **Hours opens with the status line** ("Hours are on the site." or "Hours aren’t on the site yet.") instead of an amber pill in an amber-bordered box. The confirm box is now "Owner’s OK" with one short line and the tick box.
+- **One filled button.** Save hours is a normal-size primary button, and the holiday reminder's Open Google Business Profile is outlined. A closure shows its date, then Closed or its hours as a tag. "Hours table & Open now line". Shorter lede and help.
+
+## 0.1.14 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **The screen title matches the menu.** The Hours screen is now titled Hours (was "When you’re open"), the same as its menu item. In the "Where it updates" box, the "Schema" line is now called "Google listing". Same page address and settings. Visitors see no change.
+- **Shorter, plainer words.** The intro and help lines are one short sentence each, and "schema" now reads "your Google listing".
+
+## 0.1.13 (2026-11-05)
+
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.1.12 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.1.11 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.1.10 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.1.9 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.1.8 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.1.7 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.1.6 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.1.5 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.4 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.1.3 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.2 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.1 (2026-10-13)
+
+- Ships the shared admin kit 1.3.0: the Scout menu bar is grouped into tabs (Home, Search, Website, Business, Reviews, Chat), and a long Scout sidebar shows one link per group.
+
+## 0.1.0 (2026-10-13)
+
+- First release. Weekly hours per day (closed, open and close times, an
+  optional second range for a break) under Scout Build / Site Build → Hours.
+- "Hours not confirmed yet": nothing reaches the site or schema until the
+  owner confirms the hours. Editors see a short note where the hours will go.
+- Holiday closures and special hours by date, with an optional note.
+- `[scout_hours]` (with `show="status"` or `show="table"`) and
+  `scout_hours_html()`: the hours table and a live "Open now", "Closed now"
+  or "Closed today for (holiday)" line in the site's timezone, kept current
+  in the browser so cached pages stay right.
+- Optional notice bar on closure days, or from a week before.
+- Schema: openingHoursSpecification and specialOpeningHoursSpecification,
+  added to Scout Core's business node through `scout_schema_graph`, or a
+  minimal node with the same @id when Scout Core is not active.
+- Reminder to update Google: a dashboard notice a week before each closure.

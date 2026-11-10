@@ -32,6 +32,10 @@ adds its screen under the Scout menu, and switches off Scout Core's head tags on
 card pages). A Scout Core release reaches every client site automatically, so a
 rename there can break a dependent plugin on every site at once.
 
+- **Themes have their own gate.** `tools/theme-standard-check.sh <theme-dir>` (the Scout Site
+  Standard: required files, nothing a theme never holds) and `php tools/design-build.php
+  <theme-dir>` (theme.json tokens and `design-tokens.css` from DESIGN.md, with the contrast
+  check) run in every client repo's `theme-release.yml`. See `tools/theme-release/README.md`.
 - **CI guards it.** `tools/core-contract.sh` (Lint workflow, "Scout Core contract")
   fails when a Scout Core API a plugin depends on disappears. Fix the dependent
   plugin in the same change, release both, and update the contract list.
@@ -51,13 +55,19 @@ header is the source of truth for the release.
 **2. Write the changelog.** Add a dated entry at the top of that plugin's
 `CHANGELOG.md`. The release notes are pulled from this entry automatically.
 
-**3. Commit and push**, then release from the Actions tab:
+**3. Commit, push, and merge the pull request into `main`.** That is the
+release. On every push to `main` the Release workflow reads each plugin's
+`Version:` header, and any version without a release yet gets one: it creates
+the `<slug>-v<version>` tag, builds the zip, and publishes the release. Scout
+Core goes first, then the rest, one at a time. A plugin whose version did not
+change is skipped, so merging never ships anything by accident. The version can
+never disagree with the code because nobody retypes it.
+
+### By hand, as a backup
 
 > **Actions → Release → Run workflow →** pick the plugin → **Run**
 
-That reads the version straight out of the plugin's header, creates the
-`<slug>-v<version>` tag for you, builds the zip, and publishes the release. The
-version can never disagree with the code because nobody retypes it.
+Same build, for one plugin. It refuses a version that already shipped.
 
 Each plugin is versioned and released on its own. Releasing one never touches
 the others.
@@ -76,10 +86,66 @@ purpose if it does not.
 
 ---
 
+## Test builds for staging
+
+A zip built from an unmerged branch with a normal version number causes two
+problems. If its number is already released, or lower than the next release,
+that release overwrites it and the branch's unreleased work disappears. If its
+number is higher than any release, it never updates at all. Both happened on
+Andy's site in October 2026 (Scout Build 0.6.7 and Forms Guard 0.3.0 test zips).
+
+Build staging zips with the script instead:
+
+```bash
+bash tools/test-build.sh scout-build      # scout-build-0.7.8-test.1.zip
+bash tools/test-build.sh scout-build 2    # pick the test number yourself
+```
+
+The zip's `Version:` header (and the `SCOUT_*_VERSION` constant) reads
+`<version>-test.<n>`. Only the copy in the zip changes; never commit a `-test`
+version. PHP's `version_compare()` sorts `0.7.8-test.1` below `0.7.8`, so the
+real release of that version replaces the test build on the next update check.
+Until then Scout Build's **Site health** lists it under **Test builds**, along
+with any Scout plugin running a version newer than its newest release.
+
+Install test zips on staging only.
+
+---
+
+## Staging first, then live (the approval hold)
+
+A release installs by itself on every staging copy. A live site waits for
+Scout's OK (Scout Build 0.12.0, Joy 2026-11-04):
+
+1. The release lands on staging. Scout, and the client where it changes what
+   they see, check it there.
+2. On the live site: **Scout tools → Updates → Waiting for your OK**. Type who
+   said yes ("Client OK by text, Nov 5"), then **Approve** or **Approve all**.
+   The Site log records it, and the client sees it under Your site.
+3. The live site installs it on its next update run, or at once with Update now.
+
+This covers Scout plugins and any theme that updates from GitHub. Update now
+always works. A site can switch the hold off on the same screen;
+`define( 'SCOUT_HUB_APPROVAL', false )` in wp-config.php does the same.
+
+**Security fixes skip the wait.** Add the release to `"security"` in
+`catalog.json` (and its copy in `scout-build/catalog.json`):
+
+```json
+"security": [ { "slug": "scout-forms-guard", "version": "0.3.5", "note": "Upload fix" } ]
+```
+
+Any site still below that version installs it (or anything newer) as soon as
+it is out, with no OK and no ring wait. Once a site has the fix, later releases
+wait for an OK as usual. A theme is listed by its folder name. A `"hold"`
+entry still stops it, and so does a pause on one site.
+
+---
+
 ## Checking it worked
 
 The release shows up at
-https://github.com/joyrmac/Scout-Plugins/releases with a `<slug>.zip` asset
+https://github.com/Scout-Media-Raleigh/Scout-Plugins/releases with a `<slug>.zip` asset
 attached. That asset is what client sites download, so a release without it
 offers nothing and sites stay on their current version.
 

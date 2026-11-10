@@ -31,3 +31,20 @@ bindings so the theme can display them.
 
 That split is what lets a small team maintain one platform across the whole
 roster instead of N bespoke codebases.
+
+## What this feature needs from the theme
+
+No visitor-facing output of its own. The theme shows the two types with
+Scout Core's `scout/field` binding or `scout_core_field()`: Amenity `icon`,
+`summary` and `highlight`; Site Type `hookups`, `nightly`, `monthly` and
+`max_length`. No DESIGN.md keys and nothing from `scout-setup.json`.
+
+<!-- visitor-data:start -->
+## Visitor data
+
+This plugin keeps nothing about the people who visit the site and sets no cookies.
+
+This plugin adds the park's amenities and site types, which site staff write. It does not collect or send anything about visitors.
+
+Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
+<!-- visitor-data:end -->

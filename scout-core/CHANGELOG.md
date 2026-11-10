@@ -1,5 +1,253 @@
 # Scout Core — Changelog
 
+## 1.10.4 (2026-11-09)
+
+- **Fields reach the block editor and REST.** WordPress only includes a post's `meta` in `/wp/v2/<type>`, and only saves `meta` sent to it, when the type supports custom fields. No Scout type did, so every field was missing over REST and REST writes were dropped without an error. Every Scout type with fields (testimonials, the RV park types, any companion type) now supports custom fields. Types with no fields (FAQ) are unchanged.
+- The generic Custom Fields box WordPress adds for that support is removed on those types, so the raw `scout_*` keys don't show up a second time next to the Details box. Nothing changes on the edit screen.
+- Block editor: bindings to these fields through the built-in Post Meta source can now read and edit the value in the editor. The `scout/field` source printed the value on the page before and still does.
+- Tests: `tools/tests/select-meta.php` now fails if a testimonial loses custom-fields support, and checks REST reads and writes of a select field.
+
+## 1.10.3 (2026-11-09)
+
+- **Fix: drop-down (select) fields saved as blank.** Every select field registered through Scout Core (a type's fields or a page fieldset) lost its value on save: the testimonial Source, North Crest's "Feature on the homepage?" on amenities, and any fieldset select. The check WordPress runs on every `update_post_meta`, `add_post_meta` and REST write had no list of allowed choices, so it rejected all of them. That check runs on the edit screen's save too, so editing and saving a testimonial blanked its Source. It now gets the field's choices. Values already saved as blank stay blank: set them again or re-run the import.
+- Select values now match ignoring case and surrounding space, and are stored as the declared key ("Google" is saved as `google`). A value that is not a choice is still rejected. A list sent to a select field (possible over REST) is rejected instead of stopping the page with a PHP error.
+- Tests: `tools/tests/core-select-meta.php` (no WordPress needed) and `tools/tests/select-meta.php`, run by the new "WordPress tests (fresh install)" CI job on a clean WordPress with Scout Core activated.
+
+## 1.10.2 (2026-11-09)
+
+- **Turn off the code editor works on WP Engine.** WP Engine's own wp-config.php sets DISALLOW_FILE_EDIT to false, and a setting like that can't be changed once it is set, so on scoutraleigh.com the switch did nothing. The switch now also takes away the code-editing permissions (edit themes, edit plugins, edit files), so the editors are gone whatever wp-config.php says. Off still means off.
+
+## 1.10.1 (2026-11-09)
+
+- **Turn off the code editor.** A new Spam protection switch (on by default) does what DISALLOW_FILE_EDIT in wp-config.php does: the theme and plugin code editors leave wp-admin, so a stolen login can't change site code (Site Standard rule 22). A value set in wp-config.php still wins. Nothing visitors see changes.
+
+## 1.10.0 (2026-11-05)
+
+- **Screen cleanup (Joy's dashboard review).** Page copy opens with its status line only: the row of up to six numbers is gone, since the status line already counts. Its two boxes each open with one sentence, the extra note sits behind More, and only Sync these now is a filled button (Keep the WordPress copy is outlined). Page copy errors say "Page copy" instead of the old name Site Sync. The comparison table has no zebra stripes.
+- **Privacy & terms.** Each document's state uses the kit's dot and word (an amber dot only when it changed after approval) instead of hand-made symbols, and only the first Make the page button is filled. The lede is one sentence. The settings-group screens use the kit's colors, corners and text size, and fill the kit's column instead of a narrower 900px box. The select placeholder reads "Select one" (no dashes). The staging notice says "your web team" on white-label sites.
+- **Language versions (hreflang).** The Scout SEO box on pages and posts has a new "Other language versions" part: set the page's language and pick the same page in another language (es, en, fr, pt, zh, vi, ko, or any simple code like pt-BR). Google then shows each visitor the right one instead of treating the two as duplicates. Nothing changes for visitors until someone links a page.
+  - Links are saved on every page in the group (`_scout_hreflang`), so they always run both ways, and removing a version on one page removes it on all of them. Each page also keeps its own language (`_scout_lang`), the site language by default.
+  - On a linked page the head gets one `<link rel="alternate" hreflang>` per live version and `x-default` for the site language version. Drafts, pages hidden from search, thank-you pages and pages whose canonical points elsewhere are left out.
+  - A page in another language gets that language in `<html lang>`.
+  - Google checks has a "Language versions" row once any page is linked. It names pages whose versions are not live or do not link back.
+  - With WPML, Polylang, TranslatePress or Weglot active, Core stands down (or through `scout_core_hreflang_stand_down`). The sitemap is not changed.
+  - Deleting the plugin with "remove all Scout data" on also removes the two new keys. No visitor data.
+
+- **Searches that found nothing.** When a visitor uses the site's own search box and gets no results, Scout Core counts the search words, so you can see what people look for and can't find. Search settings shows the top 20 with how many times and the last day each was searched, a "Clear the list" button, and the hint "Add a page or an FAQ answer for the top ones." Nothing changes for visitors, and no search box is added to any page.
+  - Only the words are kept, lowercased and cut to 80 characters, with a count and the first and last day seen. No IP address, browser or time of the search. Words with an @, seven or more digits in a row (phone numbers however they are written), a web address, or more than 8 words are never kept.
+  - Not counted for people logged in to edit the site, for bots, inside the dashboard, on page two of results, or when the search found something. One visitor's repeat search within 30 minutes counts once, through a short-lived record named by a scrambled copy of the words and IP address.
+  - At most 200 phrases. Phrases not searched for 90 days are removed by Core's existing daily check. The list is one setting that is not loaded on every page (`scout_core_empty_searches`), and deleting the plugin removes it.
+  - A new switch in Search settings, "Keep a list of searches that found nothing", is on by default and saved with the other Search settings (`scout_seo_defaults[empty_searches]`). Turning it off stops the count and clears the list.
+  - Scout Core's visitor data list now names the search words and the 30-minute record, so the privacy policy draft includes them.
+
+## 1.9.0 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **One address for notices.** Business info has a new optional field, "Send notices to", for whoever gets form, booking and chat emails. Left blank, the email above it is used. Other plugins read it through `scout_core_notice_email()`, which falls back to Business info's email and then the WordPress admin email. A plugin's own "send notices to" field still wins when it is filled in.
+- **No star rating built from testimonials.** The business entry Google reads no longer carries a star rating or Review entries made from the testimonials you picked by hand, since those are not a platform's full count. Testimonials themselves, and how they show on pages, do not change. A plugin that has real totals from a review platform can still add a rating through the `scout_schema_aggregate_rating` filter, which now starts empty. The `scout_schema_review_limit` filter is gone with the Review entries.
+- **Business info no longer offers an Hours box.** Weekly hours live in Scout Hours. Any text a site saved in the old box stays saved and readable by the theme, but the box is hidden. With Scout Hours on, the row still points to the Hours screen.
+- **Plain labels.** Search health is now Google checks (the menu, the screen and its list). SEO is now Search settings. Site Sync is now Page copy, and its "Last sync" box is "Last update from the theme". On Business info, "Schema type" is "Type of business" and "Profile URLs" is "Your other profiles", each with a help line. Same page addresses, tabs and saved settings.
+- **Removed unused code.** The old Settings → Scout Business screen (`Scout_Core_Business::admin_menu()` and `render_page()`) was never hooked up, so it is gone.
+- **Shorter, plainer words on every screen.** Screen intros, help lines and switch notes on Google checks, Business info, Search settings, Page copy, Spam protection and Privacy and terms are cut to one short sentence each, and old menu group names are gone (the Hours note now says "under Business"). The visitor-facing policy drafts are unchanged.
+
+## 1.8.1 (2026-11-05)
+
+- **Search health opens with one status line, and the checks are a list.** Without the Scout Build hub, the checks show one row each (name, what to do, All set or Needs a look, and its button) instead of a grid of cards. The hub's Site health still shows them as cards.
+- **Site Sync opens with one status line and a row of counts.** The six count boxes are now one line (in sync, updates ready, items that need a look, or missing pages) and a compact row of numbers.
+- **Privacy and terms: the features list is tags, and Copy the email is an outlined button.** The features that keep something about visitors show as tags instead of one comma line. Make the page stays the one main button for a document, and only when it shows.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 1.8.0 (2026-11-04)
+
+Numbered 1.8.0 because the Change log branch (`claude/change-log`) already claims 1.7.0. Merge that one first, or renumber it above this.
+
+Five Site Standard gaps close in Core, so themes can drop their own copies.
+
+- **Policies → Privacy and terms (Joy, 2026-11-05).** A privacy policy and terms of service drafted from what the site actually runs: Business info, plus the visitor data list (`visitor-data.json`) of every Scout plugin that is on, plus Gravity Forms. Scout drafts; the business's own lawyer reviews; the business approves.
+  - **Copy the email** gives a ready-to-send email with both drafts as plain text, for the business to forward to its lawyer. Lines in [square brackets] are for the lawyer or the business to confirm.
+  - **Mark approved** records who approved it and when. Then **Make the page** creates a draft page with the approved text and the date, where the lawyer's changes go in before a person publishes it. Nothing publishes on its own, and an existing page is never overwritten.
+  - **Changed since it was approved:** when a feature that collects something is turned on or off, or business details change, the screen says so and lists what is new or no longer collected.
+- **Breadcrumbs (gap 3).** One trail feeds both the `BreadcrumbList` schema and the visible links. The trail runs Home, then a page's parent pages, the blog page for a post, or a content type's archive. A theme turns it on with `add_theme_support( 'scout-breadcrumbs' )` and shows the links with `scout_core_breadcrumbs()`. It is off until a theme asks, because many themes still print their own and two would disagree (rule 20). It is skipped when something else already added a `BreadcrumbList`. Filter `scout_core_breadcrumb_trail`.
+- **Search engine verification (gap 1).** Scout → Get found → SEO has fields for the Google Search Console and Bing Webmaster Tools codes. Paste the code or the whole meta tag, and only the code is kept. The tags print on the front page. Google's HTML file name is refused, because it is a file check and not a code.
+- **Thank-you pages stay out of search.** Pages a visitor only reaches after sending a form get `noindex` and leave the sitemap. That covers Gravity Forms confirmations set to a page or to a redirect on this site, and pages at the address thank-you or thanks. The front page and the blog page are never hidden, even when a form sends people there. Filter `scout_core_thanks_pages`.
+- **Site hardening (gap 6), three new switches under spam protection, all on by default:**
+  - Visitors who are not signed in cannot list login names through `/wp/v2/users`.
+  - XML-RPC is off, unless Jetpack is installed.
+  - Every page sends `nosniff`, `SAMEORIGIN` framing and a referrer policy, plus HSTS on SSL, and the WordPress version is hidden. A header the host already sets is kept.
+  - This is the same code Bliss Boogie's companion and Maravela's theme run, so both can drop theirs. Until they do, the filters run twice with the same result.
+- **Caches purge themselves after an update (gap 5).** When the active theme or any Scout plugin is updated or replaced, Core purges WP Engine's caches (and WP Rocket's, where a site runs it), so pages stop pointing at old styles. Cloudflare still needs a hand purge, because that takes the site's Cloudflare key. Filter `scout_core_purge_after_update`; action `scout_core_caches_purged`. Bliss Boogie's theme can drop its own purge.
+- **Staging copies never reach real people.** A staging copy carries the live site's customers and keys, and its scheduled jobs keep running. On a staging copy, email now goes only to scoutraleigh.com addresses, and customers are dropped from To, Cc and Bcc. That covers booking reminders, member renewals and form notifications. Calls to newsletter, email-marketing, texting, payment and Zapier services are refused, so a test sign-up never joins the real list and a test checkout never charges a card. A notice on every dashboard screen says so. A copy is staging when WordPress is set to staging or its address is a host's staging address. `SCOUT_STAGING` in wp-config.php overrides that either way. Filters: `scout_core_staging_mail_to` and `scout_core_staging_blocked_hosts`.
+- Fix: saving the SEO screen kept only the fields it shows, which wiped `purge_on_uninstall`. Keys the screen doesn't show are now kept.
+- Tests: `tools/tests/core-seo-gaps.php` (23 checks).
+
+## 1.6.6 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 1.6.5 (2026-11-04)
+
+- **Site Sync creates the pages the bundle names and brings posts in as drafts** (Site Standard §6 and §12). A page entry with `"create": true` (or `"create_missing": true` at the top of the manifest) that the site lacks is created on the next run: pages publish, with their title, content, template, parent, menu order and front-page or posts-page setting; a new `posts` list works like `pages` with post_type `post` and arrives as drafts. The state reads "Will be created" and counts as a safe update, never as something to review. Undo trashes what the run created and puts the front-page settings back. A page without `create` is still reported as "Page not found", as before.
+- **One manifest shape.** The entry keys the client themes grew on their own are read as aliases: `file` is `source`; `seo_title` and `description` on a page are its SEO fields; `identity` (`title`, `tagline`, `business.*`) sets the site title, tagline and Business info the way `options` does. Andy's and Bliss Boogie's manifests now read without a companion importer for pages, SEO and identity.
+- Tests: `tools/tests/site-sync.php` gains the create, draft, alias and undo checks.
+
+## 1.6.4 (2026-11-04)
+
+- **Hours live in one place.** With Scout Hours on, Business info no longer shows its free-text hours box; it points at Your business, Hours instead (Site Standard §7 v1.2: one fact, one place; Joy, 2026-11-04). The old text stays saved and untouched until the site's conversion copies it into Scout Hours.
+- **Business info, SEO, Site Sync and Spam protection file by the new map.** Business info under Your business, Site Sync under Content, SEO and Spam protection under Search and AI, the Change log under Build. Shared admin kit 1.7.0.
+
+## 1.6.3 (2026-11-04)
+
+- **`scout_design()`: every plugin reads the site's design from the theme's `DESIGN.md`** (Scout Site Standard §4, rule 3). The tokens on top of DESIGN.md (mode, colors, fonts, radius, logo, mark) are parsed with a small built-in reader (no YAML extension needed), the child theme over the parent, with gaps filled from the block theme's `theme.json` palette and fonts, then Scout's defaults. `scout_design( 'call buttons' )` lays a `## Feature: call buttons` section over the tokens. `scout_design_css()` prints a `:root` block of `--scout-*` variables, `scout_design_contrast()` and `scout_design_issues()` check the pairs §4 requires (button text on the accent fill, text on the page and on cards, 4.5:1), and the `scout_design` filter adjusts the result. Parsed once per request; forgotten on a theme switch or update.
+- **`scout_core_owns( $job )`: a theme fallback runs only when no plugin does the job** (rule 6). `hours`, `call_bar`, `cards`, `reviews`, `chat`, `redirects`, `analytics`, `team`, `events`, `members`, `head`, `schema`, `sync`, `changelog` and the rest answer from the plugin classes that are loaded; `head` and `schema` say no while Scout Core still stands aside for a theme that prints its own. The `scout_core_owns` filter lets a plugin claim a job. The theme kit carries a stand-in that answers false when Scout Core is off.
+- Test: `php tools/tests/design.php` (runs without WordPress; in the Lint workflow).
+
+## 1.6.2 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 1.6.1 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 1.6.0 (2026-10-30)
+
+Two spam switches, both on for every site unless someone turns them off under **Scout → Spam protection**.
+
+- **Email addresses are hidden from spam bots.** Client sites printed their contact email in plain text (email links, visible text, the business details for search), and bots collected it, so clients got SEO spam. Scout Core now codes every address on the finished page before it is sent. Visitors see and click it as usual, and a page cache stores the coded copy. Inside the search data (JSON-LD) only the "@" is written as `\u0040`, so Google reads the same email. Scripts, styles, text boxes, form values and comments are left alone, and if anything goes wrong the page is sent unchanged. Filter `scout_core_email_guard` (true or false).
+- **Comments and pingbacks are closed.** New comments and pingbacks on client sites mostly brought spam. With the switch on, pages and posts take no new comments or pingbacks, the `X-Pingback` header is gone, and the pingback XML-RPC methods are removed. Comments already saved stay in WordPress. Turn it off and the site works exactly as before. Filter `scout_core_close_comments` (true or false).
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+- Test: `php tools/tests/email-guard.php`.
+
+## 1.5.2 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 1.5.1 (2026-10-26)
+
+- **Fix: no false "Page descriptions" warning on themes that write their own.** Scout Media and Recon set every page's description in their templates and never read the SEO box, so Recon's health check listed 16 pages that were fine and told Joy to fill a box that changes nothing. When the theme writes its own head, the check now reads "Your theme writes each page's description for search."
+
+## 1.5.0 (2026-10-26)
+
+Site Sync reaches four more places, so a theme update can carry them instead of one-time code in the theme. Joy asked why Sean's bio update needed theme code at all.
+
+- **Business info, one field at a time.** A manifest can set a single Business info field (`scout_business`), leaving the others as typed.
+- **Theme options, one key at a time.** A theme can let Site Sync set keys in its own array options (filter `scout_sync_option_keys`), such as one person's title on the business cards. A list item is found by its slug.
+- **Team profiles, one field at a time.** A manifest can set one key inside an array meta value, such as a Team profile's role, and leave the rest of the profile alone.
+- **Author bios.** A manifest can set an author's Biographical Info, matched by email.
+- **A Core update re-runs the automatic sync,** so rows a new Core understands apply on the first admin load after it updates.
+- Every new row has the same states, review, journal and undo as before. Spec: `docs/site-sync-spec.md`. 52 checks pass.
+
+## 1.4.1 (2026-10-22)
+
+Two Site Sync fixes found testing the Hair by Patrick pilot, before any theme ships a manifest.
+
+- **Fix: automatic updates after adopting Site Sync.** A page that already matched the theme when a site adopted Site Sync got no starting record, so every later copy change read "Needs a decision" instead of updating on its own. Matching rows now get their record on the next sync pass (automatic or "Sync these now"), and a kept copy the repo has caught up with stops being kept.
+- **Fix: a missing theme file can no longer blank a page.** When a manifest names a file the theme does not ship, that row is reported and left out, so neither the automatic run nor "Use the theme copy" writes an empty page.
+- Integration test: 36 checks (was 30), including both cases.
+
+## 1.4.0 (2026-10-22)
+
+- **Site Sync.** One updating system for every Scout site, replacing each theme's own setup and sync screen over time. A theme lists the copy it bundles in a `scout-sync.json` file (page content, page fields, SEO titles and descriptions, shared settings, site title and tagline). Scout compares each item three ways: the theme copy, what WordPress holds, and what was there at the last sync.
+  - **Untouched pages update on their own** after a theme update. Anything edited in WordPress is never overwritten without a person choosing to.
+  - **Scout → Site Sync** shows what is up to date, what is ready to update, and what was changed in WordPress, side by side, with "Keep the WordPress copy" or "Use the theme copy" for each. A kept copy stays kept, even when a later theme moves on.
+  - **Safe writes.** One sync at a time, an undo record saved before anything changes, every field checked again right before it is written, a page revision for content, and **Undo the last sync** that leaves anything edited since alone.
+  - **Images** in a manifest go into the media library once and are matched by file, so a re-run never duplicates them.
+  - A theme without the file gets the screen in status-only mode. Nothing changes on any site until its theme ships a manifest.
+  - Health check row and an admin notice when items need a look. `wp scout sync status` and `wp scout sync run --dry-run` for the command line.
+  - Companions can add items through the `scout_sync_manifest` filter and react through `scout_sync_applied`. Automatic runs can be turned off with `scout_sync_auto`.
+  - Started from the reviewed content update built for a client site in September 2026, generalized so every site shares it. Spec: `docs/site-sync-spec.md`.
+
+## 1.3.4 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 1.3.3 (2026-10-15)
+
+- **Fix: review markup without stars.** Testimonials with no star rating were still marked up as `Review` items, and Google requires a rating on each one, so the Rich Results test showed them as invalid (Maravela's: 10 invalid review snippets). Only rated testimonials are marked up now; unrated ones still show on the page. The aggregate rating is unchanged (it only ever counted rated ones).
+
+## 1.3.2 (2026-10-14)
+
+- **Fix: two sets of share tags on themes that write their own.** Scout Media and Recon themes print their own title, description, canonical and Open Graph tags, and Scout Core printed a second set above them. Facebook and LinkedIn read the first `og:image`, so links showed the site icon instead of the page's share card. The SEO head now steps aside when the theme handles it (`scout_head()`, `recon_head()`, or `add_theme_support( 'scout-seo-head' )`). Filter `scout_core_seo_head` to force it either way.
+
+## 1.3.1 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 1.3.0 (2026-10-13)
+
+- **Every page carries its dates.** Single posts and pages get a `WebPage` node in the schema graph with `datePublished` and `dateModified`, linked to the site (`isPartOf`) and the business (`about`). Search engines and AI tools can see how fresh a page is. It steps aside when a companion already describes the page (Scout Team's `ProfilePage`). Filter `scout_schema_webpage` to false to turn it off.
+
+## 1.2.7 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 1.2.6 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 1.2.5 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 1.2.4 (2026-10-13)
+
+- **Fix: Business info and SEO now sit inside the theme's own Build menu.** On a site whose theme has a Scout Build or Recon Build menu, Scout Core made a second, separate "Scout" menu, so its screens were missing from the Search tab. They now join the theme's menu (the screen address stays `admin.php?page=scout`, so every link still works). Sites without a Build menu keep the Scout menu as before.
+
+## 1.2.3 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 1.2.2 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+
+## 1.2.1 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 1.2.0 (2026-10-12)
+
+- **Fits the Scout Build hub.** With Scout Build installed, the Scout menu opens on Business info and SEO as two plain screens, and the search checks move into the hub's Site health. Without the hub, Search health stays as the first screen.
+- **No more second tab bar.** The Dashboard / Business / SEO tabs are replaced by the shared section nav.
+- **Same cards as the hub.** Search health uses the shared check cards, with pages missing a description listed by name.
+- The Scout menu sits right under Dashboard with the cerulean bolt.
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 1.1.4 (2026-10-12)
+
+- **Page descriptions names the pages.** When pages or posts have no written
+  description, the dashboard card now lists each one by title with a link
+  straight to its editor (up to 10, then a link to all pages), instead of a
+  count and a generic "Review pages" link.
+
+## 1.1.3 (2026-10-12)
+
+- **Sitemap guard.** If robots.txt ends up with no Sitemap line (for example
+  an SEO plugin switched WordPress's sitemap off), Scout Core adds the one that
+  works. A daily background check finds it, so serving robots.txt never waits.
+- **One schema graph per page.** Once the business name is filled in, Scout's
+  graph stands alone: Yoast, Rank Math, All in One SEO and SEOPress are told not
+  to print their own JSON-LD, so Google never sees two businesses. Their titles
+  and sitemaps are untouched. Filter `scout_schema_take_over` to false to keep
+  theirs.
+
+## 1.1.2 (2026-10-12)
+
+- **A new look for every settings screen.** The plugin's screens now share
+  one Scout design: a clear page header with the section name, settings
+  grouped into rounded boxes, pill buttons, and a short sign-off footer with
+  how to reach us. On client sites the header reads "Site Build" instead of
+  "Scout". Nothing about how the settings work changed.
+
+## 1.1.1 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
 ## 1.1.0
 Pages become forms. Additive, nothing existing changes shape.
 

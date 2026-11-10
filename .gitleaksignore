@@ -1,0 +1,5 @@
+# Fake test keys, not secrets. One line per finding fingerprint (commit:file:rule:line).
+# tools/tests/update-report.php checks that a key-shaped string is hidden; an early version typed the fake key out.
+# tools/tests/reviews-places.php once typed its fake Google key out; it is built at run time now.
+e6080e1836f0a88d13fc190d0250752d95e1063c:tools/tests/update-report.php:github-pat:89
+695b364fca94586af17dc01ec0c184cab35e4511:tools/tests/reviews-places.php:generic-api-key:59

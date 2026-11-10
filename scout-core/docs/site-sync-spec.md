@@ -3,7 +3,13 @@
 One updating system for every Scout site. Today each theme carries its own
 homegrown version of the same job, and this module replaces all of them with
 one shared engine in `scout-core` plus a small declarative contract the theme
-ships. Status: spec ratified, not yet built. Owner: Sean and Joy.
+ships. Status: **phases 1 and 2 built in Scout Core 1.4.0** (engine, dashboard,
+automatic runs, review, undo, WP-CLI). Section markers (phase 3) and retiring
+per-theme code (phase 4) are next. Owner: Sean and Joy.
+
+Decision (Joy, 2026-10-22): every site is built the same way, and Site Sync
+starts from the field-level, conflict-safe content update built for the Walter
+Lutz site in September 2026.
 
 ---
 
@@ -148,3 +154,112 @@ WordPress-side edit.
 - Per-client extras (Maravela's category backfill, one-off fixups) live in that
   client's companion plugin as extra dashboard actions, registered through a
   scout-core hook, so the shared engine never grows client-specific code.
+
+---
+
+## As built: Scout Core 1.4.0
+
+### Manifest v1 (`scout-sync.json` at the theme root)
+
+```json
+{
+  "sync_version": 1,
+  "pages": [
+    { "slug": "about", "source": "sync/pages/about.html" },
+    { "slug": "contact", "content": "<p>Inline copy.</p>", "previous": ["Copy an earlier release shipped"] },
+    { "slug": "services/weddings", "title": "Weddings", "source": "sync/pages/services-weddings.html" }
+  ],
+  "fields": [
+    { "post_type": "service", "slug": "panel-upgrades", "field": "hero_heading", "value": "Panel upgrades" },
+    { "slug": "about", "seo": "title", "value": "About Us | Client" },
+    { "slug": "about", "seo": "desc", "value": "One sentence for search results." },
+    { "slug": "about", "field": "hero_image", "image": "sync/img/about-hero.webp" },
+    { "slug": "about", "meta": "_wp_page_template", "value": "templates/about.php" }
+  ],
+  "settings": [ { "group": "site", "key": "cta_heading", "value": "Call us today" } ],
+  "options":  [ { "option": "blogname", "value": "Client Name" }, { "option": "blogdescription", "value": "Tagline" } ]
+}
+```
+
+- `pages` sync post content (and the title when given). `post_type` defaults to `page`.
+- `fields` target one post by `post_type` and `slug`: `field` is a Scout field (`scout_<key>` meta), `seo` is `title` or `desc`, `meta` is a raw meta key, `post_field` is `title`, `content` or `excerpt`.
+- Each item takes `value`, `source` (a file inside the theme) or `image` (a file inside the theme, imported once).
+- `previous` lists copies an earlier release shipped. On a site never synced before, a saved value that matches one counts as untouched. That is how a live site adopts Site Sync without a full reset.
+- `options` accepts only `blogname` and `blogdescription`.
+- A page that already matches when a site adopts Site Sync gets its base on the first sync pass, so later copy changes update on their own (1.4.1).
+- An item whose `source` or `image` file is missing is reported and left out; it is never compared or written (1.4.1).
+- A page the manifest names but the site lacks is reported as "Page not found" unless the entry says `"create": true` (1.6.5, below); the theme's setup or a companion used to create it.
+
+### States
+
+| State | Meaning | What happens |
+|---|---|---|
+| current | WordPress matches the theme, or a kept WordPress copy | nothing |
+| update | theme moved, WordPress untouched since the last sync (or empty, or a known `previous` copy) | synced automatically after a theme update, or with "Sync these now" |
+| edited | changed in WordPress, theme unchanged | waits for a person |
+| conflict | both changed, a kept copy the theme moved past, or an unknown value never synced | waits for a person |
+| missing | the page or post is not on the site | reported |
+
+Bases are stored per item in the `scout_sync_bases` option as two hashes (theme copy and saved copy at the last sync), plus a `kept` flag when a person kept the WordPress copy.
+
+### Write safety
+
+The plan hash a person reviewed must still match (`stale` otherwise); one sync at a time (`scout_sync_lock`, 15 minutes); images imported before any text changes; the undo record (`scout_sync_journal`) saved before the first write; each field compared again right before writing; the run stops at the first field that moved. Undo puts back only fields still holding what the sync wrote.
+
+### Automatic runs
+
+On the first admin page load by an administrator after the theme, its version or its manifest changes, Scout syncs the `update` rows and leaves the rest for review, then shows "the theme update brought N changes". `scout_sync_auto` returns false to turn this off.
+
+### Tests
+
+An integration script (36 checks) runs against a real WordPress: safe fills, adoption of already-matching pages, a missing source file, known earlier copies, missing pages, unknown values, refused options, stale reviews, automatic runs, kept copies, take, undo, racing edits and status-only mode. It lives at `tools/tests/site-sync.php` (outside the plugin, so it never ships) and runs against a disposable WordPress.
+
+## Added in Scout Core 1.5.0
+
+Four things a theme update could not reach before, each one key at a time so nothing around it is touched:
+
+```json
+{
+  "options": [
+    { "option": "scout_business", "key": "email", "value": "team@example.com" },
+    { "option": "scout_cards", "key": "people.sean.title", "value": "Co-Founder", "previous": ["Old title"] }
+  ],
+  "fields": [
+    { "post_type": "scout_team", "slug": "sean-mcnamara", "meta": "_scout_team", "key": "role", "value": "Co-Founder" }
+  ],
+  "users": [
+    { "email": "sean@example.com", "field": "description", "value": "Author bio", "previous": ["Old bio"] }
+  ]
+}
+```
+
+- **Option keys.** `options` with `key` sets one key inside an array option. `scout_business` (Business info) is allowed; a theme allows its own array options with the `scout_sync_option_keys` filter. A whole array option is still refused. Keys are dotted paths; on a list, a part matches the item whose `slug` equals it, so `people.sean.title` survives reordering.
+- **Meta keys.** `fields` with `meta` and `key` sets one key inside an array meta value (a Team profile's role or bio) and leaves the rest of the profile alone.
+- **Users.** `users` sets an author's Biographical Info (`description`, the only field allowed), matched by email. A user the site lacks is reported as missing.
+- **Core updates re-run.** The automatic run's key includes the Core version, so the first admin load after a Core update syncs rows that version newly understands.
+- Same states, previous copies, journal and undo as every other row. Tests: 52 checks in `tools/tests/site-sync.php`.
+
+## Added in Scout Core 1.6.5
+
+Site Sync makes the pages and posts the bundle names (Site Standard §6: the repo is where every page starts, and a theme setup engine is no longer needed for pages), and reads one manifest shape.
+
+```json
+{
+  "sync_version": 1,
+  "create_missing": true,
+  "identity": { "title": "Client Name", "tagline": "One line", "business": { "phone": "(919) 555-0100", "city": "Raleigh" } },
+  "pages": [
+    { "slug": "home", "title": "Home", "file": "sync/pages/home.html", "template": "front-page", "front_page": true },
+    { "slug": "services/weddings", "title": "Weddings", "source": "sync/pages/weddings.html", "seo_title": "Weddings | Client", "description": "One sentence." },
+    { "slug": "privacy", "title": "Privacy", "content": "<p>...</p>", "create": false }
+  ],
+  "posts": [
+    { "slug": "welcome", "title": "Welcome", "source": "sync/posts/welcome.html", "date": "2026-11-01", "excerpt": "A first post." }
+  ]
+}
+```
+
+- **`create`.** `true` creates a page the site lacks as a published page (a post as a draft); `"draft"`, `"publish"`, `"private"` or `"pending"` names the status; `false` keeps "Page not found". `create_missing` at the top is the default for every entry. A created page takes its `title`, `content`, `template` (`_wp_page_template`), `parent` (a slug; a slug with a `/` uses the part before it), `menu_order`, `excerpt` and `date`; `front_page` or `posts_page` sets Settings, Reading to it. The parent must already be on the site, or the run stops and nothing is created.
+- **State `create`** ("Will be created"). A safe write: the automatic run and "Sync these now" make the page; it never waits for review. After the run its rows read `current`. Undo trashes the pages the run created and puts the front-page settings back.
+- **`posts`.** The same entries as `pages`, with `post_type` `post` and `create` defaulting to a draft, so a new post from the repo waits to be published.
+- **Aliases, so every theme's manifest reads the same way:** `file` is `source`; `seo_title` and `description` on a page entry are its `seo` fields; `identity.title` and `identity.tagline` are the `blogname` and `blogdescription` options; `identity.business.<key>` is `scout_business` key by key (empty values are skipped). A companion importer is still needed only for a client's own post types.

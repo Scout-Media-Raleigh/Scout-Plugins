@@ -1,6 +1,112 @@
 # Changelog — scout-optimize
 
+## 0.9.10 (2026-11-05)
+
+- **Image optimizer.** The status line is a headline and one sentence, with Shrink older photos as its button. The settings are one box (what to do, quality, largest size) instead of cards, and the server facts sit in More options. Plainer labels: "Make WebP copies (a smaller image format every browser shows)", "Make AVIF copies (a newer format, smaller still, if the server can)", "Show visitors the smaller copies". The setting keys are unchanged.
+- **Shrink older photos** opens with a status line ("12 images to shrink. 30 of 42 done (71%).") with Start or Stop, and a progress meter, instead of four number cards.
+
+## 0.9.9 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Plainer label.** Optimize existing images is now Shrink older photos, on the button and on its screen. The page address is unchanged.
+- **Shorter help text.** The Image optimizer and Shrink older photos screens say each thing once, and the link back reads Image optimizer, the same as the menu.
+
+## 0.9.8 (2026-11-05)
+
+- **The Image optimizer screen opens with one status line.** It says whether new uploads are optimized, the size limit and quality, which smaller copies are made, and whether visitors get them. Optimizing images already in the library and what the server can do now come before the settings.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.9.7 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.9.6 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.9.5 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
 All notable changes to this plugin. Format: date, what changed, why, which files.
+
+## 0.9.4 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.9.3 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.9.2 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.9.1 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.9.0 (2026-10-16)
+
+- **Forms and jQuery stop holding up the first paint, on every site.** Gravity Forms' stylesheets load at low priority, and every script that needs jQuery (Gravity Forms and its helpers included) prints at the end of the page with everything it depends on. Forms in a page's content are enqueued up front so Gravity Forms does not print its scripts mid-page. On phones PageSpeed counted 1 to 2 seconds of render-blocking from these on North Crest, Hair by Patrick, Maravela's and Andy's. The same fix lived in the Scout Media and Andy's themes; it is the platform's now. Off switches: `scout_optimize_speed` and `scout_jquery_in_footer` filters, or `SCOUT_OPTIMIZE_SPEED` false in wp-config.php. Themes that print forms from a template add their IDs with `scout_optimize_form_ids`. `includes/class-scout-optimize-speed.php`.
+
+## 0.8.7 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.8.6 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.8.5 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.8.4 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.8.3 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 0.8.2 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+
+## 0.8.1 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 0.8.0 (2026-10-12)
+
+- **Same boxes as every Scout screen.** Settings sit in the shared white boxes: what to do, quality and largest size side by side, then this server and images already in the library. Same fields, same save.
+- **One sidebar entry.** Optimize existing images now opens from a button on Image optimizer instead of its own sidebar item (it stays listed under Tools on sites without a Scout menu).
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 0.7.3 (2026-10-12)
+
+- **Moved out of Tools into the site's Build section** (Scout Build on the
+  Scout theme, Site Build on client sites), with plain names: "Image optimizer"
+  and "Optimize existing images". Old Tools links forward to the new place.
+  Tools is used only when a site has no Build section.
+
+## 0.7.2 (2026-10-12)
+
+- **A new look for every settings screen.** The plugin's screens now share
+  one Scout design: a clear page header with the section name, settings
+  grouped into rounded boxes, pill buttons, and a short sign-off footer with
+  how to reach us. On client sites the header reads "Site Build" instead of
+  "Scout". Nothing about how the settings work changed.
+
+## 0.7.1 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
 
 ## [0.7.0] — 2026-09-03 (joins the self-updating suite)
 

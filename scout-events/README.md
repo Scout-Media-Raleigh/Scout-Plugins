@@ -1,0 +1,426 @@
+# Scout Events
+
+Events, sessions and speakers that the owner edits in plain forms. Each event
+gets a page with its details, ticket button, schedule and speakers, and Event
+schema so it can appear in Google's event results.
+
+Built for Bliss Boogie first and shaped for larger multi-day events (several
+rooms or tents a day, dozens of speakers). It works with any ticket link (a
+partner's checkout, Acuity, Eventbrite), with free sign-ups on the site, and
+with paid tickets through the site's own WooCommerce checkout. Free and paid
+tickets get the same QR ticket, door check-in and per-person agreements.
+Taking the money is WooCommerce's job, through whichever payment service the
+site turns on; this plugin never sees card details.
+
+## Where it lives
+
+**Events** has its own item in the dashboard sidebar, right under Scout, with the same Scout
+bolt (a plain calendar icon on partner sites with `SCOUT_HUB_BRAND` false), so
+it reads as Scout's and sits apart from the site's Build settings. Under it:
+**Home** (the numbers, a **Needs you** list of everything waiting on a
+person, and Coming up), **All events**, **Sessions**, **Speakers**, **Add from spreadsheet**
+and **Settings**. Other Scout features add their screens to this menu on the
+`scout_events_menu` action and their items to Needs you with the
+`scout_events_needs_you` filter. Anyone who can edit posts can manage events;
+only administrators change settings.
+
+## The content
+
+| Type | Holds | Address |
+|---|---|---|
+| Event | Dates and times, status, how people attend, venue and address or online link, ticket link and button words, availability, price range, sales dates, minimum age, capacity, What to know lines, schema type. Title, description, excerpt and photo are the post's own. | `/event/name/` |
+| Session | Event, day, start and end, room or tent, track, kind (class, keynote, performance, activity, break), seats, speakers. | `/session/name/` |
+| Speaker | What they do, short bio, website, social links. Photo is the featured image; full bio is the editor. | `/speaker/name/` |
+
+Address words can be changed under Settings on the Events screen. None of the
+types has an archive, so a site's own /events/ page is never taken over.
+
+Every event shows a **Ready to share** checklist (start date and time, place,
+description, photo, ticket link while on sale, price for Google). The Events
+overview lists what each upcoming and draft event still needs.
+
+## Showing events
+
+- Event, session and speaker pages fill themselves in. Turn that off with the
+  `scout_events_auto_content` filter when a theme template places the pieces.
+- `[scout_events]` upcoming events; `show="past"` or `show="all"`, `limit="6"`.
+  Lists longer than eight fall under month headings; `group="month"` or
+  `group="none"` chooses (`group="year"` too). Speaker cards carry `id="their-slug"` for links.
+  `views="list,month"` adds a List / Month switch, `filter="series"` adds chips for each kind of
+  event, and `layout="gallery"` shows each event's photo (grouped by year), made for past events.
+- `[scout_event id="12"]` one event's details panel and ticket button.
+- `[scout_schedule event="12"]` the schedule by day and time;
+  `layout="grid"` puts rooms side by side and scrolls sideways on phones.
+- `[scout_speakers event="12"]` speaker cards; without `event`, every speaker.
+- `scout_events_upcoming()`, `scout_event_data( $id )` and
+  `scout_events_schedule_html( $id )` for themes and other Scout features.
+
+Session descriptions open in place with `<details>`, so no script loads. The
+stylesheet loads only on pages that show events. Its colors are listed under
+"What this feature needs from the theme", below.
+
+Other Scout features add to the event pages with filters:
+`scout_events_detail_rows` (rows of the details panel), `scout_events_ticket_html`
+(the ticket button or its stand-in) and `scout_events_card_tags` (the small
+tags on event cards). `scout_events_imported_event` runs after each events.csv
+row with every column, so a feature can read its own (Scout Members reads
+`members_only`).
+
+The ticket button carries `data-scout-track="ticket_click"` and the map link
+`data-scout-track="directions_click"`, which Scout Analytics reports.
+
+## Sign-ups and check-in
+
+Tick **Take sign-ups on this site** under Tickets on an event (with Capacity,
+Sales open and close, and how many guests each person may bring). The event
+page then shows a short form in place of the ticket button. Each person gets
+an email with their ticket: a link to their ticket page and the QR code as an
+image. The QR code holds that same link.
+
+At the door, sign in on a phone and scan each ticket with the camera. The
+link opens the ticket with one big **Check in** button and the running
+count. **Events, Sign-ups** is the door list for anyone without their ticket,
+the waitlist (Move in emails their ticket), and a spreadsheet download.
+
+Each upcoming event offers **Add to calendar** (Google, or an .ics file for
+Apple and Outlook), and the ticket email carries the .ics too. The day before,
+everyone going gets one reminder with their ticket.
+
+Sign-ups live in their own table (`wp_scout_event_signups`), created on
+activation and on update. Deleting the plugin keeps it, like every other
+piece of the client's content. Paid shop tickets write into the same table,
+one row per ticket (see below), so the door list and check-in are one list.
+
+## Speaker photos
+
+Each speaker can have several photos. The **Photos** box on their edit screen
+shows them all: tick **Main photo** to choose the one on their card and page,
+**Add photos** from the Media Library, and tick **Show the other photos on
+their public page** for a small strip under their bio. Replacing the main
+photo keeps the old one as an option. Presenters can add up to four from
+their profile, approved like any other change.
+
+## Directories: speakers, classes, vendors
+
+`[scout_directory]` lists every published speaker as a card (photo, name,
+role, short bio, topics) with a search box and topic buttons. People type a
+name, practice or word, or tap a topic; the list filters as they go, and the
+address keeps the choice (`?se_topic=yoga&se_q=breath`) so it can be shared.
+Without JavaScript the same search and buttons reload the page filtered.
+On a phone the cards turn into a compact list.
+
+- `type="classes"`: every class, talk, keynote, performance and activity (not
+  breaks). A class taught more than once is one card with each time and room.
+  `show="upcoming"` keeps only classes at events still to come.
+- `type="vendors"`: vendors with their logo, town and what they sell.
+- `topic="yoga"` starts on one topic; `event="summit-2026"` keeps one event;
+  `region="midwest"` keeps one region; `search="no"` leaves out the search box.
+- On a members-only page (Scout Members) it is a private directory.
+- `layout="list"` shows speakers or vendors as a contact list: a search box,
+  a Kind of work choice, a Where choice (when there is more than one region),
+  everyone A to Z under letter headings with a letter rail, and a name that
+  opens to its sheet in place (contact, topics, the link to their page). The
+  form works without JavaScript; with it the list filters as people type.
+- `contact="yes"` turns it into a contact list for members: each speaker or
+  vendor card adds where they work and how to reach them (Website, Book,
+  Email, phone, and social or shop links named by site). Fill these under
+  **Public contact** on the speaker or vendor, or with the `city`, `booking`,
+  `email`, `phone` and `links` CSV columns. Off by default, and the public
+  speaker page never shows email or phone, so use it on members-only pages.
+
+Topics are tags on speakers, sessions and vendors (the **Topics** box on each,
+or **Events, Speaker topics**), or a `topics` column in the CSV files (`Yoga|Breath`).
+
+## Tickets from a WooCommerce shop
+
+When the site runs WooCommerce, each event has a **Tickets from the shop**
+box. Tick the products that are its tickets, one per ticket type (Weekend
+pass, Day pass, VIP, a camping spot), each with its own price and stock.
+
+- The event page lists them in place of the single ticket button: price,
+  "12 left" when stock runs low, **Sold out**, and **Add to cart** (it works
+  without JavaScript too). Products with choices link to their own page.
+- The event's price, and whether it is on sale or sold out, come from the
+  products, so event cards, the details panel and Google's event listing
+  follow the shop. "Not on sale yet" on the event still holds the list back
+  until the owner opens sales; Cancelled always wins.
+- Each product page says which event it is for, and the events list has a
+  **Tickets sold** column.
+- Every paid order fires `scout_events_ticket_bought` ( $order, $event_id,
+  $product_id, $qty ) once per ticket line.
+
+### Paid tickets, end to end
+
+- **Create a ticket** (in the Tickets from the shop box): ticket name, price,
+  how many to sell, sales open and close, the **name on receipts**, and what
+  it includes. It makes a simple, virtual WooCommerce product, already ticked
+  as this event's ticket. Receipt name, sales open and close can be changed
+  later on the product's General tab.
+- **Name on receipts.** The order, the WooCommerce emails and the payment
+  service see this name (such as "Workshop registration"); the event page
+  and the cart show the ticket name. The order screen shows both.
+- **Sales window and places left.** A ticket outside its sales dates shows
+  "On sale December 1" or "Sales closed" instead of Add to cart. The event's
+  Capacity caps free and paid tickets together: the quantity box stops at the
+  places left, the cart refuses more, and the event shows Sold out at zero.
+- **Checkout** asks for each ticket holder's name (and, optionally, their own
+  email for a copy of their ticket), and their agreements when the event asks
+  (below). While the cart holds tickets, a block checkout page shows the
+  classic checkout form instead, because the block checkout has no place for
+  fields repeated per ticket (`scout_events_classic_checkout` filter to keep
+  the block one).
+- **When the order is paid** (Processing or Completed), each ticket becomes an
+  attendee: the same QR ticket page, door list, check-in and day-before
+  reminder as a free sign-up, counted in places left. The buyer gets one email
+  with every ticket (a link and a QR image each) and the calendar file; a
+  holder with their own email gets their own copy. An order paid by a method
+  that waits (such as a cheque) makes its tickets when the owner marks it
+  Processing.
+- **Refunds.** A full refund, a cancelled order, or a partial refund turns the
+  refunded tickets void: they show "This ticket was refunded" and never check
+  in. A partial refund voids tickets not yet checked in first. Paid tickets are
+  cancelled by refunding the order, not from the door list.
+- Orders made another way (in the dashboard, or by a route that skips the
+  checkout form) still make one ticket per seat, named for the buyer. When the
+  event asks for agreements, the ticket page asks the holder to agree there,
+  and the door list marks them "Has not agreed yet".
+- Off on a site running FooEvents, which makes its own tickets from the same
+  products, or with the `scout_events_paid_attendees` filter returning false.
+
+To test without a payment service: turn on WooCommerce's **Cash on delivery**
+method (with "Accept for virtual orders"), call it "Test payment", and buy a
+ticket. The order goes straight to Processing and the tickets arrive.
+
+## Agreements and waivers
+
+Under **Agreements** on an event, tick **Each person agrees before they get a
+ticket**, and write an optional **Waiver**. Set the link to the site's
+community agreements once, under Events, Settings. Tick **Ask each person
+whether they can be in photos and video** for a yes or no.
+
+- On the sign-up form and at checkout (once per ticket holder), people read the
+  waiver in a box, tick that they agree to the community agreements and the
+  waiver, confirm their age when the event has a Minimum age, choose yes or no
+  for photos, and type their full name to sign. The signature has to match the
+  name on the ticket. One person signing up with guests confirms the age for
+  the group.
+- The ticket keeps the signature, the date and time, the age confirmation, the
+  photo choice and the **agreement version**: a short id for the exact waiver
+  words, agreements link, minimum age and photo question at that moment. The
+  words of every version are kept on the event (`_scout_event_waivers`), so an
+  edit later never changes what someone signed.
+- The door list shows "Agreed" or "Has not agreed yet" and "No photos" per
+  person, with a count of each at the top. Scanning a ticket shows the same.
+  The spreadsheet download adds Ticket, Order, Agreed at, Signature,
+  Agreement version, Age confirmed, Photos and Newsletter requested.
+- The event page says each ticket holder agrees when they get their ticket.
+- Answers are in the privacy export. The waiver itself is the owner's words;
+  have a lawyer read it.
+
+## Newsletter opt-in
+
+An unticked **Send me the newsletter** box on the sign-up form and at checkout
+(when the cart holds tickets). It shows only when something listens to
+`scout_newsletter_optin` (a newsletter connector plugin), or with the
+`scout_events_offer_newsletter` filter. When ticked, the time is stored on the
+ticket (and on the order), and once the sign-up is made or the order is paid:
+
+`do_action( 'scout_newsletter_optin', $email, $first_name, $source, $tags, $context )`
+
+`$source` is `event` for a free sign-up and `ticket` for a paid checkout.
+`$tags` is empty unless the `scout_events_newsletter_tags` filter adds some:
+the connector tags by source, never one tag per event, because Beehiiv caps a
+publication at 100 tags. `$context` holds `wording` (the exact words on the box
+they ticked), `page` and `url` (the event's address) and `campaign` (the
+event's slug; the first event in the cart at checkout), so the consent record
+keeps them. A listener that takes four arguments still works. Scout Events
+never calls a newsletter service itself.
+
+**With Scout Newsletter active, the checkout box is Scout Newsletter's.** The
+ticket checkout shows Scout Newsletter's one box (with its words) instead of
+this one, Scout Newsletter saves the consent record when the order is paid
+(tagged `ticket`), and this plugin only notes the time on the first ticket. The
+free sign-up form keeps its own box. Without Scout Newsletter, nothing changes.
+
+## Regions
+
+For events that run in more than one place. Set the region once, on the
+event (**Regions** box, or a `regions` column in events.csv). Its sessions,
+speakers and vendors belong to that region too; any of them can also carry a
+region of its own. When there is more than one region, directories show
+region buttons next to the topics.
+
+- `[scout_regions]`: one card per region with its next event, linking to the
+  region's page (Events, Regions, edit a region, Region page).
+- `[scout_events region="midwest"]`: one region's events.
+- The event's details show its region, linked to the region's page.
+
+## Topic pages
+
+A public page per topic, for search: everything on "Water" or "Solar" in one
+place. **Events, Speaker topics**: write the topic's description, then tick **Make a
+draft page for this topic** (or tick several topics and use **Make topic
+pages**). Each page starts as a draft under a page with the slug `topics`
+when there is one, with the description as its introduction and search
+description. Read it, then publish it from Pages. The Page column shows Draft
+or Live. Skip topics with only one or two entries: thin pages do not help.
+
+- `[scout_topic topic="water"]`: the topic's classes, speakers and vendors,
+  with an ItemList in structured data. `show="classes,vendors"`,
+  `region="midwest"`, and headings such as `speakers="Instructors"`.
+- `[scout_topics]`: a card for every topic with a live page, busiest first.
+- Speaker and class pages link to their topics' live pages.
+
+## Volunteers
+
+Fill in the **Volunteer shifts** box on an event (job, day, from, to, how many
+people, a note for volunteers) and put `[scout_volunteer event="..."]` on a
+page. Volunteers pick shifts and get a confirmation, a link to see or drop
+their shifts, and a reminder the day before. **Events, Volunteers** is the
+roster, with open spots and a spreadsheet download.
+
+## Vendors
+
+`[scout_vendor_apply]` (add `event="summit-2027"` to file them under one
+event) is the application for people who want to sell. Each one arrives as a
+pending **Vendor** under Events and in Needs you. The owner fills in or fixes
+the public details (name, description, logo, city, website, events) and clicks
+Publish, which approves them and sends an email. Approved vendors show as a
+Vendors list near the end of every event page they are at, and anywhere with
+`[scout_vendors event="..."]`. Vendors have no pages of their own.
+
+Contact details (name, email, phone, power and setup needs) live in a private
+box on the vendor's edit screen, never on the site, and are in the WordPress
+privacy export and erase tools. vendors.csv imports public details only.
+
+## Presenters
+
+Put `[scout_presenter_portal event="summit-2027"]` on a page (the event's
+address word links the proposed classes to it; leave it out to link them later).
+
+- **Logged out:** the application. It creates a Presenter account (WordPress's
+  own set-password email), a speaker in **Pending Review** with their photo, and
+  draft sessions for up to two class ideas.
+- **Logged in:** their status, their sessions, and a profile form. Changes wait
+  for approval; phone and room needs save straight away (organizers only).
+- **The owner:** new applications and waiting changes lead **Needs you**.
+  Publish a pending speaker to approve them (they are emailed). The speaker's
+  edit screen shows the private details and any waiting changes side by side
+  with **Approve changes** and **Discard**.
+- Private details live in `_scout_speaker_private` and never reach the site,
+  schema or the import. Presenters are sent away from wp-admin.
+- Mail goes through `wp_mail`, so the site needs working email (on WP Engine,
+  an SMTP plugin or the host's mail) for the set-password and approval emails.
+
+## Bringing in a spreadsheet
+
+Scout → Events → **Bring in a spreadsheet** takes up to three CSV files, read in
+this order so sessions can point at what came before:
+
+| File | Columns |
+|---|---|
+| events | title, slug, start_date, start_time, end_date, end_time, status, mode, venue, street, city, region, postal, country, online_url, availability, ticket_url, ticket_label, price_from, price_to, sales_start, sales_end, min_age, capacity, signup, signup_guests, agree, waiver, photo_ask, know, schema_type, excerpt, description, photo, regions, post_status |
+| speakers | name, slug, role, short_bio, bio, website, links, photo, photos, topics, regions, order, post_status |
+| sessions | title, slug, event, date, start, end, room, track, kind, speakers, capacity, description, topics, regions, post_status |
+
+`region` on events is the state in the address; `regions` is the event's regions (Midwest, Southeast). Dates are `YYYY-MM-DD`, times `HH:MM`. `links`, `speakers`, `know`, `photos`, `topics` and `regions` take
+several values separated by `|`. `event` and `speakers` match by slug, then by
+title or name. `photo` is a file name already in the Media Library or a web
+address. Unknown columns are ignored.
+
+Every run is a preview until "Bring them in" is ticked. A row updates the
+entry with the same slug or title (sessions: same title in the same event),
+only for cells that have a value, so running the same files twice changes
+nothing. Notes list rows that could not be matched or read.
+
+## Hooks for other features
+
+- `scout_events_person` ( $person ): someone signed up, volunteered, or
+  applied as a vendor or presenter. Keys: email, name, role (attendee,
+  waitlist, volunteer, vendor, presenter), event (id or 0), and phone and org
+  when known. Scout CRM Sync uses it.
+- `scout_events_ticket_bought` ( $order, $event_id, $product_id, $qty ):
+  a paid shop ticket line.
+- `scout_newsletter_optin` ( $email, $first_name, $source, $tags, $context ): someone
+  ticked "Send me the newsletter" (above).
+- Filters: `scout_events_paid_attendees` (paid tickets become attendees),
+  `scout_events_classic_checkout` (swap a block checkout while tickets are in
+  the cart), `scout_events_offer_newsletter`, `scout_events_newsletter_tags`.
+- `scout_events_event` filter ( $event, $id ): stand in for event fields on
+  the site (the shop's price and stock use it).
+- `scout_events_imported_event`, `_session`, `_speaker`, `_vendor`
+  ( $id, $row ): after each spreadsheet row, for extra columns.
+
+## Schema
+
+- Event pages: an Event node (or EducationEvent, Festival, SocialEvent) with
+  start and end, eventStatus, eventAttendanceMode, Place with PostalAddress or
+  VirtualLocation, Offer or AggregateOffer (price, currency, availability,
+  sales dates), organizer, performers from the sessions, typicalAgeRange and
+  capacity. No node without a start date.
+- Speaker pages: a Person node with jobTitle, description, image and sameAs.
+- With Scout Core active the nodes join its graph (`scout_schema_graph`) and
+  the organizer points at `/#business`. Without it the plugin prints its own
+  small graph.
+- Off under Settings, or with the `scout_events_schema` filter, when a theme
+  prints its own. Adjust nodes with `scout_events_event_schema` and
+  `scout_events_person_schema`.
+
+## Data
+
+Each post keeps one protected meta array (`_scout_event`, `_scout_session`,
+`_scout_speaker`); a few sortable copies (`_scout_event_start`,
+`_scout_event_end`, `_scout_session_event`, `_scout_session_start`) exist only
+for ordering lists. Dates and times are in the site timezone. Deleting the
+plugin removes its settings only; the content stays.
+
+## Not in this release
+
+A real payment service (turned on in WooCommerce when the merchant account
+exists), ticket transfers between people, per-ticket fields in the block
+checkout, holding places for orders that wait for payment, and filling events
+from `scout-setup.json` (Scout Build needs an `events` section first).
+
+## What this feature needs from the theme
+
+- **DESIGN.md:** fonts and text color come from the theme. Colors read
+  the DESIGN.md roles accent fill (buttons and chosen chips), on accent, line,
+  muted text, surface 2 (insets) and the card corner, as `--scout-accent-fill`,
+  `--scout-on-accent`, `--scout-line`, `--scout-text-2`, `--scout-surface-2`
+  and `--scout-radius-card`. These are the `--scout-*` variables `tools/design-build.php` writes to the theme's `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that file. The plugin's own variables still win when
+  the theme sets them: `--scout-events-accent`, `--scout-events-on-accent`,
+  `--scout-events-line`, `--scout-events-muted`, `--scout-events-inset`,
+  `--scout-events-radius`. With neither, neutral defaults (`#1D1D1F`, `#fff`,
+  a soft gray, `14px`). The red and green status lines and the white plate
+  behind logos stay fixed.
+- **Where it lands:** event, session and speaker pages (`scout_event`,
+  `scout_session`, `scout_speaker`) fill themselves in through `the_content`.
+  The theme's single templates print the title as the H1 and call
+  `the_content()`. A theme that places the pieces itself turns that off with
+  `scout_events_auto_content`. Lists, schedules, speakers and directories
+  print where their shortcodes sit, with H2 and H3 headings. The stylesheet
+  loads only on pages that show events.
+- **Images:** each event's and speaker's featured image. A speaker with no
+  photo shows their initials.
+- **scout-setup.json:** nothing.
+
+<!-- visitor-data:start -->
+## Visitor data
+
+| What | Where it is kept | How long | Shared with |
+|---|---|---|---|
+| Free event sign-ups: name, email, number of guests, status (going, waitlist, cancelled), the time they signed up, their account number if they were signed in, a private ticket code, and check-in and reminder times (only when an event takes sign-ups on the site) | A table of event sign-ups in this website's database | Until someone deletes it. The site's privacy eraser tool exports a person's sign-ups by email address, and the eraser tool deletes them. | Nobody |
+| Answers to an event's agreements: the time they agreed, the full name they typed as a signature, which version of the waiver they agreed to, the age confirmation, and whether they can be in photos (only when the event asks for agreements or a photo choice) | A table of event sign-ups in this website's database | Until someone deletes it. The site's privacy eraser tool removes them with the sign-up. On a paid ticket it removes the typed signature and keeps the time and waiver version. | Nobody |
+| The time a person ticked "Send me the newsletter" when signing up or buying a ticket (only when a newsletter plugin is on and the box is ticked) | A table of event sign-ups, and the WooCommerce order for paid tickets, in this website's database | Until someone deletes it. On a paid ticket the time stays after a privacy erase, as the record of the yes | Nobody |
+| Paid tickets: each ticket holder's name, optional email and agreement answers, and one sign-up row per ticket with the order number (only when tickets are sold through the site's WooCommerce checkout) | The WooCommerce order and the table of event sign-ups in this website's database | Until someone deletes it. A refund marks the tickets void but does not delete them. The site's privacy eraser tool keeps paid tickets with their order and takes out the holder's name, email and signature, on the ticket and in the order's holder list. | Nobody |
+| Volunteers: name, email, phone number, the shifts they picked, the time they signed up, reminder times, a private link code, and any shift they dropped (only when an event lists volunteer shifts) | A table of volunteers in this website's database | Until someone deletes it. The site's privacy eraser tool removes a person's volunteer rows by email address. | Nobody |
+| Vendor applications: business name, description, city, website, what they sell, a logo or photo, and the event they applied for (only when the site has a vendor application form) | This website's database, as a vendor post that waits for approval and is shown on the site once approved, and the image in the Media Library | Until someone deletes it. The site's privacy tools export it by email address; the eraser tool leaves the listing for staff to edit or delete by hand | Emailed to the site's own address (the business name and a link only) |
+| Vendor contact details: contact name, pronouns, email, phone number, power and space needs, notes, and the time they applied (only when the site has a vendor application form) | This website's database, as private details on the vendor post. Never shown on the site. | Until someone deletes it. The site's privacy eraser tool removes these details by email address. | Nobody |
+| A presenter account: a login name made from the email, the email address and a display name (only when someone applies through the presenter form) | This website's user accounts | Until someone deletes it. WordPress's own privacy export lists the account; the eraser tool leaves the login for staff to delete under Users | Nobody |
+| Presenter applications and profile updates: name, what they do, short and full bio, website, social links, photos, and up to two class ideas with descriptions (only when someone applies through the presenter form) | This website's database, as a speaker post that waits for approval and is shown on the site once approved, draft sessions, and photos in the Media Library | Until someone deletes it. The site's privacy tools export it by email address; the eraser tool leaves the profile for staff to edit or delete by hand | Emailed to the site's own address (the presenter's name and a link only) |
+| Presenter private details: phone number, pronouns, room needs, notes, photo release and the time they applied (only when someone applies through the presenter form) | This website's database, as private details on the speaker post. Never shown on the site. | Until someone deletes it. The site's privacy eraser tool removes these details, and any profile changes waiting for approval, by email address | Nobody |
+
+Tickets, reminders and confirmations are emailed to the person, with a QR code image that is made for the email and deleted right after sending. Names and emails are also handed to Scout CRM Sync and Scout Newsletter when those plugins are on, and each of those lists what it keeps.
+
+Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
+<!-- visitor-data:end -->

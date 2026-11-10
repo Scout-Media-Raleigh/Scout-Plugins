@@ -43,6 +43,29 @@ require_once SCOUT_OPTIMIZE_DIR . 'includes/batch/class-scout-optimize-batch.php
 final class Scout_Optimize {
 
 	/**
+	 * One status line at the top of the screen (admin kit 1.10.0). An older kit
+	 * copy may be the one loaded mid-update, so fall back to the same markup.
+	 *
+	 * @param string $go Button markup, escaped by the caller.
+	 */
+	private static function ui_status( string $state, string $headline, string $detail = '', string $go = '' ): void {
+		if ( method_exists( 'Scout_Admin_UI', 'status' ) ) {
+			Scout_Admin_UI::status( $state, $headline, $detail, $go );
+			return;
+		}
+		$state = in_array( $state, array( 'good', 'warn', 'bad', 'off' ), true ) ? $state : 'good';
+		echo '<section class="sh-box"><p class="sh-status is-' . esc_attr( $state ) . '"><span class="sh-dot" aria-hidden="true"></span><strong>' . esc_html( $headline ) . '</strong>';
+		if ( '' !== $detail ) {
+			echo ' <span>' . esc_html( $detail ) . '</span>';
+		}
+		if ( '' !== $go ) {
+			echo ' <span class="sh-status-go">' . $go . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped by the caller.
+		}
+		echo '</p></section>';
+	}
+
+
+	/**
 	 * Option key holding the installed plugin version, used for idempotent
 	 * activation and future upgrade routines.
 	 */
@@ -80,7 +103,9 @@ final class Scout_Optimize {
 	 * @return void
 	 */
 	private function init() {
-		add_action( 'admin_menu', array( $this, 'register_admin_page' ) );
+		// Priority 20: after the theme's Build section (9) and the Site Build hub (15).
+		add_action( 'admin_menu', array( $this, 'register_admin_page' ), 20 );
+		add_action( 'admin_menu', array( __CLASS__, 'redirect_old_urls' ), 1 );
 		add_action( 'admin_post_scout_optimize_save', array( $this, 'handle_save_settings' ) );
 
 		// Register the upload pipeline. Its callback is a no-op until the
@@ -151,12 +176,69 @@ final class Scout_Optimize {
 	 * @return void
 	 */
 	public function register_admin_page() {
-		add_management_page(
-			__( 'Scout Optimize', 'scout-optimize' ),
-			__( 'Scout Optimize', 'scout-optimize' ),
+		add_submenu_page(
+			self::parent(),
+			__( 'Image optimizer', 'scout-optimize' ),
+			__( 'Image optimizer', 'scout-optimize' ),
 			SCOUT_OPTIMIZE_CAP,
 			'scout-optimize',
 			array( $this, 'render_admin_page' )
+		);
+	}
+
+	/**
+	 * The site's Build section (the theme's Scout Build, Recon Build, or the
+	 * Site Build hub), so every Scout screen lives in one place. Tools only
+	 * when there is no Build section at all.
+	 *
+	 * @return string
+	 */
+	public static function parent() {
+		global $admin_page_hooks;
+		foreach ( array( 'scout-build', 'recon-build', 'site-build', 'scout' ) as $slug ) {
+			if ( isset( $admin_page_hooks[ $slug ] ) ) {
+				return $slug;
+			}
+		}
+		return 'tools.php';
+	}
+
+	/**
+	 * Admin URL of one of the optimizer's screens, wherever it lives.
+	 *
+	 * @param string $page Page slug.
+	 * @param array  $args Extra query args.
+	 * @return string
+	 */
+	public static function url( $page = 'scout-optimize', $args = array() ) {
+		$base = 'tools.php' === get_option( 'scout_optimize_parent', 'tools.php' ) ? 'tools.php' : 'admin.php';
+		return add_query_arg( array_merge( array( 'page' => $page ), $args ), admin_url( $base ) );
+	}
+
+	/**
+	 * Remember where the screens live (redirects run before menus exist), and
+	 * send old Tools bookmarks to the new place.
+	 *
+	 * @return void
+	 */
+	public static function redirect_old_urls() {
+		global $pagenow;
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 'tools.php' === $pagenow && in_array( $page, array( 'scout-optimize', 'scout-optimize-sweep' ), true ) && 'tools.php' !== get_option( 'scout_optimize_parent', 'tools.php' ) ) {
+			$args = wp_unslash( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			unset( $args['page'] );
+			wp_safe_redirect( self::url( $page, $args ) );
+			exit;
+		}
+		add_action(
+			'admin_menu',
+			static function () {
+				$parent = self::parent();
+				if ( get_option( 'scout_optimize_parent' ) !== $parent ) {
+					update_option( 'scout_optimize_parent', $parent, false );
+				}
+			},
+			21
 		);
 	}
 
@@ -208,7 +290,7 @@ final class Scout_Optimize {
 
 		update_option( self::SETTINGS_OPTION, $settings );
 
-		wp_safe_redirect( add_query_arg( 'updated', '1', admin_url( 'tools.php?page=scout-optimize' ) ) );
+		wp_safe_redirect( self::url( 'scout-optimize', array( 'updated' => '1' ) ) );
 		exit;
 	}
 
@@ -243,85 +325,122 @@ final class Scout_Optimize {
 		$no   = __( 'no', 'scout-optimize' );
 
 		$toggles = array(
-			'optimize_uploads' => __( 'Optimize new uploads (compress, cap dimensions, back up the original first)', 'scout-optimize' ),
-			'generate_webp'    => __( 'Generate WebP copies', 'scout-optimize' ),
-			'generate_avif'    => __( 'Generate AVIF copies (smaller than WebP; needs server AVIF support)', 'scout-optimize' ),
-			'rewrite_picture'  => __( 'Serve the smaller copies to visitors (wrap images in <picture>)', 'scout-optimize' ),
+			'optimize_uploads' => __( 'Optimize new uploads (resize and compress, with the original backed up first)', 'scout-optimize' ),
+			'generate_webp'    => __( 'Make WebP copies (a smaller image format every browser shows)', 'scout-optimize' ),
+			'generate_avif'    => __( 'Make AVIF copies (a newer format, smaller still, if the server can)', 'scout-optimize' ),
+			'rewrite_picture'  => __( 'Show visitors the smaller copies', 'scout-optimize' ),
 		);
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Scout Optimize', 'scout-optimize' ); ?></h1>
+		<?php Scout_Admin_UI::open( __( 'Image optimizer', 'scout-optimize' ), __( 'Every photo you upload is resized and compressed so the site stays fast.', 'scout-optimize' ), __( 'Images', 'scout-optimize' ) ); ?>
 
 			<?php if ( isset( $_GET['updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display flag after a nonce-checked save/redirect. ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'scout-optimize' ); ?></p></div>
 			<?php endif; ?>
 
-			<p style="max-width:760px;">
-				<?php esc_html_e( 'Turn optimization on for this site. Everything is off until you enable it here. Originals are always backed up before any image is touched, so every change is reversible.', 'scout-optimize' ); ?>
-			</p>
-
-			<h2><?php esc_html_e( 'This server', 'scout-optimize' ); ?></h2>
-			<table class="widefat striped" style="max-width:420px;">
-				<tbody>
-					<tr><td><?php esc_html_e( 'Imagick image engine', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['imagick'] ? $yes : $no ); ?></strong></td></tr>
-					<tr><td><?php esc_html_e( 'Can create WebP', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['webp'] ? $yes : $no ); ?></strong></td></tr>
-					<tr><td><?php esc_html_e( 'Can create AVIF', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['avif'] ? $yes : $no ); ?></strong></td></tr>
-				</tbody>
-			</table>
-			<?php if ( ! $caps['avif'] ) : ?>
-				<p style="color:#8a6d3b;max-width:760px;"><?php esc_html_e( 'This server cannot create AVIF, so AVIF copies are skipped even if the option below is on. WebP still works.', 'scout-optimize' ); ?></p>
-			<?php endif; ?>
+			<?php
+			$presets_short = array(
+				'lossy'    => __( 'lossy', 'scout-optimize' ),
+				'balanced' => __( 'balanced', 'scout-optimize' ),
+				'lossless' => __( 'lossless', 'scout-optimize' ),
+			);
+			// Headline plus one sentence (DESIGN 2a #2). Each switch below shows its own state.
+			if ( ! $caps['imagick'] ) {
+				$state    = 'warn';
+				$headline = __( 'Can’t run on this server.', 'scout-optimize' );
+				$detail   = __( 'The hosting has no Imagick image engine, which the optimizer needs.', 'scout-optimize' );
+			} elseif ( ! empty( $s['optimize_uploads'] ) ) {
+				$state    = 'good';
+				$headline = __( 'On.', 'scout-optimize' );
+				$detail   = (int) $s['max_dimension'] > 0
+					/* translators: 1: largest size in pixels, 2: quality preset. */
+					? sprintf( __( 'New uploads are scaled to at most %1$d pixels and compressed at %2$s quality, with the original backed up first.', 'scout-optimize' ), (int) $s['max_dimension'], $presets_short[ $s['preset'] ] ?? $s['preset'] )
+					/* translators: %s: quality preset. */
+					: sprintf( __( 'New uploads are compressed at %s quality, with the original backed up first.', 'scout-optimize' ), $presets_short[ $s['preset'] ] ?? $s['preset'] );
+			} else {
+				$state    = 'off';
+				$headline = __( 'Off.', 'scout-optimize' );
+				$detail   = __( 'Turn on Optimize new uploads below.', 'scout-optimize' );
+			}
+			self::ui_status( $state, $headline, $detail, '<a class="button" href="' . esc_url( self::url( 'scout-optimize-sweep' ) ) . '">' . esc_html__( 'Shrink older photos', 'scout-optimize' ) . '</a>' );
+			?>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php wp_nonce_field( 'scout_optimize_settings' ); ?>
 				<input type="hidden" name="action" value="scout_optimize_save" />
 
-				<h2><?php esc_html_e( 'Quality preset', 'scout-optimize' ); ?></h2>
-				<select name="preset">
-					<?php
-					$presets = array(
-						'lossy'    => __( 'Lossy (smallest files)', 'scout-optimize' ),
-						'balanced' => __( 'Balanced (recommended)', 'scout-optimize' ),
-						'lossless' => __( 'Lossless (largest, highest quality)', 'scout-optimize' ),
-					);
-					foreach ( $presets as $key => $label ) :
-						?>
-						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['preset'], $key ); ?>><?php echo esc_html( $label ); ?></option>
-					<?php endforeach; ?>
-				</select>
-
-				<h2><?php esc_html_e( 'What to do', 'scout-optimize' ); ?></h2>
-				<fieldset>
-					<?php foreach ( $toggles as $key => $label ) : ?>
-						<p>
-							<label>
-								<input type="checkbox" name="<?php echo esc_attr( $key ); ?>" value="1" <?php checked( ! empty( $s[ $key ] ) ); ?> />
-								<?php echo esc_html( $label ); ?>
-							</label>
-						</p>
-					<?php endforeach; ?>
-				</fieldset>
-
-				<h2><?php esc_html_e( 'Maximum image width/height (pixels)', 'scout-optimize' ); ?></h2>
-				<p>
-					<input type="number" name="max_dimension" min="0" max="8000" step="10" value="<?php echo esc_attr( (string) $s['max_dimension'] ); ?>" />
-					<span class="description"><?php esc_html_e( 'New uploads larger than this are scaled down. 0 turns the cap off. Applies to new uploads only.', 'scout-optimize' ); ?></span>
-				</p>
-
-				<?php submit_button( __( 'Save settings', 'scout-optimize' ) ); ?>
+				<section class="sh-box">
+					<h2 class="sh-title"><?php esc_html_e( 'Settings', 'scout-optimize' ); ?></h2>
+					<p><?php esc_html_e( 'Originals are backed up first, so every change can be undone.', 'scout-optimize' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'What to do', 'scout-optimize' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text"><?php esc_html_e( 'What to do', 'scout-optimize' ); ?></legend>
+									<?php foreach ( $toggles as $key => $label ) : ?>
+										<p>
+											<label>
+												<input type="checkbox" name="<?php echo esc_attr( $key ); ?>" value="1" <?php checked( ! empty( $s[ $key ] ) ); ?> />
+												<?php echo esc_html( $label ); ?>
+											</label>
+										</p>
+									<?php endforeach; ?>
+								</fieldset>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="scout-optimize-preset"><?php esc_html_e( 'Quality', 'scout-optimize' ); ?></label></th>
+							<td>
+								<select id="scout-optimize-preset" name="preset">
+									<?php
+									$presets = array(
+										'lossy'    => __( 'Lossy (smallest files)', 'scout-optimize' ),
+										'balanced' => __( 'Balanced (recommended)', 'scout-optimize' ),
+										'lossless' => __( 'Lossless (largest, highest quality)', 'scout-optimize' ),
+									);
+									foreach ( $presets as $key => $label ) :
+										?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['preset'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Balanced suits almost every site.', 'scout-optimize' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="scout-optimize-max"><?php esc_html_e( 'Largest image size', 'scout-optimize' ); ?></label></th>
+							<td>
+								<p class="sh-inline"><input type="number" id="scout-optimize-max" name="max_dimension" min="0" max="8000" step="10" value="<?php echo esc_attr( (string) $s['max_dimension'] ); ?>" /> <?php esc_html_e( 'pixels', 'scout-optimize' ); ?></p>
+								<p class="description"><?php esc_html_e( 'Bigger uploads are scaled down. 0 turns the limit off.', 'scout-optimize' ); ?></p>
+							</td>
+						</tr>
+					</table>
+					<?php submit_button( __( 'Save settings', 'scout-optimize' ) ); ?>
+				</section>
 			</form>
 
-			<p style="max-width:760px;">
-				<?php
-				printf(
-					/* translators: %s: URL of the sweep tool. */
-					wp_kses_post( __( 'To optimize images already in the library, use <a href="%s">Scout Optimize Sweep</a>. New uploads are handled automatically once the options above are on.', 'scout-optimize' ) ),
-					esc_url( admin_url( 'tools.php?page=scout-optimize-sweep' ) )
-				);
-				?>
-			</p>
-			<p style="color:#666;"><?php echo esc_html( sprintf( /* translators: %s: version. */ __( 'Scout Optimize %s', 'scout-optimize' ), SCOUT_OPTIMIZE_VERSION ) ); ?></p>
-		</div>
+			<?php if ( method_exists( 'Scout_Admin_UI', 'fold_open' ) ) : ?>
+				<?php Scout_Admin_UI::fold_open( __( 'More options: this server', 'scout-optimize' ) ); ?>
+			<?php else : ?>
+				<details class="sh-box sh-fold"><summary class="sh-title"><?php esc_html_e( 'More options: this server', 'scout-optimize' ); ?></summary>
+			<?php endif; ?>
+				<p><?php esc_html_e( 'What the hosting can do with images.', 'scout-optimize' ); ?></p>
+				<table class="widefat sh-table sh-table-plain">
+					<tbody>
+						<tr><td><?php esc_html_e( 'Imagick image engine', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['imagick'] ? $yes : $no ); ?></strong></td></tr>
+						<tr><td><?php esc_html_e( 'Can create WebP', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['webp'] ? $yes : $no ); ?></strong></td></tr>
+						<tr><td><?php esc_html_e( 'Can create AVIF', 'scout-optimize' ); ?></td><td><strong><?php echo esc_html( $caps['avif'] ? $yes : $no ); ?></strong></td></tr>
+					</tbody>
+				</table>
+				<?php if ( ! $caps['avif'] ) : ?>
+					<p class="sh-note"><?php esc_html_e( 'AVIF copies are skipped on this server even if that option is on. WebP still works.', 'scout-optimize' ); ?></p>
+				<?php endif; ?>
+			<?php if ( method_exists( 'Scout_Admin_UI', 'fold_close' ) ) : ?>
+				<?php Scout_Admin_UI::fold_close(); ?>
+			<?php else : ?>
+				</details>
+			<?php endif; ?>
+
+		<?php Scout_Admin_UI::close(); ?>
 		<?php
 	}
 }

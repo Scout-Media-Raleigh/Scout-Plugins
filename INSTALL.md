@@ -24,7 +24,7 @@ You need a WordPress to play in. Easiest free option:
 Clone this repo, or download it as a zip from GitHub and unzip it:
 
 ```bash
-git clone https://github.com/joyrmac/Scout-Plugins.git
+git clone https://github.com/Scout-Media-Raleigh/Scout-Plugins.git
 ```
 
 Each top-level folder (`scout-core`, `scout-forms-guard`, and so on) is a complete
@@ -42,14 +42,19 @@ zip contains `scout-core/scout-core.php`, not just the loose files), then use
 ## Step 3 — Turn the plugins on, in this order
 
 1. `scout-core` (the engine, do this one first)
-2. `scout-forms-guard`
-3. `scout-rvpark`
+2. `scout-build` (the Scout dashboard; it turns the other features on)
+3. `scout-forms-guard`
+4. `scout-rvpark`
 
 > `scout-forms-guard` only does something once Gravity Forms is installed. It's
 > fine to activate it now; it just sits quietly until then.
 
 > `scout-rvpark` is the reference companion plugin. On a real client build you
 > would swap it for that client's own companion plugin.
+
+> The other Scout features (Call buttons, Hours, Reviews, AI search and the
+> rest) switch on from **Scout → Scout tools → Features** once Scout Build is
+> active.
 
 ---
 

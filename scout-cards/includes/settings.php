@@ -27,8 +27,36 @@ final class Scout_Cards_Settings {
 		);
 	}
 
+	/**
+	 * What the team card can take from Business info (Scout Core), guarded: the
+	 * name, email, logo (an attachment ID under `logo_id` or `logo`, when Business
+	 * info has one) and description (when it has one). Blanks when Scout Core is off.
+	 */
+	public static function business() {
+		$b    = function_exists( 'scout_core_business' ) ? (array) scout_core_business() : array();
+		$logo = 0;
+		foreach ( array( 'logo_id', 'logo' ) as $k ) {
+			if ( isset( $b[ $k ] ) && is_numeric( $b[ $k ] ) && (int) $b[ $k ] > 0 ) {
+				$logo = (int) $b[ $k ];
+				break;
+			}
+		}
+		return array(
+			'name'        => trim( (string) ( $b['name'] ?? '' ) ),
+			'email'       => trim( (string) ( $b['email'] ?? '' ) ),
+			'logo'        => $logo,
+			'description' => trim( (string) ( $b['description'] ?? '' ) ),
+		);
+	}
+
+	/** The team card's photo: its own, else the Business info logo, else 0 (the Site Icon then shows). */
+	public static function team_photo_id( array $s ) {
+		return (int) $s['photo_id'] ? (int) $s['photo_id'] : self::business()['logo'];
+	}
+
 	public static function defaults() {
 		$id = self::identity();
+		$bi = self::business();
 		return array(
 			'enable_cards' => 1,
 			'enable_links' => 1,
@@ -38,17 +66,22 @@ final class Scout_Cards_Settings {
 			'accent'       => '#0E8FE6',
 			'font'         => '',
 			'name'         => $id['name'] ? $id['name'] : get_bloginfo( 'name' ),
+			'org'          => '', // the company name saved to phones; empty uses the name
+			'look'         => '', // '' the plugin's own look; 'theme' the theme's own card look (render-theme.php)
 			'phone'        => $id['phone'],
-			'email'        => $id['email'] ? $id['email'] : get_option( 'admin_email' ),
+			'email'        => $id['email'], // never the WordPress admin email: on client sites that is often not the business
 			'city'         => $id['city'],
 			'region'       => $id['region'],
 			'postal'       => $id['postal'],
 			'socials'      => $id['same_as'],
 			'footer'       => trim( $id['city'] . ( $id['region'] ? ', ' . $id['region'] : '' ) ),
 			'note'         => get_bloginfo( 'description' ),
-			'team_intro'   => get_bloginfo( 'description' ),
+			'team_intro'   => '' !== $bi['description'] ? $bi['description'] : get_bloginfo( 'description' ),
 			'pick_heading' => 'Who would you like to talk to?',
 			'photo_id'     => 0,
+			'logo_id'        => 0,
+			'share_card_id'  => 0,
+			'share_links_id' => 0,
 			'spot_heading' => '',
 			'spot_text'    => '',
 			'spot_label'   => '',
@@ -78,7 +111,7 @@ final class Scout_Cards_Settings {
 				}
 				continue;
 			}
-			if ( in_array( $k, array( 'enable_cards', 'enable_links', 'links_latest', 'photo_id' ), true ) ) {
+			if ( in_array( $k, array( 'enable_cards', 'enable_links', 'links_latest', 'photo_id', 'logo_id', 'share_card_id', 'share_links_id' ), true ) ) {
 				$d[ $k ] = (int) $v;
 				continue;
 			}
@@ -87,6 +120,11 @@ final class Scout_Cards_Settings {
 			}
 		}
 		return $d;
+	}
+
+	/** The company name saved to phones (vCard): its own setting, else the card name. */
+	public static function org( array $s ) {
+		return '' !== trim( (string) ( $s['org'] ?? '' ) ) ? (string) $s['org'] : (string) $s['name'];
 	}
 
 	public static function phone_e164( $phone ) {
@@ -121,8 +159,28 @@ final class Scout_Cards_Settings {
 		return '' === $out['heading'] . $out['text'] . $out['label'] ? null : $out;
 	}
 
-	/** Everything each card needs, keyed 'team' then each person's link name. */
+	/** people() for this request, so a page that asks more than once reads People once. */
+	private static $people = null;
+
+	/** Forget the cached people (after a save, or in tests). */
+	public static function flush() {
+		self::$people = null;
+	}
+
+	/**
+	 * Everything each card needs, keyed 'team' then each person's link name.
+	 *
+	 * A card linked to a People profile (`profile_id`) reads its name, title, photo,
+	 * card phone, card email, intro, "why talk to them", tags, links and bio from
+	 * People (an empty intro, why or tags uses the card's own); it is left out (so its
+	 * address answers "not found") when the person is not live or Card is off. With
+	 * Scout People off, or the profile gone, the card uses its own saved details as
+	 * before. After the move to People, anyone live with Card on gets a card too.
+	 */
 	public static function people() {
+		if ( null !== self::$people ) {
+			return self::$people;
+		}
 		$s   = self::get();
 		$out = array(
 			'team' => array(
@@ -132,47 +190,167 @@ final class Scout_Cards_Settings {
 				'last'     => '',
 				'title'    => '',
 				'email'    => $s['email'],
+				'phone'    => $s['phone'],
 				'intro'    => $s['team_intro'],
 				'pick'     => '',
 				'tags'     => array(),
-				'photo_id' => (int) $s['photo_id'],
-				'photo'    => self::photo_url( (int) $s['photo_id'], true ),
+				'photo_id' => self::team_photo_id( $s ),
+				'photo'    => self::photo_url( self::team_photo_id( $s ), true ),
+				'alt'      => $s['name'],
+				'bio'      => '',
+				'links'    => array(),
+				'show'     => Scout_Cards_People::show( array() ),
+				'profile'  => 0,
 				'url'      => self::card_url( 'team' ),
 				'save'     => self::card_url( 'team', 'save' ),
 				'share'    => self::card_url( 'team', 'share' ),
-				'file'     => sanitize_title( $s['name'] ),
+				'file'     => sanitize_title( self::org( $s ) ),
 				'spot'     => self::spot( $s ),
 			),
 		);
+		$reserved = array( 'save', 'share', 'team' );
+		$linked   = array();
 		foreach ( (array) $s['people'] as $p ) {
 			$slug = sanitize_title( $p['slug'] ?? '' );
-			if ( '' === $slug || in_array( $slug, array( 'save', 'share', 'team' ), true ) || empty( $p['name'] ) ) {
+			if ( '' === $slug || in_array( $slug, $reserved, true ) ) {
 				continue;
 			}
-			$parts        = preg_split( '/\s+/', trim( $p['name'] ) );
-			$out[ $slug ] = array(
-				'key'      => $slug,
-				'name'     => $p['name'],
-				'first'    => $parts[0],
-				'last'     => count( $parts ) > 1 ? end( $parts ) : '',
-				'title'    => $p['title'] ?? '',
-				'email'    => ! empty( $p['email'] ) ? $p['email'] : $s['email'],
-				'intro'    => $p['intro'] ?? '',
-				'pick'     => $p['pick'] ?? '',
-				'tags'     => array_values( array_filter( array_map( 'trim', explode( ',', $p['tags'] ?? '' ) ) ) ),
-				'photo_id' => (int) ( $p['photo_id'] ?? 0 ),
-				'photo'    => self::photo_url( (int) ( $p['photo_id'] ?? 0 ), false ),
-				'url'      => self::card_url( $slug ),
-				'save'     => self::card_url( $slug, 'save' ),
-				'share'    => self::card_url( $slug, 'share' ),
-				'file'     => sanitize_title( $p['name'] ),
-				'spot'     => self::spot( $p ),
-			);
+			$pid = (int) ( $p['profile_id'] ?? 0 );
+			if ( $pid ) {
+				$linked[] = $pid;
+				$c        = Scout_Cards_People::profile( $pid );
+				if ( $c ) {
+					if ( ! empty( $c['on'] ) && '' !== $c['name'] ) {
+						$out[ $slug ] = self::person( $slug, self::from_people( $c ), $p, $s );
+					}
+					continue; // Not live, or Card off: no card.
+				}
+			}
+			if ( empty( $p['name'] ) ) {
+				continue;
+			}
+			$out[ $slug ] = self::person( $slug, self::from_record( $p ), $p, $s );
 		}
+		if ( Scout_Cards_People::reading() ) {
+			foreach ( Scout_Cards_People::card_ids() as $pid ) {
+				if ( in_array( $pid, $linked, true ) ) {
+					continue;
+				}
+				$c = Scout_Cards_People::profile( $pid );
+				if ( ! $c || empty( $c['on'] ) || '' === $c['name'] ) {
+					continue;
+				}
+				$base = sanitize_title( '' !== $c['slug'] ? $c['slug'] : $c['name'] );
+				$slug = $base;
+				for ( $n = 2; '' === $slug || in_array( $slug, $reserved, true ) || isset( $out[ $slug ] ); $n++ ) {
+					$slug = ( '' !== $base ? $base : 'person' ) . '-' . $n;
+				}
+				$out[ $slug ] = self::person( $slug, self::from_people( $c ), array( 'profile_id' => $pid ), $s );
+			}
+		}
+		self::$people = $out;
 		return $out;
 	}
 
+	/** A card's own saved details, as cards used them before People. */
+	private static function from_record( array $p ) {
+		return array(
+			'name'     => (string) $p['name'],
+			'title'    => (string) ( $p['title'] ?? '' ),
+			'email'    => (string) ( $p['email'] ?? '' ),
+			'phone'    => '',
+			'photo_id' => (int) ( $p['photo_id'] ?? 0 ),
+			'alt'      => '',
+			'bio'      => '',
+			'links'    => array(),
+			'profile'  => 0,
+			'intro'    => '',
+			'why'      => '',
+			'tags'     => '',
+		);
+	}
+
+	/** A person's details from their People profile (Scout_Team::card()). */
+	private static function from_people( array $c ) {
+		return array(
+			'name'     => (string) $c['name'],
+			'title'    => (string) $c['role'],
+			'email'    => (string) $c['card_email'],
+			'phone'    => (string) $c['phone'],
+			'photo_id' => (int) $c['photo_id'],
+			'alt'      => (string) $c['alt'],
+			'bio'      => (string) $c['bio'],
+			'links'    => (array) $c['links'],
+			'profile'  => (int) $c['id'],
+			'intro'    => (string) ( $c['intro'] ?? '' ),
+			'why'      => (string) ( $c['why'] ?? '' ),
+			'tags'     => (string) ( $c['tags'] ?? '' ),
+		);
+	}
+
+	/** The profile's words when it has them, else the card's own saved ones. */
+	private static function word( $people, $card ) {
+		return '' !== trim( (string) $people ) ? (string) $people : (string) $card;
+	}
+
+	/**
+	 * One person's card. $f holds who they are (from People or the card's own saved
+	 * details); $rec holds the card's own settings, and its intro, why and tags are
+	 * the fallback when People has none. A blank card email or phone uses the
+	 * business one, as cards always have. A field switched off on the card is blank.
+	 */
+	private static function person( $slug, array $f, array $rec, array $s ) {
+		$show  = Scout_Cards_People::show( $rec );
+		$parts = preg_split( '/\s+/', trim( $f['name'] ) );
+		return array(
+			'key'      => $slug,
+			'name'     => $f['name'],
+			'first'    => $parts[0],
+			'last'     => count( $parts ) > 1 ? end( $parts ) : '',
+			'title'    => $f['title'],
+			'email'    => $show['email'] ? ( '' !== $f['email'] ? $f['email'] : $s['email'] ) : '',
+			'phone'    => $show['phone'] ? ( '' !== $f['phone'] ? $f['phone'] : $s['phone'] ) : '',
+			'intro'    => $show['intro'] ? self::word( $f['intro'], $rec['intro'] ?? '' ) : '',
+			'pick'     => self::word( $f['why'], $rec['pick'] ?? '' ),
+			'tags'     => $show['tags'] ? array_values( array_filter( array_map( 'trim', explode( ',', self::word( $f['tags'], $rec['tags'] ?? '' ) ) ) ) ) : array(),
+			'photo_id' => $f['photo_id'],
+			'photo'    => self::photo_url( $f['photo_id'], false ),
+			'alt'      => '' !== $f['alt'] ? $f['alt'] : $f['name'],
+			'bio'      => $show['bio'] ? $f['bio'] : '',
+			'links'    => $show['links'] ? $f['links'] : array(),
+			'show'     => $show,
+			'profile'  => $f['profile'],
+			'url'      => self::card_url( $slug ),
+			'save'     => self::card_url( $slug, 'save' ),
+			'share'    => self::card_url( $slug, 'share' ),
+			'file'     => sanitize_title( $f['name'] ),
+			'spot'     => self::spot( $rec ),
+			'share_id' => (int) ( $rec['share_id'] ?? 0 ),
+		);
+	}
+
 	/** Photo URL: the uploaded photo, else (team card only) the Site Icon, else ''. */
+	/**
+	 * The wide picture shown when a page is shared in a text or a post (1200 by 630 works
+	 * everywhere). 'card' or 'links'; the links page falls back to the card's. Null when unset.
+	 */
+	public static function share_image( $which, $person_share_id = 0 ) {
+		$s  = self::get();
+		$id = 'links' === $which && $s['share_links_id'] ? $s['share_links_id'] : $s['share_card_id'];
+		if ( 'person' === $which ) {
+			$id = (int) $person_share_id;
+		}
+		$src = $id ? wp_get_attachment_image_src( (int) $id, 'full' ) : false;
+		return $src ? array( 'url' => $src[0], 'width' => (int) $src[1], 'height' => (int) $src[2] ) : null;
+	}
+
+	/** The logo for the links page and share page, or '' (they fall back to the main card's photo). */
+	public static function logo_url() {
+		$id = (int) self::get()['logo_id'];
+		$u  = $id ? wp_get_attachment_image_url( $id, 'medium' ) : '';
+		return $u ? (string) $u : '';
+	}
+
 	public static function photo_url( $photo_id, $team ) {
 		if ( $photo_id ) {
 			$u = wp_get_attachment_image_url( $photo_id, 'medium' );
@@ -203,6 +381,40 @@ final class Scout_Cards_Settings {
 			$host = preg_replace( '/^www\./', '', (string) wp_parse_url( $url, PHP_URL_HOST ) );
 			if ( $host && isset( $known[ $host ] ) && ! isset( $out[ $known[ $host ] ] ) ) {
 				$out[ $known[ $host ] ] = $url;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * A person's profile links (from People) as label => url: the network's name
+	 * for a known one, else the site's own name. A repeat of a label is skipped.
+	 *
+	 * @param array $urls Profile URLs.
+	 */
+	public static function label_links( array $urls ) {
+		$known = array(
+			'facebook.com'  => 'Facebook',
+			'instagram.com' => 'Instagram',
+			'linkedin.com'  => 'LinkedIn',
+			'x.com'         => 'X',
+			'twitter.com'   => 'X',
+			'threads.net'   => 'Threads',
+			'threads.com'   => 'Threads',
+			'youtube.com'   => 'YouTube',
+			'tiktok.com'    => 'TikTok',
+			'pinterest.com' => 'Pinterest',
+		);
+		$out = array();
+		foreach ( $urls as $url ) {
+			$url  = trim( (string) $url );
+			$host = preg_replace( '/^www\./', '', strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ) );
+			if ( '' === $host ) {
+				continue;
+			}
+			$label = $known[ $host ] ?? $host;
+			if ( ! isset( $out[ $label ] ) ) {
+				$out[ $label ] = $url;
 			}
 		}
 		return $out;

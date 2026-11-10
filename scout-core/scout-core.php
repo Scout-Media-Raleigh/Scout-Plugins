@@ -3,14 +3,14 @@
  * Plugin Name:       Scout Core
  * Plugin URI:        https://scoutraleigh.com/platform/scout-core
  * Description:       The Scout engine for a client site: business identity, content model (post types, fields, Block Bindings), the JSON-LD schema graph, and the in-house SEO head tags and sitemap tuning. One plugin, one Scout dashboard. The Yoast replacement, built to survive any future redesign.
- * Version:           1.1.0
+ * Version:           1.10.4
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Scout Media & Consulting
  * Author URI:        https://scoutraleigh.com
  * License:           GPL-2.0-or-later
  * Text Domain:       scout-core
- * Update URI:        https://github.com/joyrmac/Scout-Plugins/scout-core
+ * Update URI:        https://github.com/Scout-Media-Raleigh/Scout-Plugins/scout-core
  *
  * @package Scout_Core
  */
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SCOUT_CORE_VERSION', '1.1.0' );
+define( 'SCOUT_CORE_VERSION', '1.10.4' );
 define( 'SCOUT_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCOUT_CORE_FILE', __FILE__ );
 
@@ -38,6 +38,7 @@ require_once SCOUT_CORE_DIR . 'includes/registry.php';
 require_once SCOUT_CORE_DIR . 'includes/fieldsets.php';
 require_once SCOUT_CORE_DIR . 'includes/settings-groups.php';
 require_once SCOUT_CORE_DIR . 'includes/helpers.php';
+require_once SCOUT_CORE_DIR . 'includes/design.php';
 require_once SCOUT_CORE_DIR . 'includes/post-types.php';
 require_once SCOUT_CORE_DIR . 'includes/meta.php';
 require_once SCOUT_CORE_DIR . 'includes/meta-box.php';
@@ -45,25 +46,59 @@ require_once SCOUT_CORE_DIR . 'includes/block-bindings.php';
 require_once SCOUT_CORE_DIR . 'includes/business.php';
 require_once SCOUT_CORE_DIR . 'includes/universal-types.php';
 
+/* ---- Spam protection: email guard, comments and pingbacks closed (both on by default) ---- */
+require_once SCOUT_CORE_DIR . 'includes/protection.php';
+Scout_Core_Protection::init();
+require_once SCOUT_CORE_DIR . 'includes/cache-purge.php';
+Scout_Core_Cache::init();
+require_once SCOUT_CORE_DIR . 'includes/staging-guard.php';
+Scout_Core_Staging::init();
+require_once SCOUT_CORE_DIR . 'includes/policies.php';
+Scout_Core_Policies::init();
+
 /* ---- Schema module (was scout-schema) ---- */
 require_once SCOUT_CORE_DIR . 'includes/schema/class-scout-schema.php';
+require_once SCOUT_CORE_DIR . 'includes/schema/class-scout-schema-conflicts.php';
 
 /* ---- SEO module (was scout-seo) ---- */
 require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-head.php';
 require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-box.php';
 require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-sitemap.php';
+require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-breadcrumbs.php';
+require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-empty-searches.php';
+require_once SCOUT_CORE_DIR . 'includes/seo/class-seo-hreflang.php';
 
 /* ---- SEO global defaults, the unified Scout admin, and the update tracker ---- */
 require_once SCOUT_CORE_DIR . 'includes/seo/seo-settings.php';
+require_once SCOUT_CORE_DIR . 'includes/class-scout-admin-ui.php';
 require_once SCOUT_CORE_DIR . 'includes/admin.php';
+
+/* ---- Site Sync: theme copy in, hand edits kept (docs/site-sync-spec.md) ---- */
+require_once SCOUT_CORE_DIR . 'includes/sync/class-scout-sync.php';
+require_once SCOUT_CORE_DIR . 'includes/sync/class-scout-sync-admin.php';
+Scout_Sync::init();
+Scout_Sync_Admin::init();
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once SCOUT_CORE_DIR . 'includes/sync/class-scout-sync-cli.php';
+	WP_CLI::add_command( 'scout sync', 'Scout_Sync_CLI' );
+}
 
 /*
  * Self-updating from the Scout Plugins releases. Replaces the earlier hosted
  * manifest tracker, which needed a JSON file hosted somewhere and never got
  * switched on.
  */
-require_once SCOUT_CORE_DIR . 'includes/class-scout-plugin-updater.php';
-Scout_Plugin_Updater::boot( __FILE__, 'scout-core' );
+// Self-updating from the Scout Plugins releases (see includes/class-scout-plugin-updater.php).
+// Loaded on plugins_loaded, after every plugin's own file, so older Scout
+// plugins that still declare the shared class at load time always go first.
+add_action(
+	'plugins_loaded',
+	static function () {
+		require_once __DIR__ . '/includes/class-scout-plugin-updater.php';
+		Scout_Plugin_Updater::boot( __DIR__ . '/scout-core.php', 'scout-core' );
+	},
+	0
+);
 
 /*
  * Registration pipeline. The registry is filled at init:1 via `scout_core_register`
@@ -102,6 +137,10 @@ add_action( 'update_option_scout_business', array( 'Scout_Schema', 'clear_cache'
 Scout_SEO_Head::init();
 Scout_SEO_Box::init();
 Scout_SEO_Sitemap::init();
+Scout_SEO_Breadcrumbs::init();
+Scout_SEO_Empty_Searches::init();
+Scout_SEO_Hreflang::init();
+Scout_Schema_Conflicts::init();
 
 /* The one Scout menu (Dashboard / Business / SEO). */
 Scout_Core_Admin::init();
@@ -115,4 +154,7 @@ register_activation_hook( __FILE__, function () {
 	Scout_Core_Post_Types::register_all();
 	flush_rewrite_rules();
 } );
-register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+register_deactivation_hook( __FILE__, function () {
+	Scout_SEO_Sitemap::unschedule();
+	flush_rewrite_rules();
+} );

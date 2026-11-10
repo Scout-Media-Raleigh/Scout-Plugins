@@ -1,0 +1,139 @@
+# Scout Chat changelog
+
+## 0.3.6 (2026-11-05)
+
+- **Colors and fonts from DESIGN.md (Site Standard rule 3):** the panel's colors and fonts now read the theme's DESIGN.md (the `--scout-*` names from `design-tokens.css`) when the theme's own `--surface`, `--accent` and the rest are not set; white text on the accent reads DESIGN.md's on accent. Sites that set them, or set neither, look exactly the same.
+- **Status line is one sentence (Joy, 2026-11-05).** "On. 2 questions are waiting." plus one line. Whether the AI server is connected moved into More options: AI connection, as its own small status line.
+- **Chat messages pills show their color.** "Yes" is green, "Not yet" is a calm grey pill (it isn't a warning), and a message sent on as a change request says "Sent as a change request" (was "In Requests").
+- **No names on client sites.** The Team names and greeting placeholders are neutral examples ("First names", "Maria from the office") instead of Sean and Joy. The AI connection text says Scout's server on Scout-branded sites and "your web team's" server on white-label sites. Saved settings are unchanged.
+
+## 0.3.5 (2026-11-05)
+
+- **Privacy tools reach chat messages.** WordPress's Export and Erase Personal Data tools now find a visitor's chat messages by the email they gave, trashed ones included. Erasing deletes the messages. A message left with only a phone number is still deleted by hand.
+
+## 0.3.4 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **The booking link is never empty.** When Scout Booking has no booking page (or it was removed), the chat's "See open times" link and the Booking page placeholder use the Contact page.
+- **A chat change request shows once in the Inbox.** When a visitor asks for a change in the chat and it joins Scout Build's request list, the saved chat message is now marked as handled, so To do, the menu count and Today list it once, as the request. Older change requests already in the request list are left out of the count too. The chat message is still saved, and its list now says "In Requests".
+- **Chat emails can use the shared notice address.** "Email new questions to" is now an optional override. When it is blank, new chats go to Send notices to in Business info (or the site email when Scout Core is older). An address already saved here keeps working.
+- **Plainer names.** The settings screen and its menu item are both "Chat" (was "Chat settings" and "Chat assistant"), and the list of saved chats is "Chat messages" (was "Chat questions"). Same addresses and settings.
+- **Shorter, plainer help text** (Sean's voice, admin kit DESIGN.md 2a). The screen's opening line, status line and field help are one short sentence each. The carrier list for text alerts moved behind a More fold. The team email links to Chat messages.
+
+## 0.3.3 (2026-11-05)
+
+- **The Chat assistant screen opens with one status line.** The three status cards are now one line: on or off, whether AI answers, how many questions wait for an answer, and an Open Chat questions button. The AI connection moves into a closed More options box. Same fields and option.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.3.2 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.3.1 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.3.0 (2026-11-04)
+
+- **Change requests from the chat join the site's request list.** When a visitor asks for a change in the chat and Scout Build is on the site, the ask is also saved as a change request under Scout, Request a change, with the person's name and how to reach them, so one list holds every request however it came in and the Site log records it. The chat inbox keeps its own copy as before. Sites without Scout Build change nothing.
+
+## 0.2.6 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.2.5 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.2.4 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.2.3 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1. The settings screen's tab now reads "Chat settings", so it is never confused with the list beside it.
+
+## 0.2.2 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.2.1 (2026-10-14)
+
+- **Fix: the greeting no longer shifts the page.** "Questions about your website?" now floats above the chat button instead of making the corner widget taller, so PageSpeed stops counting a layout shift when it appears (0.069 on scoutraleigh.com's phone test).
+
+## 0.2.0 (2026-10-13)
+
+- **Text back from your own phone.** The chat form asks for a phone number to text the visitor back, with email as the other choice (one of the two is enough). The email alert and the inbox show the number with a Text back button.
+- **A text alert for new questions.** New setting "Text me new questions": a short message with the question and the number to text back, sent to your carrier's email-to-text address (Verizon, T-Mobile, Google Fi). No texting service or registration needed.
+
+## 0.1.12 (2026-10-13)
+
+- **More hellos.** "whatsup", "what's up", "sup", "hello there", "hi y'all", "ty" and "cool" get the greeting too, instead of the ask-for-email step.
+
+## 0.1.11 (2026-10-13)
+
+- **Fix: "hi" got "Good question."** A hello or a thanks now gets a greeting and the starter buttons instead of the ask-for-email step, and a message that isn't a question opens with "Thanks." instead of "Good question."
+- **Fix: the header cut off "Sean & Joy on call".** The status line wraps instead of trimming.
+
+## 0.1.10 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.9 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.1.8 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.7 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.6 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 0.1.5 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+
+## 0.1.4 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 0.1.3 (2026-10-12)
+
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 0.1.2 (2026-10-12)
+
+- **The chat button's pulse no longer slows the page.** The ring now grows
+  and fades with transform and opacity only, which the browser animates on
+  the GPU. Before, it animated a shadow and repainted on every frame, which
+  PageSpeed flagged.
+
+## 0.1.1 (2026-10-12)
+
+- On phones the chat button is a round 56px bolt button instead of the wide
+  "Ask Sean & Joy" pill, so it no longer covers article text. The label is
+  still read out by screen readers.
+
+## 0.1.0 (2026-10-12)
+
+- First release. A chat assistant in the corner of every page (design:
+  Scout features DESIGN.md 5.1, panel variant): launcher pill with the team's
+  photos, a greeting card that waits for the cookie notice, streaming replies,
+  quick-reply buttons, full screen on phones.
+- Answers the common paths right away: what it costs (The Build, The
+  Partnership, The Whole System, no prices), our work, book a call, existing
+  clients (request a change, talk to a person).
+- Collect mode until an AI server is connected: any other question is saved
+  to Scout Build → Chat questions with the visitor's name and email, and
+  emailed to the team. AI mode passes free-text questions to the AI server and
+  falls back to collecting if it fails.
+- Inbox: who asked, type, answered or not, the full conversation, Reply by
+  email. Unanswered count shows in the sidebar.
+- Reports chat_open, chip_click, handoff and lead_submit through Scout
+  Analytics. Honeypot and per-visitor rate limits on both endpoints.

@@ -1,0 +1,62 @@
+/* Scout Case Results: the edit screen for one result and the sample card on
+   the settings screen. Light Scout Build look, scoped to this plugin. Colors
+   come from the admin kit tokens (var(--sh-*)): the edit screen's own boxes
+   carry the kit's .sh class (with .sr-kit) so the tokens reach them. */
+
+.sr-kit.sh { max-width: none; margin-right: 0; }
+
+.sr-title-help { margin: 8px 0 0; color: var(--sh-text-2); font-size: 13px; }
+
+.sr-fields { display: grid; gap: 4px; }
+.sr-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - 40px) / 3)), 1fr)); gap: 0 20px; }
+.sr-field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 0; }
+.sr-field > label, .sr-help > label {
+	font-family: var(--sh-mono); font-size: 11px; letter-spacing: 1.2px;
+	text-transform: uppercase; font-weight: 500; color: var(--sh-text-2);
+}
+.sr-help { color: var(--sh-text-3); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.sr-field input[type="text"], .sr-field input[type="date"], .sr-field select, .sr-field textarea, .sr-help input[type="text"] {
+	width: 100%; max-width: 100%; min-height: var(--sh-tap); border: 1px solid var(--sh-border-strong); border-radius: var(--sh-r-control); padding: 8px 12px; color: var(--sh-text); background: var(--sh-surface);
+}
+.sr-field textarea { line-height: 1.5; }
+.sr-field input:focus, .sr-field select:focus, .sr-field textarea:focus, .sr-help input:focus, .sr-check input:focus-visible {
+	border-color: var(--sh-accent); box-shadow: 0 0 0 3px var(--sh-glow); outline: none;
+}
+
+.sr-flags { margin-top: 14px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--sh-bad) 30%, transparent); border-radius: var(--sh-r-control); background: var(--sh-bad-tint); }
+.sr-flags[hidden] { display: none; }
+.sr-flags-title { margin: 0 0 8px; color: var(--sh-bad); font-weight: 600; font-size: 14px; }
+.sr-flags ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.sr-flags li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; color: var(--sh-text); }
+.sr-flags code { background: var(--sh-bad-tint); color: var(--sh-bad); border-radius: var(--sh-r-chip); padding: 2px 8px; font-weight: 600; }
+
+.sr-approval .sr-check { display: flex; align-items: center; gap: 10px; min-height: var(--sh-tap); margin: 0; }
+.sr-approval .sr-check input { width: 22px; height: 22px; margin: 0; accent-color: var(--sh-accent); }
+.sr-approval .sr-check label { font-weight: 600; font-size: 14px; }
+.sr-approval .sr-help { margin: 12px 0 0; }
+
+/* The preview: the result card on the light kit canvas, like the settings sample. */
+#scout-result-preview .inside { margin: 0; padding: 0; }
+.sr-preview { background: var(--sh-bg); color: var(--sh-text); padding: 20px 22px 24px; border-radius: 0 0 4px 4px; }
+.sr-preview-note { margin: 0 0 14px; color: var(--sh-text-2); font-size: 13px; }
+.sr-preview .scout-result { --scout-results-border: var(--sh-border); --scout-results-surface: var(--sh-surface); color: var(--sh-text); max-width: 560px; }
+.sr-preview .scout-result__headline { color: var(--sh-text); font-size: 22px; letter-spacing: -.01em; }
+
+/* Settings screen. */
+.sr-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.sr-settings > .sh-box { margin-top: 16px; }
+.sr-sample { position: relative; padding: 18px; border-radius: var(--sh-r-card); background: var(--sh-bg); color: var(--sh-text); }
+.sr-sample .scout-result { --scout-results-surface: var(--sh-surface); --scout-results-border: var(--sh-border); }
+.sr-sample-tag {
+	display: inline-block; margin: 0 0 12px; padding: 4px 10px; border-radius: var(--sh-r-pill); background: var(--sh-surface-2); color: var(--sh-text-2);
+	font-family: var(--sh-mono); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+}
+.sh .sh-table td:first-child { white-space: normal; word-break: break-word; }
+@container shmain (max-width: 600px) {
+	.sr-shortcodes tr, .sr-shortcodes td { display: block; }
+	.sh .sr-shortcodes td { border-bottom: 0; padding: 2px 0; }
+	.sr-shortcodes tr { padding: 8px 0; border-bottom: 1px solid var(--sh-border); }
+}
+
+/* The main column decides, not the window (admin kit 1.10.0). */
+@container shmain (max-width: 860px) { .sr-settings { grid-template-columns: minmax(0, 1fr); } }

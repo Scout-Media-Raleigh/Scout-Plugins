@@ -9,7 +9,12 @@ Standalone: does not need Scout Core.
 
 ## Using it
 
-1. **Reviews > Settings.** For each platform you're on, enter the overall
+Where the screens are: on a site with a Build section (Scout Build, Recon Build,
+Site Build), every Reviews screen sits inside it: Reviews, New reviews, Ask for
+reviews and Review settings. On any other site the plugin keeps its own Reviews
+menu, with the same screens under it.
+
+1. **Review settings.** For each platform you're on, enter the overall
    rating and total review count exactly as the platform shows them, plus the
    profile link and the "leave a review" link.
 2. **Reviews > Add review.** Reviewer name as the title, the review text word
@@ -30,14 +35,39 @@ Standalone: does not need Scout Core.
 Options: `layout` (grid, row, list), `count`, `source`, `featured`,
 `min_rating`, `summary`, `topic`, `fallback`.
 
-## Inbox and topics (0.3.0)
+## New reviews and topics (0.3.0)
 
-New Google reviews land in **Reviews > Inbox**. Each card has the pages it
+New Google reviews land in **New reviews**. Each card has the pages it
 belongs on pre-checked (from each topic's keywords). Click **Add to site** and
 it shows on those pages; **Skip** keeps it as a hidden draft.
 
 Topics live at **Reviews > Topics**. Each one is a place reviews show on the
 site, usually one per page, with keywords that drive the inbox suggestions.
+
+## Ask for reviews (0.4.0)
+
+**Ask for reviews** gives the business one review link on its own
+domain and everything needed to share it:
+
+| Address | What it shows |
+|---|---|
+| `/review/` | The review page: the ask, a button to the main platform, smaller buttons for the others, and a quiet private note link |
+| `/review/?via=qr` | The same page, counted as a QR scan (also `text`, `email`, `card`) |
+| `/review/note/` | The private note form. Entries land in New reviews and are emailed to the note address set in Reviews, or to the notice address in Business info when that is blank (filter `scout_reviews_note_recipient`) |
+
+The screen also has the QR code (SVG, PNG), three printable card layouts, a
+text message and an email ready to copy, and monthly visit counts by source.
+Setting "Where the link goes" to the main platform skips the page entirely.
+
+Every client gets the same page on purpose: asking only happy clients (review
+gating) breaks Google's rules and FTC guidance, and so does offering anything
+in return. The private note link sits below the review buttons, never in
+their place. A note can go on the site only when the client ticked the OK box.
+Law firms check their state bar's rules before sending requests.
+
+The page loads Hanken Grotesk and Geist Mono from Google Fonts; return an
+empty string from `scout_reviews_page_fonts_url` to use system fonts. If visit
+counts look low on WP Engine, exclude `/review/` from the page cache.
 
 ## Theme integration
 
@@ -91,7 +121,7 @@ for law firms, state bar advertising rules.
 
 Once Google approves API access ([setup steps](docs/google-business-profile-api.md)):
 
-1. **Reviews > Settings > Google reviews sync.** Paste the OAuth client ID and
+1. **Review settings > Bring in Google reviews.** Paste the OAuth client ID and
    secret, or define `SCOUT_REVIEWS_GOOGLE_CLIENT_ID` and
    `SCOUT_REVIEWS_GOOGLE_CLIENT_SECRET` in `wp-config.php` (better).
 2. **Connect Google** and sign in with the account that manages the profile.
@@ -101,17 +131,104 @@ New reviews arrive as drafts with a count on the Reviews menu. Publish the
 ones you want. Google keeps control of the name, text, stars, and date; a
 review deleted on Google comes off the site on the next sync.
 
-## Design
+## Google totals every day, with an API key (0.7.0)
 
-The stylesheet reads Scout design tokens when the theme has them (`--surface`,
-`--line`, `--text-2`, `--accent-text`, `--font-mono`, `--r-card`) and
-otherwise mixes colors from the page's text color, so it fits light and dark
-themes. To restyle:
+A lighter way to keep the Google rating and review count current, without the
+sign-in above and without bringing in the reviews themselves. Once a day the
+site asks Google's Places API (New) for the business's rating and review
+count, and puts them in the Google row on Review settings.
 
-- Override the `--sr-*` variables on `.scout-reviews`.
-- Replace markup by copying `templates/section.php`, `summary.php`, or
-  `card.php` to `{theme}/scout-reviews/`.
-- Turn the stylesheet off in Settings or with
+1. **Get the place ID.** Open Google's Place ID Finder
+   (developers.google.com/maps/documentation/places/web-service/place-id),
+   search for the business as it appears on Google Maps, and copy the ID that
+   starts with `ChIJ`. The theme can carry it as `reviews.google_place_id` in
+   `scout-setup.json` (it is not a secret), and Fill from theme puts it in
+   when the field is blank.
+2. **Make the API key.** In Google Cloud, pick or make a project, turn on
+   **Places API (New)** under APIs & Services, then make an API key under
+   APIs & Services > Credentials. Limit the key to Places API (New). The daily
+   check asks only for `rating` and `userRatingCount`.
+3. **Put both on Review settings > Check Google every day** and click Save.
+   The first check runs straight away. The key is stored encrypted and only
+   ever shows as "Saved" with a Replace button. You can set
+   `SCOUT_REVIEWS_PLACES_KEY` in `wp-config.php` instead.
+
+The key never goes in `scout-setup.json`, the update report, logs, REST output
+or the Hub API. A good check replaces the Google rating and count and marks the
+totals as checked today. A failed check changes nothing and keeps a plain
+reason, which Review settings shows; after three days of failures Site status
+asks for a look and links here. "Check Google now" runs one check on demand.
+While the Business Profile sign-in is connected, its sync owns the Google
+numbers and this check stands down. Deleting the plugin removes the key and
+the place ID.
+
+## What this feature needs from the theme
+
+- **DESIGN.md:** on the site, the stylesheet reads the DESIGN.md roles
+  surface, line, muted text, accent (links, or `accent_text` when a DESIGN.md
+  adds it), the card corner and the label font, as `--scout-surface`,
+  `--scout-line`, `--scout-text-2`, `--scout-accent-text`, `--scout-accent`,
+  `--scout-radius-card` and `--scout-font-label`. These are the `--scout-*` variables `tools/design-build.php` writes to the theme's `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that file. The names it read
+  before still win when the theme sets them: `--surface`, `--line`,
+  `--text-2`, `--text-3`, `--accent-text`, `--font-mono`, `--r-card`. With
+  neither, it mixes shades from the page's text color, so it fits light and
+  dark themes. The stars are a fixed amber, `#fbb024`.
+- **Where it lands:** where the **Scout Reviews** block, `[scout_reviews]`,
+  `[scout_review_summary]` or `scout_reviews_slot()` sits (Theme
+  integration, above). A slot prints nothing when there is nothing to show,
+  so the theme passes its section wrapper as `before` and `after`.
+- **The review page** (`/review/` and `/review/note/`) is its own page,
+  outside the theme's templates. Its look comes from Review settings
+  (`background`, `text_color`, `accent`, `heading_font`, `body_font`,
+  `label_font`), whose defaults a theme can set with the `scout_reviews_brand`
+  filter. The logo at the top is the site icon.
+- **scout-setup.json:** the `reviews` section, filled in by Scout Build where
+  the setting is blank: `business`, `headline`, `ask`, `photo`,
+  `card_headline`, `google_review_url`, and the look keys `background`,
+  `text_color`, `accent`, `heading_font`, `body_font`, `label_font`.
+- **scout-setup.json, `google_place_id` (0.7.0):** the business's Google
+  place ID for the daily Google check (above). Filled only when the field is
+  blank. The API key is never read from the theme.
+- **scout-setup.json, review totals and reviews (0.6.0):** Scout keeps track
+  of each client's review profiles, so the theme can carry what Scout last saw.
+
+  ```json
+  "reviews": {
+    "totals": {
+      "checked": "2026-11-09",
+      "profiles": {
+        "google": { "rating": 4.9, "count": 52, "url": "https://maps.app.goo.gl/..." },
+        "yelp":   { "rating": 4.0, "count": 4,  "url": "https://www.yelp.com/biz/..." }
+      }
+    },
+    "items": [
+      { "source": "google", "author": "Pat R.", "rating": 5, "date": "2026-10-02",
+        "text": "The review, word for word.", "url": "https://..." }
+    ]
+  }
+  ```
+
+  - `totals.profiles` keys are the platform keys on Review settings:
+    `google`, `facebook`, `yelp`, `clutch`, `upcity`, `designrush`, `bbb`,
+    `avvo`, `tripadvisor` (plus any a `scout_reviews_sources` filter adds).
+    `url` is the profile link; the "leave a review" link stays where it is.
+    Facebook has no stars, so only its count is used.
+  - **The newest check wins.** A platform's totals change only when `checked`
+    is a real `YYYY-MM-DD` date, not in the future, and newer than the last
+    time that platform was checked (saving Review settings counts as a check).
+    The saved "last updated" moves to the `checked` date, not to the day the
+    theme was installed, so Site status still says how long ago someone
+    looked. A future date waits until that day.
+  - `items` are added once each as published reviews, matched on `source`,
+    `author` and `date` (the trash counts, so a deleted review stays deleted).
+    A review already on the site is never edited or removed. `rating` is 0 to
+    5, `date` is `YYYY-MM-DD`, and a review with no `author` or `text` is
+    skipped.
+  - While Google is connected and syncing, Google's own totals and reviews
+    win, and the theme's Google totals and Google reviews are skipped.
+- **Restyling today:** override the `--sr-*` variables on `.scout-reviews`,
+  copy `templates/section.php`, `summary.php` or `card.php` to
+  `{theme}/scout-reviews/`, or turn the stylesheet off in Settings or with
   `add_filter( 'scout_reviews_load_styles', '__return_false' );`.
 
 ## Filters
@@ -125,3 +242,21 @@ themes. To restyle:
 ## Roadmap
 
 - **0.3.0:** Facebook Page recommendations sync.
+
+<!-- visitor-data:start -->
+## Visitor data
+
+| What | Where it is kept | How long | Shared with |
+|---|---|---|---|
+| What a person sends on the private note form: their name, their note, a star rating (optional), their business name (optional), whether they said it is OK to show it on the website, and the date it was sent (When someone sends the note form at /review/note/. A note is only shown on the website if the person ticked the OK box.) | This website's database, as draft reviews in Reviews > New reviews | Until someone deletes it | Emailed to the site's own address (the note email set in Reviews, or the notice address in Business info) |
+| A scrambled (hashed) form of the visitor's IP address, with a count of notes sent from it, used to limit notes to five an hour (When someone sends the private note form.) | A temporary record in this website's database | One hour | Nobody |
+| A count of visits to the review page, kept as monthly totals by how the link was shared (QR code, text, email, card or plain link). Nothing about the visitor is saved with it. (When someone opens the review page (/review/). Search engines, link previews and signed-in staff are not counted.) | This website's database, in the plugin's settings | The last 13 months of totals | Nobody |
+| Public Google reviews of the business, copied from its Google Business Profile: the reviewer's name as Google shows it (or "A Google user"), the review text, star rating, date, and the address of the reviewer's Google profile photo (Only when Google is connected in the Reviews settings. Reviews with stars but no words are not copied.) | This website's database, as reviews. New ones arrive as drafts. | Until someone deletes it. A daily sync updates each one from Google. A review removed from Google is taken off the site and kept as a draft. | Nobody |
+| Reviews that site staff copy in by hand from other review sites (such as Yelp, Facebook or BBB): the reviewer's name, the review text, stars, date, a link to the review and an optional reviewer detail (When site staff add them.) | This website's database, as reviews | Until someone deletes it | Nobody |
+| The visitor's IP address and browser details, seen by Google when a review card shows a Google reviewer's photo (When a page shows a Google review that has a profile photo.) | Not kept by this website. The photo loads straight from Google's servers, without telling Google which page it is on. | Not kept by this website | Google |
+| The visitor's IP address and browser details, seen by Google Fonts when the review pages load their fonts (On the /review/ and /review/note/ pages, when a font from the list is chosen in the Reviews settings (Hanken Grotesk and Geist Mono are the defaults).) | Not kept by this website | Not kept by this website | Google Fonts |
+
+Deleting the plugin keeps the reviews, notes and visit totals unless "Remove all reviews and settings when the plugin is deleted" is ticked. The private note form asks for no email, so the site's privacy tools cannot find a note; staff delete one by hand in Reviews > New reviews.
+
+Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
+<!-- visitor-data:end -->

@@ -1,5 +1,61 @@
 # Scout Forms Guard — Changelog
 
+## 0.3.6 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **One name in its messages.** The hidden upload warning and its health check now call this feature Spam protection, the same name the rest of the dashboard uses. The checks themselves are unchanged.
+- **Shorter warning.** The hidden upload warning says the problem and the fix in two short lines.
+
+## 0.3.5 (2026-11-05)
+
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.3.4 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.3.3 (2026-11-02)
+
+- **Website fields take "www.example.com".** Gravity Forms refused any address without https:// ("Please enter a valid Website URL"), which real visitors never type (Joy, Nov 2, on the Law Firm Inquiry form). Forms Guard now adds https:// before Gravity Forms checks the field, so www.example.com and example.com both go through.
+- **Fix: a visitor's own website no longer marks the entry as spam.** 0.3.2's link check read every field, so a law firm that filled in the "Current website" field would have landed in Spam. Website fields are now left out of that check; links typed in the message still count.
+
+## 0.3.2 (2026-10-31)
+
+- **Catches "add your site to Google" spam.** Two entries on Walter Lutz's live form got past the honeypot, time trap and token: bots that wait like a person, then pitch a search-index service with a link to their own site. Forms Guard now reads the message too. An entry that links to another website (email addresses are fine) or uses a known pitch ("search index", "backlink" and a few more) is marked as spam: the visitor sees the normal confirmation, no notification goes out, and the entry waits in the form's Spam folder in case a real person was caught. It counts toward the monthly blocked total. Turn it off with `scout_forms_guard_content_check`; change the phrases with `scout_forms_guard_spam_phrases`.
+
+## 0.3.1 (2026-10-30)
+
+- **Released as 0.3.1, not 0.3.0.** Test copies of 0.3.0 went onto staging and one live site before release. A release with the same number would never replace them, so the first release is 0.3.1. Everything below ships in it.
+
+- **Refuses files sent to hidden upload fields.** A reported critical Gravity Forms flaw (CVE-2026-84434, reported 9.8) lets a stranger upload a file that runs code through any File Upload field whose Visibility is Hidden. Gravity Forms has no fix yet. Scout Forms Guard now drops any file sent to a File Upload field set to Hidden or Administrative, on a normal submit and on drag-and-drop uploads (those get a 403). A visitor never sees those fields, so real visitors lose nothing. Logged-in staff who can edit entries are let through. Each refusal adds to the monthly blocked count. Turn it off with the `scout_forms_guard_block_hidden_uploads` filter.
+- **Names the fields to fix.** Site admins see a red notice listing each form and field, with a link to the form and what to change (set Visibility to Visible, or delete the field). `Scout_Forms_Guard::upload_check()` gives Scout Build the same answer as a Site health row; `Scout_Forms_Guard::hidden_uploads()` returns the list.
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.2.0 (2026-10-16)
+
+- **Counts the spam it blocks.** Each blocked submission adds one to a monthly count (the last 13 months are kept; nothing about the sender is stored). Scout Build 0.6.2 shows it on the Dashboard, so the client can see the protection working. `Scout_Forms_Guard::blocked()` returns this month's count, `blocked( 'all' )` the total kept.
+
+## 0.1.5 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.4 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.3 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.2 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
 ## 0.1.1 — 2026-09-03
 
 Updates now install themselves.

@@ -2,7 +2,7 @@
 
 The one place that shows the whole roster: every site, what it runs, how it
 updates today, and who has access. The platform map
-(`Scout-Media-Raleigh/ops/playbook/platform-map.md`) reads from this file;
+(`Scout-Internal/ops/playbook/platform-map.md`) reads from this file;
 update it whenever a site deploys, a plugin updates, or a client joins or
 leaves. Fields marked **TODO** need Joy or Sean to fill from the live installs.
 
@@ -15,12 +15,13 @@ installs; remaining TODOs need the WP Engine portal and account answers).
 
 | Site | Domain | WP Engine install | Repo | Tier |
 |---|---|---|---|---|
-| Scout Media | scoutraleigh.com | **TODO** | `joyrmac/Scout-Media-Raleigh` | own site |
-| Scout Recon | scoutrecon.app | `scoutrecon1` | `joyrmac/Scout-Media-Raleigh` (`wordpress/recon-deploy/`, separation plan in `ops/`) | own product |
+| Scout Media | scoutraleigh.com | **TODO** | `Scout-Media-Raleigh/Scout-Internal` | own site |
+| Scout Recon | scoutrecon.app | `scoutrecon1` | `Scout-Media-Raleigh/Scout-Internal` (`wordpress/scout-recon/`, separation plan in `ops/`) | own product |
 | Hair by Patrick McGuire | **TODO** (live domain not launched; staging at hairbypatrick.wpenginepowered.com) | `hairbypatrick` (staging: indexing blocked in code) | **TODO** | **TODO** |
 | Maravela's Banquets & Catering | **TODO** | **TODO** | **TODO** | retained client |
 | North Crest RV Park | northcrestrvpark.com | `rlcnorthcrestr` (Prd) | **TODO** | **TODO** |
-| Andy's Golf Car Garage | andysgolfcarts.com | `andysgolfcarts` (current site, per the staging domain on Yelp; account owner **TODO**) | `joyrmac/Andres-Borda---Golf-Carts` | The Build (favor). **In build, not deployed.** Companion plugin `scout-andysgolfcarts` 0.1.0 lives in the client repo. |
+| Andy's Golf Car Garage | andysgolfcarts.com | `andysgolfcarts` (current site, per the staging domain on Yelp; account owner **TODO**) | `Scout-Media-Raleigh/AndysGolfCarts` | The Build (favor). **Live since 2026-10-22.** Theme self-updates from the client repo (0.7.14, 2026-10-30). Companion plugin `scout-andysgolfcarts` 0.6.0 lives in the client repo. Runs an unreleased Forms Guard 0.3.0 test build until 0.3.1 ships. |
+| Walter Lutz Electrical (Walter Lutz Services LLC) | walterlutzelectric.com (live 2026-10-19) | **TODO** | `Scout-Media-Raleigh/WalterLutz` (theme on `main`; repo default branch still `claude/new-client-dzfr0t`) | The Build. Sean signs off for Scout. |
 
 ## Versions
 
@@ -30,11 +31,12 @@ disabled).
 
 | Site | Theme (version) | WordPress | scout-core | scout-forms-guard | scout-optimize | Gravity Forms | Third-party beyond GF |
 |---|---|---|---|---|---|---|---|
-| Scout Media | scout-media 1.30.1 | **TODO** | **DO NOT INSTALL.** Deleted 2026-09-24: it duplicated the theme's canonical/OG/meta tags and published 10 fabricated testimonials as Review schema. The theme owns SEO/schema/setup. | **0.1.1 ✓** | **0.7.0 ✓** + Pilot Toggle 1.1.0 (temp, delete after pilot) | 3.1.2 + Mailchimp add-on 5.7.2 + reCAPTCHA add-on 2.2.2 | WordPress Importer 0.9.6 (active; deactivate once imports are done) |
+| Scout Media | scout-media 1.30.1 | **TODO** | **DO NOT INSTALL.** Deleted 2026-09-24: it duplicated the theme's canonical/OG/meta tags and published 10 fabricated testimonials as Review schema. The theme owns SEO/schema/setup. | **0.1.1 ✓** | **0.7.0 ✓** + Pilot Toggle 1.1.0 (temp, delete after pilot) | 3.1.2 + Mailchimp add-on 5.7.2 + reCAPTCHA add-on 2.2.2 | WordPress Importer 0.9.6 (active; deactivate once imports are done). **scout-aeo 0.2.0 ✓** installed 2026-10-13, all four switches on; theme hands it robots.txt and keeps its own llms.txt. robots.txt `*` group carries `Crawl-delay: 10` from outside Scout code, same as North Crest, so likely WP Engine. |
 | Scout Recon | **TODO** | **TODO** | none (no Scout plugins at all) | none | none | 3.1.0.2 | Akismet 5.7.2, Genesis Blocks 3.1.11, WordPress Importer |
 | Hair by Patrick | HBP theme 0.9.12 | 7.1 | **1.0.4 ✓** | removing (no forms on this site) | **0.7.0 ✓** | **removing — DECISION 2026-09-03: HBP runs no forms.** Delete order: forms-guard, then GF, then Akismet. Check book/contact pages for stray embeds after. | Akismet: delete. On the auto-update channel 2026-09-03. |
 | Maravela's | Maravela's theme **TODO** | current | **1.0.4 ✓** | **0.1.1 ✓** | **0.7.0 ✓ (active; keep the delivery toggles off — see drift item on the hero)** | **3.1.1 ✓** | Genesis Blocks Pro 3.1.11 (active), WordPress Importer (active). On the auto-update channel 2026-09-03. |
-| North Crest | north-crest 3.11.1 | 7.0.4 | **1.0.4 ✓** (1.0.3 fataled, fixed same day) | **0.1.1 ✓** | **0.7.0 ✓** | 3.1.0.2 | GTM4WP 2.0.0 (2.0.1 pending), Smush 4.3.2 (inactive, delete); scout-rvpark **0.1.1 ✓**. **All Scout plugins self-updating as of 2026-09-03 — first site fully on the channel.** |
+| North Crest | north-crest **3.13.0** (2026-10-12) | 7.1.3 | **1.3.0 ✓** (2026-10-13) | **0.1.4 ✓** | **0.8.6 ✓** | 3.1.3 | GTM4WP 2.0.6 (owns GTM); scout-rvpark **0.1.5 ✓**; scout-aeo **0.2.0 ✓** (IndexNow on); scout-analytics **0.1.9**, scout-accessibility **0.1.4**, scout-reviews **0.4.13** (Site Build screen, 2026-10-13; plan: The Partnership; 6/7 ready for AI search). robots.txt carries a `Crawl-delay: 10` in the `*` group from outside Scout code (host or another plugin). Smush deleted. **All Scout plugins self-updating as of 2026-09-03 — first site fully on the channel.** |
+| Walter Lutz | walter-lutz-theme **0.3.1** (live 2026-10-22) | 7.1.3 | **1.3.4 ✓** | **0.2.0 ✓** | **0.9.1 ✓** | 3.2.0 (form 1, quote form with a **visible** photo upload) | Scout Build **0.6.5 ✓**, AI Search **0.2.2 ✓**, Analytics **0.1.13** (no GTM ID yet), companion `scout-walter-lutz` **0.4.3** (client repo, manual). Plan: The Build. Site health all green except Direct answers 2/5 and no posts. Timezone Chicago, comments off, email through Google (2026-10-22). Open: GTM ID, privacy page, Redirects and Accessibility features. |
 
 > **scout-cards** (new 2026-10-01, 1.0.1): first rollout is Hair by Patrick. Scout Media and Scout Recon run the same cards inside their own themes (Scout 1.30.1, Recon 1.13.0), not this plugin. If Scout Media moves to the plugin, install scout-cards **without** scout-core (it works standalone). Add a column once a second site installs it.
 
@@ -44,12 +46,18 @@ scout-rvpark **0.1.1**. Every site on these versions installs future releases
 automatically (twice-daily check). One cleanup left: **delete the broken
 scout-core 1.0.3 release** (Releases page) so it can never be installed.
 
-## How each site updates today (to be replaced by Site Sync)
+## How each site updates today (moving to Site Sync)
+
+Site Sync shipped in scout-core 1.4.0 (2026-10-22); 1.4.1 fixes adoption on
+live sites and must be on a site before its theme ships `scout-sync.json`.
+Sites on the auto-update channel pick up 1.4.0 on their own (confirmed on
+Hair by Patrick, Site Health 2026-10-22 14:25; the others not checked yet). It runs status-only until a theme ships a
+manifest, and none does yet, so nothing changes on any site.
 
 | Site | Mechanism | Blueprint state |
 |---|---|---|
 | Scout Media | Copy hardcoded in PHP templates; one-click setup + Tools → Scout Build; deploy = theme zip via `/deploy-wordpress` | pre-blueprint |
-| Hair by Patrick | Scout dashboard: char-count freshness, re-sync from theme, seeders, SEO filler | pre-blueprint, closest to Site Sync |
+| Hair by Patrick | Scout dashboard: char-count freshness, re-sync from theme, seeders, SEO filler | **Site Sync ready:** theme 1.2.0 (built on live 1.1.8) ships the manifest (not deployed; fourth in the Oct 22 order; needs scout-core 1.4.1). Its own dashboard retires once the pilot holds |
 | Maravela's | Tools importer: bundled HTML → `wp:html` pages, dry run / force overwrite, identity reset, seeders | pre-blueprint |
 | North Crest | Theme Dashboard: status, re-run setup, content map (copy edited in repo, deployed); defers to Scout plugins | pre-blueprint, model status-only site |
 
@@ -62,7 +70,7 @@ Where credentials live, not what they are. **TODO: fill and confirm 2FA per row.
 | WP Engine account | **TODO** | **TODO** | **TODO** |
 | wp-admin per site | **TODO** | **TODO** | **TODO** |
 | Domains / DNS registrar(s) | **TODO** | **TODO** | **TODO** |
-| GitHub org/repos | Joy, Sean | github.com/joyrmac | **TODO** |
+| GitHub org/repos | Joy, Sean | github.com/Scout-Media-Raleigh (moved from joyrmac 2026-11-04) | **TODO** |
 | Google (GA4, GSC, GBP) per client | **TODO** | **TODO** | **TODO** |
 | Gravity Forms license | **TODO** | **TODO** | **TODO** |
 

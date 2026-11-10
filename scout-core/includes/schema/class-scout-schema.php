@@ -4,12 +4,13 @@
  *
  * The graph is one connected entity model, not a pile of disconnected blobs:
  *
- *   #business  LocalBusiness (or the subtype set in Scout Business) — the NAP,
- *              geo, profiles, and an aggregateRating computed from real
- *              testimonials. Stable @id: home_url( '/#business' ).
+ *   #business  LocalBusiness (or the subtype set in Scout Business): the NAP,
+ *              geo and profiles. Stable @id: home_url( '/#business' ). No star
+ *              rating is built from testimonials: those are hand-picked quotes,
+ *              not a platform's full count. A plugin with real platform totals
+ *              adds one through the `scout_schema_aggregate_rating` filter.
  *   #website   WebSite, publisher -> #business.
  *   FAQPage    on the FAQ hub page / archive, from the FAQ post type.
- *   Review     from testimonials, itemReviewed -> #business.
  *   BlogPosting on single posts, publisher -> #business.
  *
  * Everything references #business by @id, which is what makes Google (and AI
@@ -25,6 +26,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Scout_Schema {
 
+	/**
+	 * The old testimonial rating cache. Nothing is cached under it any more;
+	 * clear_cache() still deletes it so a leftover copy goes away.
+	 */
 	const CACHE_KEY = 'scout_schema_reviews';
 
 	/**
@@ -35,7 +40,7 @@ final class Scout_Schema {
 			return;
 		}
 
-		$graph = apply_filters( 'scout_schema_graph', self::build_graph() );
+		$graph = self::add_webpage( (array) apply_filters( 'scout_schema_graph', self::build_graph() ) );
 		if ( empty( $graph ) ) {
 			return;
 		}
@@ -51,6 +56,47 @@ final class Scout_Schema {
 	}
 
 	/**
+	 * Add a WebPage node with published and updated dates on single posts and
+	 * pages. Runs after companions extend the graph, and steps aside when one
+	 * already describes the page (Scout Team's ProfilePage, for example).
+	 *
+	 * @param array<string,array> $graph
+	 * @return array<string,array>
+	 */
+	public static function add_webpage( array $graph ) {
+		if ( ! is_singular() || ! apply_filters( 'scout_schema_webpage', true ) ) {
+			return $graph;
+		}
+		$page_types = array( 'WebPage', 'ProfilePage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage', 'FAQPage', 'QAPage' );
+		foreach ( $graph as $node ) {
+			$types = isset( $node['@type'] ) ? (array) $node['@type'] : array();
+			if ( array_intersect( $types, $page_types ) ) {
+				return $graph;
+			}
+		}
+		$id = get_queried_object_id();
+		if ( ! $id ) {
+			return $graph;
+		}
+		$url  = get_permalink( $id );
+		$node = array(
+			'@type'         => 'WebPage',
+			'@id'           => $url . '#webpage',
+			'url'           => $url,
+			'name'          => wp_strip_all_tags( get_the_title( $id ) ),
+			'isPartOf'      => array( '@id' => home_url( '/#website' ) ),
+			'about'         => array( '@id' => home_url( '/#business' ) ),
+			'datePublished' => get_the_date( 'c', $id ),
+			'dateModified'  => get_the_modified_date( 'c', $id ),
+		);
+		if ( has_excerpt( $id ) ) {
+			$node['description'] = wp_strip_all_tags( get_the_excerpt( $id ) );
+		}
+		$graph['webpage'] = $node;
+		return $graph;
+	}
+
+	/**
 	 * Assemble the graph nodes relevant to the current request.
 	 *
 	 * @return array<string,array>
@@ -61,14 +107,17 @@ final class Scout_Schema {
 			'website'  => self::website_node(),
 		);
 
-		list( $aggregate, $reviews ) = self::reviews();
-
-		$aggregate = apply_filters( 'scout_schema_aggregate_rating', $aggregate );
-		if ( ! empty( $aggregate ) ) {
+		/**
+		 * A star rating for the business node. Empty by default: Scout Core
+		 * never builds one from testimonials. A plugin that holds a platform's
+		 * real totals (rating value and review count) can return an
+		 * AggregateRating array here.
+		 *
+		 * @param array $aggregate Empty array.
+		 */
+		$aggregate = apply_filters( 'scout_schema_aggregate_rating', array() );
+		if ( ! empty( $aggregate ) && is_array( $aggregate ) ) {
 			$graph['business']['aggregateRating'] = $aggregate;
-		}
-		foreach ( $reviews as $i => $review ) {
-			$graph[ 'review_' . $i ] = $review;
 		}
 
 		if ( self::is_faq_context() ) {
@@ -89,7 +138,7 @@ final class Scout_Schema {
 	}
 
 	/**
-	 * The business entity, built from Settings -> Scout Business.
+	 * The business entity, built from Scout -> Business info.
 	 */
 	private static function business_node() {
 		$b    = scout_core_business();
@@ -168,86 +217,6 @@ final class Scout_Schema {
 				'query-input' => 'required name=search_term_string',
 			),
 		);
-	}
-
-	/**
-	 * Compute the aggregate rating and review nodes from testimonials.
-	 * Cached for an hour; cleared on testimonial save/delete.
-	 *
-	 * @return array{0:?array,1:array}
-	 */
-	public static function reviews() {
-		$cached = get_transient( self::CACHE_KEY );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
-
-		$limit   = (int) apply_filters( 'scout_schema_review_limit', 10 );
-		$ratings = array();
-		$reviews = array();
-
-		$query = new WP_Query(
-			array(
-				'post_type'      => 'testimonial',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'no_found_rows'  => true,
-			)
-		);
-
-		foreach ( $query->posts as $post ) {
-			$rating = get_post_meta( $post->ID, scout_core_meta_key( 'rating' ), true );
-			if ( is_numeric( $rating ) ) {
-				$ratings[] = (float) $rating;
-			}
-
-			if ( count( $reviews ) >= $limit ) {
-				continue;
-			}
-
-			$node = array(
-				'@type'        => 'Review',
-				'@id'          => home_url( '/#review-' . $post->ID ),
-				'itemReviewed' => array( '@id' => home_url( '/#business' ) ),
-				'author'       => array(
-					'@type' => 'Person',
-					'name'  => get_the_title( $post ),
-				),
-			);
-
-			$body = trim( wp_strip_all_tags( $post->post_content ) );
-			if ( '' !== $body ) {
-				$node['reviewBody'] = $body;
-			}
-			if ( is_numeric( $rating ) ) {
-				$node['reviewRating'] = array(
-					'@type'       => 'Rating',
-					'ratingValue' => (string) ( 0 + $rating ),
-					'bestRating'  => '5',
-				);
-			}
-			$date = get_post_meta( $post->ID, scout_core_meta_key( 'date' ), true );
-			if ( '' !== $date ) {
-				$node['datePublished'] = $date;
-			}
-
-			$reviews[] = $node;
-		}
-		wp_reset_postdata();
-
-		$aggregate = null;
-		if ( $ratings ) {
-			$aggregate = array(
-				'@type'       => 'AggregateRating',
-				'ratingValue' => (string) round( array_sum( $ratings ) / count( $ratings ), 1 ),
-				'reviewCount' => (string) count( $ratings ),
-				'bestRating'  => '5',
-			);
-		}
-
-		$result = array( $aggregate, $reviews );
-		set_transient( self::CACHE_KEY, $result, HOUR_IN_SECONDS );
-		return $result;
 	}
 
 	public static function clear_cache() {

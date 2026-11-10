@@ -48,6 +48,110 @@ jobs:
       - name: Check the Scout Core APIs other plugins depend on
         run: bash tools/core-contract.sh
 
+  catalog:
+    name: Feature catalog copies match
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: catalog.json and scout-build/catalog.json are identical, valid JSON
+        run: |
+          python3 -m json.tool catalog.json > /dev/null
+          cmp catalog.json scout-build/catalog.json || { echo "::error::scout-build/catalog.json differs from catalog.json. Copy the root file over."; exit 1; }
+
+  admin-kit:
+    name: Admin kit copies match
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every plugin's copy of the Scout admin kit matches tools/admin-kit
+        run: |
+          status=0
+          for f in */assets/scout-admin.css; do cmp -s "$f" tools/admin-kit/scout-admin.css || { echo "::error file=$f::differs from tools/admin-kit/scout-admin.css. Copy the kit file over."; status=1; }; done
+          for f in */includes/class-scout-admin-ui.php; do cmp -s "$f" tools/admin-kit/class-scout-admin-ui.php || { echo "::error file=$f::differs from tools/admin-kit/class-scout-admin-ui.php. Copy the kit file over."; status=1; }; done
+          exit $status
+
+  design:
+    name: Design module checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+      - name: DESIGN.md parser, token merge, contrast and scout_core_owns (no WordPress needed)
+        run: php tools/tests/design.php
+      - name: Admin kit files every Scout screen by the dashboard map (docs/dashboard-map.md)
+        run: php tools/tests/admin-kit-groups.php
+      - name: Dashboard tokens match tools/admin-kit/tokens.json, kit copies are current, contrast passes
+        run: |
+          php tools/admin-kit/build-tokens.php --check
+          php tools/tests/admin-tokens.php
+      - name: Law firm disclaimer rules (no WordPress needed)
+        run: php tools/tests/law-disclaimers.php
+      - name: Law firm approval rules (no WordPress needed)
+        run: php tools/tests/law-approvals.php
+      - name: Law firm "Reviewed by" due dates (no WordPress needed)
+        run: php tools/tests/law-reviews.php
+      - name: Law firm form entries that delete themselves (no WordPress needed)
+        run: php tools/tests/law-entries.php
+      - name: Law firm screens fall back when an older admin kit loads first (no WordPress needed)
+        run: php tools/tests/law-kit-fallback.php
+      - name: Scout Core breadcrumbs, verification, thank-you pages and hardening (no WordPress needed)
+        run: php tools/tests/core-seo-gaps.php
+      - name: Scout Core searches that found nothing (no WordPress needed)
+        run: php tools/tests/core-empty-search.php
+      - name: Language versions (no WordPress needed)
+        run: php tools/tests/core-hreflang.php
+      - name: Scout Core select fields keep their value on every write path (no WordPress needed)
+        run: php tools/tests/core-select-meta.php
+      - name: Every plugin lists the visitor data it keeps (Site Standard rule 24)
+        run: php tools/visitor-data.php --check
+      - name: Every plugin README says what it needs from the theme (Site Standard rule 4)
+        run: php tools/tests/readme-theme-needs.php
+      - name: Plugins take colors and fonts from DESIGN.md (Site Standard rule 3, no WordPress needed)
+        run: php tools/tests/color-contract.php
+      - name: Approval hold, live sites wait for Scout's OK (no WordPress needed)
+        run: php tools/tests/approval-hold.php
+      - name: Privacy policy and terms drafted from the visitor data lists (no WordPress needed)
+        run: php tools/tests/core-policies.php
+      - name: WordPress's own Site Health, run by Scout (no WordPress needed)
+        run: php tools/tests/wp-health.php
+      - name: Security baseline in Site status (no WordPress needed)
+        run: php tools/tests/security-baseline.php
+      - name: Form emails sent, in Site status (no WordPress needed)
+        run: php tools/tests/form-mail.php
+      - name: Update report on Scout tools, Updates (no WordPress needed)
+        run: php tools/tests/update-report.php
+      - name: White-label layer for the admin, opt-in only (no WordPress needed)
+        run: php tools/tests/brand.php
+      - name: Monthly update to the client (no WordPress needed)
+        run: php tools/tests/site-report.php
+      - name: Today list on Home (no WordPress needed)
+        run: php tools/tests/today.php
+      - name: Inbox list (no WordPress needed)
+        run: php tools/tests/inbox.php
+      - name: Plans, picks and recommendations (no WordPress needed)
+        run: php tools/tests/plans.php
+      - name: People profiles (no WordPress needed)
+        run: php tools/tests/people.php
+      - name: Business cards read from People (no WordPress needed)
+        run: php tools/tests/cards-people.php
+      - name: Cards take over from a theme that made its own (no WordPress needed)
+        run: php tools/tests/cards-theme-import.php
+      - name: Privacy export and erase tools (no WordPress needed)
+        run: php tools/tests/privacy-tools.php
+      - name: Booking busy times from the owner's calendar (no WordPress needed)
+        run: php tools/tests/booking-busy.php
+      - name: Redirects leave out bot probes and check broken links (no WordPress needed)
+        run: php tools/tests/redirects-noise.php
+      - name: Saved secrets after the site's security keys change (no WordPress needed)
+        run: php tools/tests/secret-health.php
+      - name: Review totals and reviews from the theme's scout-setup.json (no WordPress needed)
+        run: php tools/tests/reviews-from-theme.php
+      - name: Daily Google check with an API key, stubbed, no real request (no WordPress needed)
+        run: php tools/tests/reviews-places.php
+
   slop-check:
     name: Code slop check
     runs-on: ubuntu-latest
@@ -57,3 +161,43 @@ jobs:
       # comments and visible em dashes warn. Rules: tools/slop-check.py.
       - name: Check for code slop
         run: python3 tools/slop-check.py
+
+  wp-tests:
+    name: WordPress tests (fresh install)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.0 (scout-core's floor)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+          tools: wp-cli
+
+      # A clean WordPress every run, Scout Core installed the way a site gets
+      # it (folder under wp-content/plugins), then the tests in tools/tests/.
+      - name: Install WordPress and Scout Core
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/wp && cd /tmp/wp
+          wp core download --quiet
+          wp config create --dbname=wp --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check
+          wp core install --url=http://localhost --title=Scout --admin_user=admin --admin_password=admin --admin_email=ci@example.com --skip-email
+          cp -r "$GITHUB_WORKSPACE/scout-core" wp-content/plugins/
+          mkdir -p wp-content/mu-plugins
+          cp "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset.php" "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset-register.php" wp-content/mu-plugins/
+          wp plugin activate scout-core
+
+      - name: Select fields keep their value
+        run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/select-meta.php"

@@ -1,0 +1,494 @@
+# Scout Build changelog
+
+## 0.14.3 (2026-11-09)
+
+- **Site status knows about the daily Google check** (Scout Reviews 0.7.0). When it is on and working, the Review totals row says "Google is checked every day." When it has failed for three days, the row is a look ("Google check failing") with the reason and a link to Review settings. Sites without it look the same as before.
+- **Fill from theme takes `reviews.google_place_id`** and puts it in Scout Reviews' place ID when that is blank. The API key is never read from the theme.
+
+## 0.14.2 (2026-11-09)
+
+- **Review totals and reviews from the theme.** Fill from theme now hands the `reviews` section's `totals` (each platform's rating, count and link, with the date Scout checked them) and `items` (single reviews) to Scout Reviews 0.6.0. The newest check wins for totals, and reviews are only ever added. The look settings and the Google review link fill exactly as before.
+- The reviews section runs again when the `checked` date changes, once more on the day a future `checked` date arrives, and once Scout Reviews is updated if it was too old to take totals. A theme without totals or reviews runs nothing new.
+
+## 0.14.1 (2026-11-09)
+
+- **Business info from the theme.** `scout-setup.json` can carry a `business` section (name, type, phone, email, city, state, other profiles and the rest of Business info). Fill from theme copies it into Scout Core's Business info, filling blank fields only, so anything typed there stays. `same_as` is a list of https links; anything else is dropped.
+- **File editing row** reads the Scout Core switch too, so it shows Off when the switch keeps the editors off even if the host's wp-config.php says otherwise.
+
+## 0.14.0 (2026-11-09)
+
+- **Saved keys never go quiet when the site's security keys change (scoutraleigh.com, Nov 5 to 9).** The Email app password, the theme key and the Hub keys are encrypted with the site's own security keys. When a host changed those keys, all three silently read as "not set", and form email went out through the host and into junk. Now each saved secret keeps a short fingerprint of the keys it was made with (8 characters of a hash, never the keys or the secret), and when they no longer match it reads as "can't be read":
+  - **Email** says "Your Google connection can't be read anymore. This happens when the site's security keys change." with a Connect again button, and its menu hint says Connect again.
+  - **Site status:** the Site email row is a fix with that message and a link to Email, so it reaches Home's Today list. A new Theme updates row ("Theme updates stopped: the saved key can't be read. Paste it again.") appears only in that case, for Scout and for the Hub's nightly read, and links to Updates. Sites that never set them up look the same as before.
+  - **Updates:** the Theme box says "The saved key can't be read anymore. Paste it again." with its key row open, and the update report says "Theme key: can't be read (paste it again)".
+  - **Site history, Hub keys:** "The saved keys can't be read anymore" with Make new keys, and the More options fold opens on its own.
+  - The first time it happens, one Site history line for Scout only: "Security keys changed: reconnect Email and paste the theme key". Keys saved before this release get their fingerprint the first time they're read. `tools/tests/secret-health.php` checks it.
+- **The test email tells the truth.** It used to say "through Google" even when Google wasn't set up and the host sent it. Now, when the host sends it, the email says so ("This came through your host's mail, not Google...") and the screen shows a warning instead of a success.
+- **Updates is calm when nothing needs doing (Joy, Nov 9).** The status line says "Everything is up to date. Checked 1 minute ago." with Check again, then Copy the update report, then one short list, "The six steps", with a check mark and one line per step ("Plugins: 14 up to date", "Theme: Scout Media 1.54.0, key saved"). Each row opens its full section right under it. When something needs doing, those steps come first and open, and the rest stay in the list. The "Checked for new features and versions." notice is gone (the status line already says it); error notices stay. Step 1 no longer repeats "Everything is up to date". Every button, form, nonce, link to a step and the Other tools fold work as before. Visitors notice nothing.
+- The File editing row in Site status points to the new "Turn off the code editor" switch instead of wp-config.php.
+- **Admins row (Joy's Nov 9 report).** An admin whose display name is an email address is now a look ("an admin whose name shows an email address"), and the address is never printed, since the report gets copied out of WordPress. Names are split by semicolons, so a name with a comma like "Scout, Raleigh" reads as one name.
+
+## 0.13.0 (2026-11-05)
+
+- **One name for the client's view: "What's new on your site".** Clients see it in the menu, the screen title, the Home link ("See everything that's new") and the dashboard widget. Scout still sees "Site history".
+
+- **Features list says "People".** The feature once called "Team credentials" is now "People", with a summary that fits every kind of site, and no "Law firms" tag. Chat and Free site check say their messages land in To do.
+
+- **Site status is one list per section (Joy, 2026-11-05).** The wall of about 20 check cards, three across, is now five kit lists: Basics, Search listing, Ready for AI search, Security and Plugins. Each row has a dot and the check's name, its value, one short line, and a link on the right. A long note shows its first sentence with the rest under More. A status line opens the screen ("3 to fix, 11 to look at."). The test email, the restore test and Copy the report moved into More options at the bottom; Copy the report is an outlined button now and copies exactly the same text. Coming back from Send a test opens that fold.
+- **Home is calmer.** The site status uses the kit status line (no more hand-made dot in the brown text color). "Things you can do here" is a list instead of four cards across. The operators' "Features · Updates · Site history" dot list is three quiet buttons under a Scout tools label (Build tools on white-label sites). The second Request a change box under the list is gone, since the header bar already has that button (and Scout's own sites have neither); the "larger text, less motion" link stays as a plain line. More features uses the kit fold and list rows.
+- **Features has one status line and no blue buttons on rows.** The four stat cards are one line ("12 features on. 11 more are ready to add..."). Turn on and Update now are outlined, so a list of features is no longer a column of primary buttons. The plan picker, plan notes and white-label status moved into a closed "More options: plan" box at the bottom. Section counts read "On this site (12)".
+- **The greyed-group notice uses the site's group name,** so a white-label site says "Nothing in Build tools is on yet", not Scout tools.
+- **Plain states, right names.** Open change requests no longer turn Request a change amber (they are normal work). A client request with no saved status shows "Received" instead of an empty pill. The To do chip says "Change requests". The Reviews marker in To do keeps its diamond but is coral, not amber. To do and Today empty states sit on the left like the rest of the column.
+- **Search engine rules has a menu entry** under Search & analytics, so "Looking for robots.txt?" in Scout tools now opens it. Same address (admin.php?page=site-build-robots).
+- **WordPress Dashboard box uses the kit.** One status line and a short list (features on, AI search, Google email, open change requests) replace the four stat cards; the hard-coded amber stars and dots and grey hexes are kit tokens now. Long check notes there and on Today show their first sentence.
+- **Shorter lines.** The To do lede, Home's ledes and the New request intro are one sentence each. White-label sites read "your web team" or no name where Site history said Scout.
+- **Updates is one screen, top to bottom (Joy, 2026-11-05).** A status line says what needs doing now ("2 plugins waiting. Update Scout Core first.") with one button for it, then six numbered steps: Check for new versions (last checked, Check again, and "if it says up to date right after a release, check again in 2 minutes"), Plugins (waiting ones on top with Scout Core first, each row saying whether it is ready, waiting for your OK, held by Scout, paused or due on a date, then the Waiting for your OK box), Theme, Page copy (Scout Core's Site Sync: in sync or how many to review), Bring changes back (Scout Core's Change log count with a Copy the changes button, once that Scout Core is out) and Check the site (ok, look and fix counts with the fixes named). Fill from theme, Import posts, Site settings, When updates install and Recent changes sit under one closed Other tools fold; a saved form that returns to one of them opens it.
+  - **Copy the update report**, at the top and the bottom: one plain-text block for the chat with the site, the time, WordPress, PHP and theme versions, every Scout plugin with its installed and new version and where it stands, the theme and key state (never the key), page copy, the Change log count and the full Site status report, built by the same code as Site status. Our own lines never carry an email address or anything shaped like a key. `tools/tests/update-report.php` checks it.
+  - **Update all, Scout Core first** (two or more ready) opens WordPress's own bulk updater with Scout Core first. Releases waiting for an OK, held by Scout or sent back a version stay out of it; it runs only when someone presses it.
+  - Every form, nonce, option and address stays the same. Update now on each row is now an outlined button; on a release that waits for an OK or a hold it sits under More. The Page copy and Change log cards left Content & settings, because steps 4 and 5 carry the same buttons. Operators only, as before. Visitors notice nothing.
+
+- **White-label for the WordPress admin (Scout Brand), so a site can drop Branda Pro.** Off on every site until that site turns it on: a `brand` section in the theme's `scout-setup.json` (even an empty one), or the `scout_brand` option saved with `"on": true`. With neither, nothing changes for anyone. `"on": false` in the setup file, or `define( 'SCOUT_BRAND_OFF', true );` in wp-config.php, turns it off again. Five parts, each can go in the section's `off` list:
+  - **Login screen:** the setup file's `brand.logo`, else the Customizer logo, else the Site Icon (the site name as text when there is none), the brand color on the button and focus rings, the logo links to the site, and the tab title is the site name.
+  - **Admin bar:** no WordPress logo menu, "Hi, Name" instead of "Howdy", and the updates counter only for operators, as on the dashboard.
+  - **Footer:** "Built and looked after by Scout Media." with Request a change. White-label sites (`SCOUT_HUB_BRAND` false) say "Built and looked after by your web team." and name nobody. The WordPress version shows only for operators. Scout's own screens skip the line, since they already end with the Scout sign-off.
+  - **Hidden menus:** menus in `brand.hide_menus` are hidden from everyone but operators (`parent.php>child.php` hides one submenu item).
+  - **Dashboard message:** `brand.message` shows at the top of the Dashboard until each person dismisses it; a new message shows again.
+  - Operators see one line on Scout tools, Features: "White-label: on, from the setup file", "on, from the scout_brand setting", or "off". No new menu.
+  - To switch a site: add the `brand` section, update the theme, check the login screen, admin bar and footer, then deactivate Branda. Branda's settings are not imported.
+- **Monthly update to the client, drafted from Site history.** Off on every site until an operator turns it on, in a new box on Scout tools, Site history (operators only): monthly, or quarterly for The Partnership (drafted in January, April, July and October for the quarter before). Early each month the site drafts last month's update from the lines marked Client sees: each line's client wording (its title when it has none) with its measure, then **Waiting on your OK** and **Coming up**. Nothing sends by itself. An operator reads the draft, changes the opening if they want, and presses **Send** or **Skip**. The team address (`SCOUT_HUB_REQUEST_EMAIL`, else team@scoutraleigh.com) hears when a draft is ready and once more after three days if it is still waiting. The draft warns when a Client sees line has no client wording, and on white-label sites when a line names Scout.
+  - It goes to the address typed in the box's Settings, else Business info's email, in the site's branded email card (Scout Email), with replies to the team address. On white-label sites the email never names Scout.
+  - **Text, sent by hand** for clients who read texts: the box shows a short text with a Copy the text button, and **I texted it** marks it sent. **Make a draft** builds one for any of the last six months; a skipped month can be drafted again, a sent one can't.
+  - Sending, texting or skipping writes a Site history line the client doesn't see. Stored as private `scout_hub_report` posts, settings in `scout_hub_report_settings`; the daily check (`scout_hub_report_daily`) runs only while the update is on. Spec: `docs/site-log-spec.md`, step 4.
+- Visitors notice nothing from either change.
+
+- **No Request a change button on Scout's own sites.** scoutraleigh.com and Recon have no one to ask, so the header button stays off there on every Scout screen (shared admin kit). Client sites keep it.
+
+- **Form emails sent, in Site status.** A new row right after "Form emails go to" says whether Gravity Forms notifications actually went out: "14 sent" with "14 sent in the last 7 days, none failed", or "2 of 14 failed" naming the last one (form, notification, date and the error) with a link to that form's notifications. A failure in the last 24 hours is a fix, so it reaches Today on Home; older failures in the week want a look. When forms got entries but no email went out, the row asks whether notifications are off. Sites without Gravity Forms don't get the row. Each try is noted in the option `scout_hub_form_mail` (not autoloaded): the form id, the notification's name, sent or failed, the error with email addresses taken out, and the time, for the last 50 tries, plus a count per form per day for 30 days. Never the recipient, subject, message or entry. Counting starts when this version first loads, so older entries never read as missed emails.
+  - Operators get a **Send a test** button on Site status (admin-post `scout_hub_form_mail_test`). It sends a plain email through WordPress to the shared notice address (Business info's "Send notices to", else the admin email), notes the result as a test, and shows it after the page reloads. It submits no form and saves no entry.
+  - Why: on Nov 5 Scout's own Contact form said sent, but the notice never reached the inbox, and nobody knew until it was checked by hand.
+  - Visitors notice nothing.
+
+- **Site history reads by day.** Lines sit under a date heading, tags sit in one row under each title, and three or more lines of the same kind on one day fold into one row ("25 × Plugin release", Show all). The note for lines with no client wording is now grey: "Client reads the title as written." The Search group is named "Search & analytics" (shared admin kit).
+
+## 0.12.4 (2026-11-05)
+
+- **Privacy tools reach chat change requests.** WordPress's Export and Erase Personal Data tools now find change requests a visitor sent through Scout Chat, by the email they gave. Erasing keeps the request as a work item and takes out their name, email and phone, and the Site log line that named them now says Scout Chat. Requests staff send from the dashboard are not touched.
+
+- Restore test and Uptime alert show only to Scout, since only Scout can set them. Clients see the other six security rows.
+
+- **Security in Site status (Site Standard rule 22).** Site status has a new Security section, and the copied report a SECURITY block, with eight rows that only read: XML-RPC, File editing, Admins, Two-step login, Backups, Restore test, Uptime alert and Security headers. Each is "ok" or "look", never a fix, and the look rows count on Home and in the dashboard widget like the other checks. Only people who can manage the site see the section, because it lists admins by display name (never email).
+  - XML-RPC is ok when off, or on because Jetpack needs it (as Spam protection already allows). File editing is ok when `DISALLOW_FILE_EDIT` (or `DISALLOW_FILE_MODS`) is set; otherwise the row gives the wp-config.php line.
+  - Admins flags generic names (admin, administrator, test, user) and anyone with no sign-in in 180 days. Scout now notes when an administrator signs in (user meta `scout_hub_last_login`); someone with no sign-in on record is flagged only after 180 days of noting.
+  - Two-step login finds Two Factor, Wordfence, WP 2FA, miniOrange and Solid Security, and names admins who haven't set it up where the plugin says. Where it doesn't, the row reads "Can't tell from here".
+  - Backups are ok on WP Engine (other hosts can answer through the `scout_hub_backups` filter). Operators type the last restore test date and the uptime alert on Site status (option `scout_hub_security`, admin-post `scout_hub_security`); a restore over 92 days old, or none, wants a look.
+  - Security headers loads the home page's headers in the background (5 seconds at most, kept 12 hours, refreshed with the daily checks) and names any of HSTS, X-Content-Type-Options, X-Frame-Options (or CSP frame-ancestors) and Referrer-Policy that are missing. It never adds or changes a header.
+- Visitors notice nothing: no page, header or setting changes.
+
+## 0.12.3 (2026-11-05)
+
+- **A chat change request shows once in To do.** A change request from the site chat already shows as a request; To do no longer lists the same chat as a chat message too.
+- **New group names on screen** (admin kit 1.11.0). The Inbox screen and menu item are "To do", and the health report screen and menu item are "Site status", matching their groups. The Home link, the admin bar, the dashboard widget button and the To do emails use the new names. In To do, chat items are "Chat messages" and site check items are "Check requests", matching those plugins' screens.
+- **Plainer names on screen.** Only the words people read changed; addresses, settings and saved values are the same.
+  - The Site log is "Site history" for everyone, in the menu and the title. The client's view was called "Your site" and now uses the same name. Links, the approval email and the Hub keys line say Site history too.
+  - Release rings read as the update order: "Update order: first", "a day later" or "two days later", with a plain Save button. The Updates box, the saved message, the "Installs by itself" line and the wp-config note use the same words.
+  - The robots.txt screen is "Search engine rules", and its all-good heading is "The rules are working".
+  - The Hub keys note says "The connection is on" (or off) instead of the endpoint.
+  - Export CSV and Download CSV on Site history are "Download spreadsheet".
+  - The Email screen's Settings box is "Sending address".
+  - On Updates, the Site Sync box is "Page copy", with an Open Page copy button.
+- **Shorter, plainer help text everywhere** (Sean's voice, admin kit DESIGN.md 2a). Screen openings, notes and statuses are one short sentence. Buttons match what they open: Fill from theme, Import posts, Open Change log, Request a change. "Security lock" reads "Secure connection (HTTPS)", and the AI crawlers "Welcome" status reads "Allowed". The AI search note no longer names a specific AI company in its list. Theme key errors point to Scout tools, Updates.
+
+## 0.12.2 (2026-11-05)
+
+- **Four screens follow the one layout.** Request a change, the Site log, Your site and Email now read top to bottom in one column: a status line first, then the thing people use most, then lists, with rare settings in a closed More options box. Each screen has at most one main (filled) button. Nothing they do has changed: the same forms, fields and buttons, in a new order.
+  - **Request a change.** The status line says how many requests are open and where the newest one stands. The new-request form comes next, then the list, one row per request with its date, who sent it, the page and a status pill. Operators still change a status from the row.
+  - **Site log.** The status line counts this month's lines and what is waiting on the client, with a link to see it as the client. The log is a list now, one row per line with its date, who wrote it, tags for kind and topic, a "Client sees" tag and the version. Edit wording opens under the row, and its Save is no longer a filled button. Add a note is one box below the log, and Add to the log is the screen's one main button. Export, the Hub keys and Import history sit in More options, which opens by itself when new keys are shown or an import is asked for. The keys note now says Scout's tools, not Claude.
+  - **Your site (the client's view).** The status line says whether anything needs their OK. Then come the lines waiting for an OK (Approve is an outlined button, with "Ask for a change first" beside it), this month, their requests and what is coming up.
+  - **Email.** The status line says whether email goes through Google, and as which address. Then the three setup steps as a numbered list, the settings with one Save, and Send a test as an outlined button.
+- These screens' styles moved out of the page into `assets/admin.css`, using the kit's color tokens only.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.12.1 (2026-11-05)
+
+- **One Site health, not two (Joy, 2026-11-05).** Scout now runs WordPress's own Site Health checks once a day, with its daily check, and lists what they found by name in Scout's Site health under **WordPress checks**, with plain advice where there is some. Items only the host can change (disk space, opcode cache, object cache and similar) are listed once as "for the host, nothing to do here" and do not count. WordPress's own badge is kept in step. Tools > Site Health no longer needs opening to be current.
+- **Form emails on Scout's own sites.** Site health no longer says a form "emails only Scout, not the business" on Scout's own sites, where Scout is the business. A site counts as Scout's own when scout-setup.json says `"scout_own_site": true`, its address is on scoutraleigh.com, or Business info's email is a scoutraleigh.com address. Found on scoutraleigh.com right after the 0.12.0 release.
+
+## 0.12.0 (2026-11-04)
+
+- **Staging first, then live: the approval hold (Joy, 2026-11-04).** A live site now installs a Scout release only after Scout says OK. Staging copies install it by themselves, so it gets checked there first.
+  - On the live site, **Scout tools → Updates → Waiting for your OK** lists each waiting plugin and theme update. Type who said yes ("Client OK by text, Nov 5"), then **Approve** or **Approve all**. It installs on the next update run, or at once with Update now.
+  - Each OK goes in the Site log, and the client sees "checked on staging and approved for your live site" under Your site.
+  - An approved release skips its ring wait. A catalog hold or a pause on the site still stops it. Update now always works.
+  - **Security fixes skip the wait:** a `"security"` entry in catalog.json lets a site still below that version install it at once. Once the site has the fix, later releases wait for an OK again.
+  - Operators get one Inbox row, "Updates waiting for your OK". Clients never see it.
+  - On by default on live sites, off on staging and local copies. One button on the Updates screen switches it for a site; `SCOUT_HUB_APPROVAL` in wp-config.php sets it too.
+- **Features is a clean list (Joy, 2026-11-05).** Each group is one box with a row per feature instead of a grid of big cards. A row shows a dot for on or off, the name, one line of what it does (the full line on hover), the version, one main button (Settings, Turn on or Update now) and a **More** menu for Turn off, Go back a version and the plan choices. Columns line up from row to row, and on a phone the row stacks. "Included in your plan" no longer repeats on every row: a feature shows its plan only when it is a Plus module, a Bonus or picked by hand. "Add to this site's plan" only shows for a feature the plan does not already include, and the note under the plan picker matches the plan chosen.
+- **Visitor contact details stay on the site.** The Hub key's request list now blanks email addresses and phone numbers in a request a visitor sent through the chat. The visitor's name and the request itself still come through.
+- **A calmer Updates screen (Joy, 2026-11-04).**
+  - The plugin list comes first, then "When updates install" (the ring and the pause), then the theme.
+  - The theme is one line, "Theme · name version · Up to date", with its key in a closed "Theme key" row that has Replace and Remove key.
+  - Ring choices are short: "Ring 1: first", "Ring 2: a day later", "Ring 3: two days later". The suggested ring for the site's address is named under them.
+  - Hints in the left list are short and in plain type: the Site log shows its count, not "31 THIS MONTH".
+- **Site health tiles, at most three across.** Tiles run three across at most (the map's rule), and their type never drops below the dashboard's floor of 12px labels and 14px notes. The Test builds tile says one line and keeps the plugin names behind "Show which". The copied report still has every sentence.
+- **Home order and Scout's own sites.** Home now reads: the sentence headline, then Today, then the health line. The first-week setup list comes first only while it shows. On Scout's own sites (`"scout_own_site": true` in scout-setup.json), the line under the headline says "Everything waiting on Scout's own site." instead of talking about a client.
+- **The screens now match the approved dashboard canvas (admin kit 1.9.0).** Joy saw on staging that the screens didn't look like the design. Every Scout screen now opens with one white bar (breadcrumb, Find anything, and Request a change) and lists its section's screens on the left. The second menu of group pills and tabs across the top is gone, so the sidebar is the only menu. The client logo tile and the mono eyebrow are gone too.
+- **Find anything (Ctrl or Cmd + K)** opens on every Scout screen. It searches every screen the person can open, and lists today's items under "Do it now".
+- **Home leads with a sentence**, for example "Good morning. Two things need you today." It shows the date above, in a centered column. Scout sees "Three things on this site are waiting." with the site's name and address.
+- **The Inbox is two panes.** The list is on the left. The open message is on the right, with Send reply (it emails the address the person left and marks the message done), Mark done (chat questions and site check requests) and Remind me tomorrow (back at 8 am the next day, for that person only). Request a change is the button in the bar.
+- **Joy's placements (Nov 4):**
+  - Chat settings and Ask for reviews move to Your website.
+  - The client's "What's new on your site" moves under Home, so clients can reach it.
+  - Plus sections sit right under the Scout menu. The sidebar shows "Scout team" above Scout tools, and Scout's count badges are amber.
+  - "Looking for" links point to screens that live in another group.
+- **Shared admin kit 1.8.1: one token system for the dashboard.** Every color, size, radius, spacing step and shadow now comes from `tools/admin-kit/tokens.json` (rules in `tools/admin-kit/DESIGN.md`). Primary buttons, the active nav group and the active tab move from #0E8FE6 to the deeper #0A78C2 fill, so their white text passes AA (3.45:1 before, 4.69:1 now). Status dots and notices use the status tokens. Sizes now match the approved dashboard canvas (Recon branch): 16px body text, 34px page titles, 44px buttons, inputs and menu links, 18px card corners, 24px padding inside boxes. Larger text goes to 18px. CI checks the CSS matches the tokens and the contrast passes, including status text on its own tint.
+- **The Inbox count matches the list.** The sidebar bubble, the Inbox hint, the All chip and the Inbox rows on Today now count from the same list the Inbox shows, so site check requests and booking requests are counted too (found on the staging test: the list said 2, the bubble said 1).
+- **The redesigned Scout menu (dashboard redesign, Joy 2026-11-04).** Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools. Every screen keeps its address; only where it is filed changes. The full map and the rules for filing new screens are in `docs/dashboard-map.md`.
+- **Home replaces Overview** as the first screen's name, in the sidebar and on the screen. Your site stays under Home for clients.
+- **Who sees what.** Operators see everything, including Scout tools (Features, Updates, Site log, Email, Chat settings, Customer list, Site Sync, the Change log). Client owners see everything but Scout tools. Staff (anyone who cannot change site settings) see Home, Inbox and Your business.
+- **Greyed "Turn on" items are for operators only.** Clients only see groups that have something in them.
+- **The sidebar follows the menu order** even when the Scout menu is short enough not to be grouped.
+- **Today on Home.** "Needs you" becomes a numbered Today list: each item says about how long it takes and has one button, the first is marked Start here, and "1 of 4 done" counts what left the list earlier today. "Not today" hides an item until tomorrow. With nothing left, Home says "Nothing needs you today." Items come from the Inbox rows, failing health checks and a site hidden from Google, and any plugin can add one with the `scout_hub_today` filter. Staff only see items they can act on.
+- **The Inbox is one list.** Chat questions, new reviews, your change requests with their status (finished ones stay two weeks), site check requests and booking requests show as single items, newest first, each with who it's from, a short preview, how long ago, and an Open button to where it's handled. Filter chips by kind show only kinds that have something. Queues other plugins add as counts (like law-firm approvals) show as one item each, and plugins can add their own items with `scout_hub_inbox_items`.
+- **Email me: never, once a day, or for every new item.** Each person picks on the Inbox screen. It starts at never, so nobody gets mail they didn't ask for. Emails are plain, name only the site, and list just what that person can see.
+- **Friends and family plan.** A fourth plan for sites Sean and Joy look after as a favor: Core features, plus anything added to the plan by hand. The theme's setup file "use" list counts as picks on these sites. Internal only.
+- **Plans follow the four kinds of features.** The catalog now sorts features into Core (`build`), Bonus (`bonus`: chat, cards and links, case results) and Plus (`plus`: booking, events, members, partners, customer list, writing room, RV park content). The Whole System includes every Bonus but not Plus modules, which are added to a site one at a time on any plan. Cards read "Bonus from Scout," "Plus: added on its own" or "Picked for this site," with a diamond or plus sign. The old `addon` tier still reads as Bonus.
+- **Operators add features to a site's plan and recommend them,** with two small buttons on each feature card.
+- **More features on Home.** Site owners see a closed "More features" section listing what Scout recommends for the site and isn't on yet, each with "Ask us to add this." Clients no longer see every feature Scout makes; the Features screen stays with Scout tools.
+- **The first-week setup list.** Site owners see five steps above Today until they're done: business name, address and phone, weekly hours, logo and site icon, the team, and the Google Business Profile link. Steps for features the site doesn't run are left out. Operators can hide the list on a site. Filter: `scout_hub_setup_steps`.
+- **Plus modules are tagged.** Bookings, Events, Members, Partners and the Writing room keep their own sidebar sections, now with a small purple "+ Plus" tag. The `scout_admin_plus_menus` filter adds a client's own module.
+- **Easier to read.** Users → Profile has two settings for the Scout screens: larger text and less motion. Home links to them. The computer's reduce-motion setting is followed either way. Dark mode is left out on purpose: WordPress's own buttons, notices and forms on these screens don't support it, and a half-dark screen reads worse.
+- **Preview the site on a phone** from any Scout screen: the live site opens in a phone-sized window.
+- **What's new on your site.** For clients, the card on Home is titled "What's new on your site" with this month's count of changes from the Site log. Operators still see "With Scout."
+- **Customer list stays visible inside Events** for site owners; it no longer files as a Scout-tools screen. RV park joins the Plus sections.
+- **Shared admin kit 1.8.0** files each screen into the new groups, with the test in `tools/tests/admin-kit-groups.php` updated to match.
+- **Scout-branded wording (Joy, 2026-11-04).** Site log notes added with the write key now say Scout as their source, and older notes that said Claude show as Scout. The Site health button reads "Copy the report", and the write key is labelled for Scout's tools.
+
+## 0.11.1 (2026-11-04)
+
+- **Release rings (Site Standard rule 19).** A Scout plugin release now installs itself on scoutraleigh.com and staging copies first (ring 1), on Recon a day later (ring 2) and on client sites two days after it is out (ring 3). Until a site's turn the automatic update waits; Build, Updates says on each plugin's row when it installs, and Update now still works. The ring comes from `SCOUT_HUB_RING` in wp-config.php, the setting on the Updates screen, or the address. A release whose date the version list does not carry is never held, so nothing changes until the Release workflow publishes dates (this release adds them).
+- **Pause switch.** Build, Updates, "Pause automatic updates for 7 days" stops automatic Scout updates on one site; "Turn automatic updates back on" ends it early. Operators only.
+- **Hold a release everywhere.** A `hold` entry in catalog.json (`{"slug": "scout-build", "version": "0.10.0", "note": "Fix coming"}`, or `"version": "*"`) stops that release's automatic update on every site that reads the catalog (within 12 hours, or at once with Check for new versions). The Updates screen shows the hold and its note.
+- The version list (`releases.json` on the feed release) now carries each release's `published_at`.
+- Test: `php tools/tests/release-rings.php <wordpress>` (17 checks).
+
+## 0.11.0 (2026-11-04)
+
+- **Your site: the client's view of the Site log.** Anyone who is not a Scout operator opens the same screen as **Scout → Your site**: only lines marked "Client sees", in their client wording, with no versions, kinds or internal detail. Four parts: **Waiting on you** (anything Scout needs their OK on, with an Approve button), **This month**, **Your requests** (open ones, with the Request a change button) and **Coming up** (planned lines), then **Earlier this year**. It files under Overview for them (Build stays hidden), and the Overview's "With Scout" box links to it. Operators get a "See it as the client" link on the Site log. Step 3 of the Scout Client Hub.
+- **Approve.** A line an operator marks "Waiting on you" and shows to the client carries an Approve button there. Approving marks it done with the approver's name and date, writes an approval line ("Approved by Patrick McGuire: …") the client also sees, and emails Scout. The Inbox counts "Waiting on your OK" with the other queues. "Ask for a change first" opens the request form with the line filled in. This replaces screenshotting a text into a decisions log.
+- **The Scout box on the Dashboard** says how many updates the site had this month and how many things wait on the client's OK, with a link to Your site.
+
+- **Hub keys made on the site, no wp-config edit.** Joy: "can't I edit wp-config in WordPress?" No, and WP Engine turns the file editors off, so the keys the Scout Client Hub needs no longer require SFTP. On Scout → Site log, operators press **Make keys**: the site makes a read key (for the Sheet) and a write key (for Claude), shows them once, and stores them encrypted the way the theme key is stored. A client administrator never sees them again. **Make new keys** replaces the pair; **Forget the keys** turns the endpoint off. `SCOUT_HUB_READ_TOKEN` and `SCOUT_HUB_WRITE_TOKEN` in wp-config.php still work and win over keys made on the screen. Making keys writes a setup line in the log.
+
+## 0.10.0 (2026-11-04)
+
+- **The Scout menu is built around who is looking (Site Standard §7, v1.2; Joy, 2026-11-04).** Seven items, the same words in the sidebar and on the screen: **Overview**, **Your business**, **Content**, **Search and AI**, **Site health**, **Inbox**, **Build**. Every existing screen keeps its address; only where it is filed and what the first screen is change. Shared admin kit 1.7.0, with a test (`tools/tests/admin-kit-groups.php`) so the filing never drifts from the map.
+- **Overview, the first screen for everyone.** One line that says whether the site is all right (from Site health), "Needs you" with the Inbox counts, "With Scout" (updates waiting, the theme, the last three Site log lines), the four things a client comes here to do (change a page, write a post, update hours, ask for a review), and one line to ask for more: "Want something added or changed? Ask Scout."
+- **Inbox: everything waiting on a person, one count.** Change requests, unanswered chat questions and new reviews, each with its count and a button, plus Ask for reviews. The sidebar shows the total as a bubble. Other plugins add a queue with the `scout_hub_inbox` filter.
+- **Build is for operators.** Features, Updates and the Site log file under Build, and the admin kit hides the group from everyone who is not an operator (`SCOUT_HUB_OPERATORS`), so a client never sees a turn-on button. The screens stay reachable by address for admins who know them; every action on them still checks for an operator.
+- **Your business holds every fact once.** Business info, Call buttons, Hours, Team, Case results, Reviews and Review settings, Cards & Links, Booking, Events, Members, Partners and Newsletter file together. Content holds Site Sync, Redirects, Image optimizer and Writing. Search and AI holds SEO, AI search, Analytics, Accessibility, Spam protection and Site checks. Email, Chat settings, Customer list, the Change log and a theme's own screen sit under Build.
+
+## 0.9.1 (2026-11-04)
+
+- **Site health: "Design contrast".** With Scout Core 1.6.3 or newer and a theme that has a DESIGN.md, Site health shows the lowest contrast ratio among the pairs the Site Standard requires (button text on the accent fill, text on the page and on cards) and names any pair under 4.5:1 (rule 10). Muted text under 4.5:1 is a warning, not a failure.
+- **Brand color from DESIGN.md.** The Email screen's detected color (which the cookie notice and form emails use) now reads the theme's `accent_fill` from DESIGN.md before Scout Cards, Scout Reviews or theme.json. Sites without a DESIGN.md are unchanged.
+
+## 0.9.0 (2026-11-04)
+
+- **The Site log: one line for every change to the site, written by the plugins that make it.** New screen, Scout, Site log. A Scout plugin updating logs its version and the first line of its changelog; the theme updating logs its version and its changelog headline; a feature turned on, off or sent back logs who did it; Site Sync logs how many pages got new copy; the setup file logs what it filled in; a change request logs when it comes in and when it moves; the hidden-from-Google alert logs when it goes out and when the site is visible again. Each line carries a kind, a topic, a status (done, planned, waiting on you), the version, a measure (before and after) and whether the client sees it. Lines shown to the client carry their own plain wording; the screen flags the ones that have none yet. A done line never changes: only its client wording, measure and client flag can be edited. Operators add notes for work done by hand, filter by month, kind, topic and status, and export the view as CSV. This is step 1 of the Scout Client Hub (spec: `docs/site-log-spec.md`).
+- **Import history.** One time per site, operators upload the site's file from `docs/site-log-import/` (the 43 rows of Scout's site-updates record as of 2026-11-02, split per site). Lines already in the log are skipped, so running it twice adds nothing.
+- **A read endpoint for the Scout Client Hub.** `scout-build/v1/log`, `/requests` and `/site` answer a Bearer key set in `wp-config.php` (`SCOUT_HUB_READ_TOKEN`; `SCOUT_HUB_WRITE_TOKEN` can also `POST /log` note lines, which is how Claude logs work as it ships). `/site` returns the plan, WordPress, PHP, theme and every Scout plugin's version and update state, the Site health rows, the AI-ready count, open requests, review totals and spam counts. No visitor data, form entries, attachments or keys. 60 calls a minute per key; a call with the wrong key is noted in the log once an hour, with no address. Off until a key is set, and off on white-label sites unless `SCOUT_HUB_LOG_API` is true.
+- **Requests can be created by other plugins.** `Scout_Hub_Requests::create()` saves a request and fires `scout_hub_request_opened`; Scout Chat 0.3.0 uses it so chat requests join the same list. New actions for the log: `scout_hub_feature_done`, `scout_hub_request_status`, `scout_hub_setup_done`, `scout_hub_watch_alert`, `scout_hub_watch_cleared`. The log also listens to Scout Core's `scout_sync_applied`.
+- **Not the same as Scout Core's Change log.** Scout Core 1.7.0's Change log (under Updates) records what someone who is not Scout edits on the site, so the repo can catch up. The Site log records what Scout does for the client, and what the client asked for. A later release feeds the first into the second as a line the client can see.
+
+## 0.8.0 (2026-11-04)
+
+- **Scout → Updates: every update in one place.** A new Updates screen holds everything that brings a new version or new content onto the site (Site Standard rule 12): the Theme box (version, read-only key, Update the theme now), a Plugins table (every installed Scout plugin with its version, Up to date or Update ready, Updates paused, and Update now), Check for new versions, Fill from theme, Site Sync, Import posts (XML), Site settings, the Change log and the Recent changes log. The Features screen keeps the feature cards, the plan and the counts; the Theme box, the version line and the two buttons moved off it. Check for new versions and Fill from theme again now return to Updates. Site Sync and the Change log open their Scout Core screens; the cards say plainly when a tool is not on the site yet (no Scout Core, or Scout Core older than 1.7.0), and Site settings waits for its export tool (`scout_hub_site_settings_url` filter).
+- **One menu named Scout on every site** (rule 11). When a theme still registers its own Build menu (scoutraleigh.com's "Scout Build", Recon's "Recon Build"), the hub relabels it Scout (Site Build on partner sites) so every dashboard reads the same until that theme's conversion drops the menu.
+- **Every group shows on every site, even with nothing on** (rule 11). The seven groups (Home, Updates, Search, Website, Business, Reviews, Chat) always appear in the section nav and the sidebar. A group with nothing on is greyed with a Turn on hint and opens the Features screen with a note saying which group it came from. Shared admin kit 1.6.0.
+- **The Updates group in the shared nav.** Site Sync and the Change log sit under Updates; Spam protection under Website; Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The "N on" hint stays on the Features entry only; Updates shows "N ready" when releases are waiting.
+
+## 0.7.11 (2026-11-04)
+
+- **Theme updates keep downloading after a repo moves or is renamed.** A theme whose Update URI still names the old owner or repo (`joyrmac/Andres-Borda---Golf-Carts`) gets its file address from GitHub under the new name (`Scout-Media-Raleigh/AndysGolfCarts`). The download check compared the two, skipped the key, and WordPress fetched the private file without it: "Download failed. Not Found." The check now also trusts the exact file address the release lookup returned, whatever owner and name it carries. Each theme picks up its new Update URI at its next release.
+- **The feature catalog and Site health read from the new organization** (`Scout-Media-Raleigh/Scout-Plugins`).
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.7.10 (2026-11-02)
+
+- **Theme updates download when the repo name's capitals differ.** Maravela's theme says `Update URI: https://github.com/joyrmac/maravelas`, but GitHub hands back the file address as `joyrmac/Maravelas`. The download check compared the two letter for letter, so it skipped the key and WordPress fetched the private file without it: "Download failed. Not Found." The check now ignores capitals, the way GitHub does.
+
+## 0.7.9 (2026-10-30)
+
+- **"Test builds" no longer flags a client's own plugin.** On Andy's live site the row named his companion plugin (Scout — Andy's Golf Car Garage), which lives in his repo and never gets a Scout Plugins release. The row now looks only at plugins that update from this repo.
+
+## 0.7.8 (2026-10-30)
+
+- **Form emails in the site's own colors.** Gravity Forms notifications now arrive in the same card as the Email test: the site's color bar, its Site Icon, the site name, and the subject as the headline, with the form answers below. When the message has a phone number, it gets Call and Text buttons; when it has an email address, an Email back button that reads plain-text addresses too (the first one that is not the site's own). The headline leaves out the phone number, since it already has its Call button. Confirmations sent to the person who filled in the form get the card without those buttons. Light colors like Carolina blue get dark button text so it stays readable. Only HTML notifications, only while Scout Email is set up. Joy, on Andy's request email: "can these be branded?" Off switch: the `scout_mail_brand_forms` filter.
+- **Other Scout plugins can use the site's brand color.** `Scout_Hub_Mail::brand_color()` returns the Email screen's pick or the detected color; Scout Analytics 0.1.15 colors the cookie notice's OK button with it.
+- **Site health: "Hidden upload fields".** With Scout Forms Guard 0.3.0 or later, Site health lists any Gravity Forms File Upload field set to Hidden, with a link to fix it.
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+- **Site health: "Test builds".** Lists any active Scout plugin running a test build: a version with a label like `0.7.8-test.1`, or one newer than its newest release. Neither updates the normal way, and the row says which plugin and what release it waits for. It reads the release list the updater already keeps, so it adds no call to GitHub. On Andy's site a Scout Build test zip was replaced by the next release, and a Forms Guard test build had no release to update to. `tools/test-build.sh` builds labeled test zips (see RELEASING.md).
+- **Scout hears when a live site is hidden from Google.** When the live site has "Discourage search engines" ticked in Settings, Reading, Scout Build emails team@scoutraleigh.com ("<Site name> is hidden from Google") as soon as the setting changes and from a daily check, at most once a week while it stays on, and shows administrators a notice. Staging addresses, non-production environments and local copies are left alone. `SCOUT_HUB_REQUEST_EMAIL` or the `scout_build_alert_email` filter changes the address. Andy's live site carried the setting over from staging for days and nobody at Scout knew.
+- **Site health: "Form emails go to".** Lists where each active Gravity Forms form sends its emails: the addresses (with {admin_email} filled in), "the address in field 3", or "routing rules". On a live site it asks for a look when a form sends no email or emails only Scout. The `scout_build_agency_domains` filter sets which domains count as Scout's.
+- **Site health: "Review totals".** With Scout Reviews 0.5.5 or later, shows how long ago the review counts were last updated, and asks for a look after 30 days. Andy's site said 17 Google reviews when Google showed 20. Sites that have not saved the totals since updating read "Update the totals once to start tracking."
+
+## 0.7.7 (2026-10-28)
+
+- **Site health, Search engines: "Kept out on staging".** A staging copy behind the host's password protection (its front page answers 401), or one the theme or a plugin already marks noindex, now reads as kept out of Google instead of asking for a password that is already on. The password probe is cached for an hour.
+- **Features screen: no stray "01" on recommended cards.** The order number on a recommended card used the class of the numbered setup steps, so it picked up their counter. It has its own class now.
+
+## 0.7.6 (2026-10-28)
+
+- **Fix: Direct answers no longer counts password-protected pages.** A private partner page (WordPress page password) is read by no visitor and no AI tool, but it was checked as a main page and counted as one without answers. It is skipped like the legal pages. The count catches up at the next scan (within 12 hours).
+
+## 0.7.5 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.7.4 (2026-10-27)
+
+- **Site health flags a staging copy that search engines can index.** A staging site said "Search engines: Allowed, Google can find the site" with a green tick, which is the right answer for a live site and the wrong one for a copy that can end up in Google beside it. On a host staging address (WP Engine, Kinsta, Flywheel, Pantheon, Cloudways) or when WordPress's environment type is staging, development or local, it now reads "Allowed on staging" and points to the host's password protection, not the Search engine visibility box, since that setting can travel to the live site with the next copy. The check reads the site's own address, so a live site reached through its host's alias still counts as live. Live sites read exactly as before.
+
+## 0.7.3 (2026-10-26)
+
+- **Features shows which Scout Build is on the site.** "Scout Build 0.7.3" sits beside "Checked … ago", and when a newer Build is waiting it says so, with a link to the Plugins screen. Scout Build updates itself from the Plugins screen, so "Everything is up to date" never covered it. Joy asked for the version "somewhere up here".
+
+## 0.7.2 (2026-10-26)
+
+- **The theme says which features a client needs.** A `features` section in the client theme's `scout-setup.json` lists the features to use, in install order, and the ones this client doesn't need. Features shows "Recommended for this site, in install order" with numbered cards first, then "Also available" sorted by name, then "Not needed for this site" grayed out (still one click to turn on). Without the section, "Ready to turn on" now sorts by name. Joy asked for it so a new site's setup reads like a checklist.
+
+## 0.7.1 (2026-10-26)
+
+- **A theme can opt in to a feature its catalog row rules out.** Business info (Scout Core) shows as "Not used on this site" on the Scout Media and Recon themes, because they print their own SEO tags. Site Sync lives in Scout Core, so a theme that turns off Core's duplicate tags now declares `add_theme_support( 'scout-core' )` and the Turn on button comes back. Works for any feature slug in `not_with_themes`.
+
+## 0.7.0 (2026-10-23)
+
+- **Themes update themselves too.** A client theme that names its own repo (`Update URI` and `Scout Release` in `style.css`) now updates like the Scout plugins: a **Theme** box on the Features screen shows its version and "Up to date" or the version ready, with **Update the theme now**, and it auto-updates within a few hours of each release. Client repos stay private: an operator pastes a read-only key once, stored encrypted, sent to GitHub's API only. **Check for new versions** checks the theme as well. The release workflow for client repos is in `tools/theme-release/`. Joy asked for themes and plugins to update "so this is all cohesive and works together".
+
+## 0.6.5 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.6.4 (2026-10-16)
+
+- **Email color picks from the site's own colors.** Joy, on the Mac color grid: "not a good one". The field is now a hex box with a color chip, plus round swatches of the site's real colors: the block theme's palette (grays left out), the Cards and Reviews colors, and Scout's cerulean. Click one or type a code. On Maravela's the swatches include its rust, #A04E10.
+
+## 0.6.3 (2026-10-16)
+
+- **Email color.** The Email screen has a color picker for the test email's top bar and button. It starts on the color Scout found (Scout Cards, Scout Reviews, then a block theme's accent, primary or brand color) and keeps whatever you pick. Joy: Maravela's test came out in Scout blue, "the wrong theme". Themes can also set it with the `scout_brand_accent` filter.
+
+## 0.6.2 (2026-10-16)
+
+- **The Dashboard box shows the spam your forms blocked.** With Scout Forms Guard 0.2.0 or later on, a line under the reviews reads "23 spam submissions blocked this month · 140 in the last year", or "Spam protection is on. Nothing blocked yet this month." Joy wanted clients to see the protection working. Sites without Forms Guard show nothing.
+
+## 0.6.1 (2026-10-16)
+
+- **The Email test is a proper email.** Joy: "this email should be cuter though, no?" The plain-text test is now a small card in the site's own color (from Cards or Reviews, else Scout's cerulean) with the site icon, the headline "Your website can send email.", one plain line on what that means, and a Visit the site button. Inline styles only, so it looks the same in Gmail, Apple Mail and Outlook.
+- **Fix: Copy for Claude printed "Andy&#039;s".** The site name in the report header is decoded.
+
+## 0.6.0 (2026-10-16)
+
+- **Email: the site's mail goes out through Google.** A new Scout, Website, Email screen. Enter a Gmail or Google Workspace address and a Google app password, Save, Send test. Every email the site sends (form notices, password resets, Scout checks) then goes through Google's mail server as that address instead of the host's, which on WP Engine landed in junk or vanished (Andy's form saved its entries but no email arrived). When a form asks to send as someone else, that address becomes the reply-to. The password is stored encrypted and never shown again, or can be set in wp-config.php as `SCOUT_MAIL_PASSWORD`. Replaces WP Mail SMTP on Scout sites.
+- **A Scout box on the WordPress Dashboard,** first on the page: features on, AI search score, Google email on or off, your review rating and any new reviews, open requests, the site checks that need a look, and a box to send a change request without leaving the Dashboard.
+- **Site health shows Site email:** host mail, through Google, or last test failed, with a link to the Email screen. Copy for Claude includes it.
+
+## 0.5.0 (2026-10-15)
+
+- **Copy for Claude.** Site health has a button that copies the whole page as plain text: every check with its state, value and note, the pages a search check names, each installed plugin with its version and whether it is on, the theme version, WordPress and PHP. Paste it into a chat instead of taking screenshots.
+- **Site health fits on one screen.** Smaller cards in a tighter grid, and the section intros and progress bar are hidden on this page, so one screenshot shows everything.
+
+## 0.4.9 (2026-10-15)
+
+- **Direct answers checks the pages that matter.** The check now looks at the home page, then the pages its menus link to (read from the home page itself, so classic menus, Navigation blocks and hand-written headers all count), then top-level pages and their children, and skips utility pages (site map, search, the blog index, legal pages). Before, it took top-level pages alphabetically, so on Maravela's it checked the site map, gallery and booking forms and missed every service page. Visitor page notes count only for these same pages, and old counts are dropped.
+- **Fill from theme again.** A button beside Check for new versions (only when the theme has a setup file) runs the setup file again. It still fills blanks only. For when a save from a page opened before a theme update blanked what the setup filled.
+
+## 0.4.8 (2026-10-15)
+
+- **The setup file fills people cards.** A `people` list in the `cards` section adds each person's card (name, title, intro, tags, photo, share picture) while the site has none. `pick_heading` is filled too.
+- **Pictures the setup file placed can be swapped by a newer theme.** A card photo, logo or share picture the setup file imported itself counts as blank; one somebody picked by hand stays.
+
+## 0.4.7 (2026-10-15)
+
+- **The setup file sets the card's logo.** `logo` in the `cards` section (a theme path) fills the new Cards logo setting while blank.
+
+## 0.4.6 (2026-10-15)
+
+- **The setup file sets the card's share pictures.** `share_card` and `share_links` in the `cards` section (theme paths) become the wide pictures shown when the card or links page is shared, filled once while blank.
+
+## 0.4.5 (2026-10-15)
+
+- **The setup file fills the digital business card.** A `cards` section in the client theme's `scout-setup.json` sets the card's look, contact details, intro, booking spotlight, photo and link page rows once Cards is on. As with the other sections it fills only blanks and untouched defaults; the site admin's email also counts as blank, since on client sites it is often whoever set WordPress up.
+
+## 0.4.4 (2026-10-15)
+
+- **Fix: the setup file now wins over untouched defaults.** On North Crest the review page kept Scout's headline and blue button after the theme carried its own, because those settings had been saved earlier with the plugin's defaults and the setup file only filled blanks. A setting that still holds the plugin's own default now counts as blank. Anything someone actually changed stays as it is. The review page section runs again on the next admin page load.
+
+## 0.4.3 (2026-10-14)
+
+- **Fix: "Structured data: Missing" on Recon.** The Recon theme prints its own schema (`recon_head()`), and the check only knew Scout Media's. It now counts `recon_head()` and any theme that declares `add_theme_support( 'scout-seo-head' )`.
+
+## 0.4.2 (2026-10-14)
+
+- **Fix: "Direct answers" stuck on Checking.** The check loads the main pages from the site itself in the background, and many hosts and firewalls block a site from loading itself (scoutraleigh.com showed Checking for good). Now, when a visitor opens a page, Scout Build notes whether it carries FAQ answers, once a day per page, and the check uses those notes when the background scan can't run. Pages count for 30 days.
+
+## 0.4.1 (2026-10-13)
+
+- **The setup file fills Analytics too.** A client theme's `scout-setup.json` can carry `"analytics": { "gtm": "GTM-XXXXXXX" }`, and Scout Build puts the container ID into Scout Analytics once that feature is on. Blank only: an ID already set stays.
+
+## 0.4.0 (2026-10-13)
+
+- **The client setup file.** A client theme can carry `scout-setup.json` with the client's own facts (team, review page, chat, hours). When a feature is on, Scout Build fills it in on the next admin page load, so nobody retypes it. A section runs again only when the theme ships new facts, and it only fills blanks: anything already set in WordPress stays. Photos can be theme files; each becomes one Media Library item. Format in `includes/class-scout-hub-setup.php`.
+
+## 0.3.10 (2026-10-13)
+
+- **Scout in the toolbar.** The black bar at the top of every page shows a cerulean bolt and "Scout" ("Site Build" on unbranded sites). It opens Features, and its menu holds Site health and Request a change, which used to sit alone in the bar.
+
+## 0.3.9 (2026-10-13)
+
+- **Plans set.** Every site gets the basics (SEO, AI search, images, forms, analytics, call buttons, redirects, hours, accessibility, team credentials). Reviews come with The Partnership. Chat, business cards and case results are add-ons on any plan, and The Whole System includes every add-on. Feature cards show the right label for each. Turning features on or off is unchanged.
+
+## 0.3.8 (2026-10-13)
+
+- **Fix: sites showed "Up to date" when they were not.** Version checks used GitHub's API, which allows 60 calls an hour per server address; shared hosts like WP Engine run out, the check failed quietly, and the Features screen still said everything was up to date (North Crest stayed on Reviews 0.4.13 after 0.5.0 shipped). Sites now read one version list the Release workflow publishes as a plain download, with the API only as a fallback. If both fail, the Features screen says it could not reach GitHub instead of "Everything is up to date".
+
+## 0.3.7 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.3.6 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.3.5 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.3.4 (2026-10-13)
+
+- **"Up to date" stays current.** When the Features screen opens and the last version check is over an hour old, a fresh check runs in the background (WordPress cron), so a release from earlier today shows as "Update ready" on the next look. The "Check for new versions" button still checks right away.
+- **Features keep themselves current.** Turning a feature on now also ticks its auto-update box. A one-time sweep ticks it for every Scout feature already on (and Scout Build itself), which fixes sites where Accessibility, Call buttons, Hours, Redirects and Team were installed with auto-updates off. Sites that block auto-updates are left alone.
+
+## 0.3.3 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 0.3.2 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+- **Your features, Site health and Request a change now use the screen name as the heading,** with the site name above it, so the title fits on a phone.
+
+## 0.3.1 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 0.3.0 (2026-10-12)
+
+- **Uses the shared frame.** Features, Site health and Request a change open in the same header, section nav and sign-off as every other Scout screen. The nav pills carry live hints (features on, AI search score, open requests).
+- **One menu order everywhere:** Features, Site health, Business info, SEO, AI search, Image optimizer, then the rest, with Request a change last.
+- **Site health shows the search listing checks** from Business info and SEO (page descriptions, visible to Google, social sharing), so there is one health screen.
+- **Every card says whether it is current.** A green "Up to date" mark, or "Update ready: vX" with an **Update now** button that runs WordPress's own updater. Next to Check for new versions: "Everything is up to date" or how many updates are waiting, and when the site last checked.
+- **Settings button on every feature that is on** and has a screen.
+- **Fix:** the Business details fix link pointed at a page that no longer exists.
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 0.2.6 (2026-10-12)
+
+- **"Check for new versions" finds a release published minutes ago.** It
+  now also clears each Scout plugin's own saved release check (kept for six
+  hours) and WordPress's update list (kept for twelve), then checks again.
+  Before, a new release could take hours to show as "Update ready".
+
+## 0.2.5 (2026-10-12)
+
+- **Turn on works for a feature released in the last few hours.** The hub
+  remembers GitHub's release list for six hours, so a brand-new release
+  (Scout Analytics) showed "No release is published yet". When a feature has
+  no release in the remembered list, the hub now asks GitHub again before
+  saying so.
+
+## 0.2.4 (2026-10-12)
+
+- **Fix a robots.txt file that hides WordPress's.** A real robots.txt file on
+  the server (Yoast's file editor leaves one) overrides WordPress and
+  everything Scout adds to it. Site health now links to a new screen that
+  shows the file next to what WordPress would send, and when no rule in the
+  file would be lost, switches to WordPress's version with one click. The file
+  is renamed and kept as a backup, and can be put back from the same screen.
+  A file with rules of its own is left for a person to review.
+
+## 0.2.3 (2026-10-12)
+
+- **The hub's tabs are easier to spot.** Features, Requests and Health are
+  now large buttons with a one-line status under each ("4 features on",
+  "2 open requests", "AI search 7 of 9"), and Requests and Health also sit in
+  the sidebar menu, so nobody has to find them inside the page.
+- **A new look for every settings screen.** The plugin's screens now share
+  one Scout design: a clear page header with the section name, settings
+  grouped into rounded boxes, pill buttons, and a short sign-off footer with
+  how to reach us. On client sites the header reads "Site Build" instead of
+  "Scout". Nothing about how the settings work changed.
+
+## 0.2.2 (2026-10-12)
+
+- **Features opens first.** Inside a theme's Build menu, Features moves to the
+  top, so clicking the section lands on the hub instead of the theme's setup
+  tools.
+- **Cleaner Features screen.** A summary bar (features on, ready to add, AI
+  search score, plan) with the plan and version check under it, then the
+  cards grouped into "On this site" and "Ready to turn on". Features the theme
+  already covers drop to a short "Not used on this site" list.
+- **Catalog:** Cards is marked not used on the Scout Media theme, which
+  already makes the cards and the links page.
+
+## 0.2.1 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
+## 0.2.0 (2026-10-12)
+
+- **Ready for AI search.** Site health gains a second scorecard: AI crawlers
+  allowed, the /llms.txt guide, structured data, business details, direct
+  answers on pages, fresh content, and real authors with bios. Each check reads
+  WordPress itself, counts what the theme or Scout Core already does, and links
+  operators to the fix. A meter shows "5 of 7 ready".
+- **Direct answers reads the real pages.** Client themes print FAQs their own
+  way, so the hub loads up to 15 main pages in the background (WP-Cron) and
+  counts the ones carrying FAQPage schema. Cached 12 hours; "Check for new
+  versions" re-runs it.
+- **Your features** shows the same score as a chip, linked to the scorecard.
+- **Catalog:** adds AI search (`scout-aeo`), included in every plan.
+
+## 0.1.0 (2026-10-12)
+
+First release: the Site Build hub (phase 1 of `docs/site-build-hub-spec.md`).
+
+- **Features.** A card for every Scout feature, read from `catalog.json` in the
+  Scout Plugins repo (cached 12 hours, with a bundled copy as the fallback).
+  Each card shows on, off or not installed, the version, an update waiting,
+  and whether it is included in the site's plan or an add-on.
+- **Operators only.** Turning features on or off, going back a version and
+  setting the plan need an operator: Sean and Joy by default, or the emails in
+  `SCOUT_HUB_OPERATORS` in `wp-config.php`. Everyone else sees the list and an
+  "Ask us to add this" button.
+- **Turn on** installs the latest GitHub release if needed (and any feature it
+  requires) and activates it. **Turn off** deactivates and deletes nothing.
+- **Go back** reinstalls the previous release and pauses automatic updates for
+  that feature until a newer release than the one left behind comes out.
+- **Request a change.** A form that emails team@scoutraleigh.com (or
+  `SCOUT_HUB_REQUEST_EMAIL`) with the page, timing and an optional file, and a
+  list on the site with each request's status. A "Request a change" link in the
+  admin bar fills in the page being viewed.
+- **Site health.** WordPress and PHP versions, updates waiting, HTTPS, search
+  engine visibility, and WordPress's own Site Health result.
+- Scout branding: the menu is **Scout** with the cerulean bolt, and the screen
+  carries the Scout mark and a "Built and looked after by Scout Media" sign-off
+  with the team's email and phone. `SCOUT_HUB_BRAND` set to false switches to a
+  neutral Site Build with no Scout mention (partner-side and white-label sites).
+- Sits inside the site's existing Build menu (Scout Build, Recon Build, or
+  Scout Core's Scout menu), and only adds a top-level Site Build section when
+  there is none.

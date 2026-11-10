@@ -1,5 +1,157 @@
 # Scout Cards changelog
 
+## 1.1.0 (2026-11-05)
+
+- **Takes over the business cards from the Scout Media theme, with nothing changing for visitors (Site Standard rules 6, 7 and 20).** Scout Cards now stands down only while the theme still draws cards (its Cards screen and its card builder both loaded). Scout Media 1.54.0 loads neither while this plugin is active, so the plugin takes over every card address.
+- **One-time copy from the theme.** On the first page load after the theme stands down, the theme's saved card settings (`scout_cards`, read through the theme's `scout_card_settings()` when it has it) are copied into this plugin's settings: the main card name and company name, phone, email, city, state, ZIP, footer line, contact note, intros, Spotlight, link rows, Latest from the blog, and the social links the theme showed. Only empty fields are filled, and a value that already matches Business info stays empty so it keeps following Business info. Each theme card person becomes a card record unless one with that link name is there, and the People move then links them to their People profiles, never overwriting a People value. Recorded once in the new `scout_cards_theme_import` option. The theme's own option is left as it was, so turning the plugin off brings the theme's cards back. The Cards screen says once that the cards came from the theme.
+- **The theme's own card look.** A new Card look setting (More options) draws the cards in the theme's own markup and styles when the theme still carries them, so /card/, each person's card, the share pages, Save contact and /links/ look and read the same as before. The copy from the theme turns it on. Any other site keeps the Scout Cards look; nothing changes there.
+- **Company name saved to phones.** A new optional field under Business details for the cards (`org`). Blank uses the main card name, as before.
+- **The /card/ and /links/ Pages stay out of the sitemap** when the plugin shows the card there (those pages are noindex). The Cards screen no longer warns about the theme's own card Pages, which stay so the theme's cards can come back.
+
+- Card rows use the stacked layout: the name line with Card settings and Edit in People on the right, the card address, Share mode and QR code on a full-width line under it, so an open QR code no longer squeezes the row.
+
+- **What a card says now lives on the People profile (Joy, 2026-11-05).** Each person's intro, "why talk to them" and tags are edited in People, in its new Business card box, beside the card phone and card email. The card reads them from there, and uses its own saved words when People has none, or when Scout People is off.
+- **One-time copy, nothing changes for visitors.** On the first page load with a Scout People that has the Business card box, each card's intro, why and tags are copied into the person's profile, only where the profile field is empty. A People value is never overwritten, and the card keeps its own copy for the fallback. Every card, share page, contact file and the links page stay the same. The Cards screen says once how many profiles got them. Gated by `scout_cards_people_db` 2.
+- **The Cards screen is switches only while People is on.** Each person's Card settings has the link name and Show on the card (Phone, Email, Intro, Tags, Profile links, Short bio, Save contact), with Share mode, the QR code and Edit in People on the row. The share picture and Spotlight sit under a closed More. Intro and Tags are new switches; both start on, the way cards always showed them.
+- **The main card takes its name, email, logo and intro from Business info.** Each shows what it uses now, with a closed "Use something else" for the card's own value; empty means Business info. The intro reads Business info's description when it has one, and stays a card field when it does not. Heading above the people and the Spotlight sit under Extras. Every saved setting keeps its key.
+- **People off, the screen is the same as before.**
+- **Removed from the Cards screen when People is on:** per person, "Intro (on their card, in their voice)", "Why talk to them (on the main card)" and "Tags" (now in People, under Business card). On the main card, the "Main card words" heading with its "Intro" and "Heading above the people" (now on the main card's Edit and under Extras), and "Business name" and "Main email" under Business details for the cards (now Name and Email on the main card, from Business info). "Save contact button" now reads "Save contact". The saved values all stay.
+
+- **Cards read from People.** One profile per person. A person's name, title, photo, card phone and card email now come from their People profile, and anyone live in People with A business card switched on gets a card. Switch it off, or take them off the site, and their card address answers "not found".
+- **One-time move, nothing changes for visitors.** On the first page load with Scout People on, each card person is linked to their People profile (by the login with the card's email, then by email, then by exact name). Only what the profile is missing is copied in, and a People value is never overwritten. Anyone with no match gets a profile that shows on the card only, live only if cards were on. People who had Card on with no card have it switched off, so no new card appears. Every card, share page, QR code, contact file and the links page stay at the same address with the same output. The Cards screen says once what moved.
+- **The Cards screen lists People with a card:** photo, name, card address, Share mode and a QR code, with Edit in People and Card settings on each row, and Add a person, which opens the People walkthrough with Card on.
+- **Card settings stay in Cards:** link name, intro, why talk to them, tags, share picture, Spotlight, and new switches for what the card shows from the profile: Phone, Email, Profile links, Short bio and the Save contact button. They start the way cards always worked (phone, email and Save contact on).
+- **Fallback.** Each card keeps the details it had saved. With Scout People off, or the profile deleted, the card shows those exactly as before, and the screen keeps the old fields when People is off.
+- **Removed from the Cards screen when People is on:** the per-person Full name, Title, Email and Photo fields (now edited in People) and "To take this person off, clear the name and save." (turn off Card in People instead). The saved values stay for the fallback.
+
+## 1.0.27 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Plainer labels.** Cards & Links is now Cards and links, in the menu and on the screen. The People box is now Card people, ready for its move to People later. The page address and saved settings are unchanged.
+- **Shorter status lines.** "Cards are live." is now "Live." and "Cards and links are off." is now "Off."
+
+## 1.0.26 (2026-11-05)
+
+- **Cards & Links follows the one Scout screen layout.** A status line comes first: whether the cards are live at /card/, how many people have a card, and whether the links page is on, with a View card button.
+- **People is a list, one row each.** Each row shows the photo, name, title, the card link and its Share mode link, with one Edit button that opens that person's fields under the row. The main card is the first row. One empty slot shows as Add a person; opening it reveals the next.
+- **Links page rows have their fields stacked with labels**, instead of a wide four-column table. One empty row shows, and Add another link reveals more.
+- **Settings people rarely change moved into a closed More options box:** the look (mode, accent color, font, share pictures), the main card's intro and heading, the business details (now labeled as overrides of Business info, for the cards and links page only), the page addresses and the on and off switches, and Reset everything to the defaults.
+- Still one form with one Save button at the bottom. Every field name, saved setting and permission is unchanged. The screen's styles live in a new `assets/cards-admin.css` on the admin kit's tokens. Works with an older admin kit too.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 1.0.25 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 1.0.24 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 1.0.23 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 1.0.22 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 1.0.21 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 1.0.20 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 1.0.19 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 1.0.18 (2026-10-15)
+
+- **Full-photo person cards.** A person with a photo now gets the layout Scout's own team cards use: the photo fills the top with their name and role on it, the business name (and logo) links back to the main card, then Save my contact, Call / Text / Book, their intro, tags and details. People without a photo keep the classic card.
+
+## 1.0.17 (2026-10-15)
+
+- **A share picture for each person.** Each person gets an optional wide share picture, used when their own card (and their share page) is texted or posted.
+
+## 1.0.16 (2026-10-15)
+
+- **A logo for the links and share pages.** New "Logo for the links and share pages" picker. When the main card shows a person, the links page shows the logo instead, and the share page shows it above the QR code. Blank keeps the card photo as before.
+- **Fix: links page rows shrank and centered on themes that style every `<nav>`** (North Crest's header rule). The list now stays full width on any theme.
+
+## 1.0.15 (2026-10-15)
+
+- **Share pictures.** Two new pickers under Look: a wide picture for the card and one for the links page (1200 by 630). When someone texts or posts either link, that picture shows in the preview instead of a small headshot, with its size and the large-image tags set. The share mode page uses the card's picture. Blank keeps the old behavior.
+
+## 1.0.14 (2026-10-15)
+
+- **Fix: the card no longer falls back to the WordPress admin email.** A blank card email used the site admin's address, which on a client site can belong to whoever installed WordPress rather than the business, and it went out on the saved phone contact. The card now uses the email from Scout → Business, or shows none.
+
+## 1.0.13 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 1.0.12 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 1.0.11 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 1.0.10 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 1.0.9 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 1.0.8 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+
+## 1.0.7 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 1.0.6 (2026-10-12)
+
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 1.0.5 (2026-10-12)
+
+- **Stands down when the theme already makes cards.** On the Scout Media theme
+  (which has its own cards and links pages), Scout Cards now does nothing: no
+  routes, no menu, no second "Site Build" section, and nothing that could take
+  over the theme's /card/ and /links/. The Plugins screen says so. Before, it
+  added its own section and its own Cards & Links screen on top of the
+  theme's. Filter `scout_cards_theme_has_cards` to decide.
+
+## 1.0.4 (2026-10-12)
+
+- **A new look for every settings screen.** The plugin's screens now share
+  one Scout design: a clear page header with the section name, settings
+  grouped into rounded boxes, pill buttons, and a short sign-off footer with
+  how to reach us. On client sites the header reads "Site Build" instead of
+  "Scout". Nothing about how the settings work changed.
+
+## 1.0.3 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
+## 1.0.2 (2026-10-12)
+
+- Nests Cards & Links inside the site's existing Build menu (Scout Build, Recon
+  Build, Scout Core's Scout menu, or the Scout Build hub's section) instead of
+  adding a second Site Build menu. Sites with none of those are unchanged.
+
 ## 1.0.1 (2026-10-01)
 
 - Richer spotlight design, tinted with the accent color. With a heading or note

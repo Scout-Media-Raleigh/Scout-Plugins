@@ -1,5 +1,56 @@
 # Scout — North Crest RV Park — Changelog
 
+## 0.2.3 (2026-11-05)
+
+- **Home** opens with a status line, headings read "Site types (4)" and "Amenities (12)", and an empty rate or length leaves the cell blank (screen readers hear "None") instead of a dash. Shorter lede and note.
+
+## 0.2.2 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Plainer label.** Overview is now Home in the RV park menu. The screen keeps "RV park" as its heading. The page address is unchanged.
+
+## 0.2.1 (2026-11-05)
+
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.2.0 (2026-11-04)
+
+- **One RV park section.** Amenities and Site Types now sit inside a single RV park section in the sidebar, with a small "+ Plus" tag, instead of two separate menus. Its first screen is an overview: every site type with hookups, nightly and monthly rates and max rig length, and every amenity, each linking to its edit screen. Custom content is a Plus module (dashboard redesign, Joy 2026-11-04).
+- Ships the shared Scout admin kit (1.8.0) for the overview screen.
+
+## 0.1.8 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.1.7 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.1.6 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.5 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.4 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.3 (2026-10-13)
+
+- **Fix: /amenities/ shows the site's Amenities page again.** The amenity type asked for a list page at /amenities/, and a post type's list page outranks a page at the same address, so visitors could get an empty list. The list page is off, and permalinks refresh once on update.
+
+## 0.1.2 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
 ## 0.1.1 — 2026-09-03
 
 Updates now install themselves.

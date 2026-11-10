@@ -1,0 +1,194 @@
+# Scout Events changelog
+
+## 0.16.8 (2026-11-05)
+
+- **Colors and fonts from DESIGN.md (Site Standard rule 3):** event cards, the ticket and the portals now read the theme's DESIGN.md (accent fill, on accent, line, muted text, surface 2 and card corner, from `design-tokens.css`) when the theme does not set `--scout-events-*`. Sites that set them, or set neither, look exactly the same.
+- **Events home opens with the status line** ("4 things need you. Next up: Spring Summit, …" with a See what button) instead of five number cards. The counts of events, sessions and speakers are one line in Coming up. The overview table has no zebra stripes. A Postponed or Moved event shows a plain tag, and Cancelled a red one, instead of amber.
+- **Sign-ups rows stack** (the kit's stacked rows): name and email with Check in and a quiet Cancel on the right, then guests, check-in time, ticket, agreement and photo tags, the order link and the signature under it. No more " · " lists.
+- **Volunteers.** A status line ("3 of 5 spots filled. 2 volunteers signed up.") replaces the three numbers, and each shift shows "2 open" in grey or "Full" in green instead of an amber "3 / 5". Email and phone are separated by a comma, and a shift's note sits on its own line.
+- **Calmer colors and words.** The admin stylesheet uses the kit's tokens instead of typed hex colors, and the edit-screen grids stop at three across. "Sign-ups & check-in" and "Prices & Google". Shorter ledes and help.
+- **The calendar gets options** (from the Oct 27 work, never released until now). `[scout_events views="list,month"]` adds a List & Month switch; Month draws a calendar for every month with an event. `filter="series"` adds chips to show one kind of event at a time. Events that repeat share a title, so the title is the series; the `scout_events_series` filter names one otherwise. Every event stays in the page, so it all works without the script, which only shows and hides.
+- **Past events as a photo gallery.** `layout="gallery"` shows each event's photo on its card and groups by year (`group="year"` works on any list). Built for Bliss Boogie's "Where we have gathered" (Joy, 2026-10-26). A plain `[scout_events]` is unchanged; Bliss Boogie's theme already asks for these options, so its Events page picks them up with this release.
+
+## 0.16.7 (2026-11-05)
+
+- **Privacy tools reach presenters.** Export Personal Data now lists a presenter's application, profile, private details and changes waiting for approval, found by their login email or the profile's contact email. Erasing removes the private details and waiting changes. The public profile and the login stay for staff to remove by hand, and the tool says so.
+- **Paid tickets stay after a privacy erase.** Erasing a person still deletes their free sign-ups. A paid ticket now stays with its order, so counts and orders still add up, without the holder's name, email, signature or account. The ticket holder list on the order loses them too. Other people on the same order are not touched. The export also shows each ticket's order number.
+- **The vendor privacy lookup finds every vendor.** It looked at only the first 200 vendors and now looks at all of them, trashed ones included. Erasing says the listing stays.
+- **No ticket or reminder email to a sign-up with no address.** Before, the email was built and sent nowhere.
+
+## 0.16.6 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **One newsletter box at ticket checkout.** With Scout Newsletter on, Events no longer prints its own "Send me the newsletter" box at checkout. Scout Newsletter shows its one box on any checkout with tickets and saves one consent record, tagged as a ticket. Without Scout Newsletter, nothing changes. The free sign-up form keeps its own box.
+- **Application notices go to the shared address.** New presenter and vendor applications are emailed to the notice address in Business info (the site email without Scout Core).
+- **Plainer words.** "Overview" is now "Home", "Import" is now "Add from spreadsheet", "Topics" is now "Speaker topics", and the browser tab says Events. "Add event schema for Google" is now "Show events on Google". "Shortcodes for your pages" is now "Add to a page". Long help text is cut to one short line.
+
+## 0.16.5 (2026-11-05)
+
+- **Every Events screen has its own name.** Overview, Sign-ups, Volunteers, Import and Settings each show their own title and one sentence on what they are for, instead of "Your events" on all of them.
+- **Settings is one column.** Boxes for Page addresses, Prices and Google, and Community agreements, then one Save settings button (now the screen's main button). The site address sits above each page-address field, so the field is no longer squeezed. The shortcode list moved into a closed "Shortcodes for your pages" box, open for people who cannot change settings. A status line says whether event schema is on.
+- **Sign-ups leads with one status line** for the chosen event (going, checked in, places left, waitlist) in place of four number cards, with a Move people in link when someone is waiting and a place is open.
+- **Check in and Move in and email ticket are outlined,** not blue, on every row. Cancel and Remove are quiet text buttons, and so is Event page. Nothing about check-in, the waitlist or emails changed.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.16.4 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.16.3 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.16.2 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.16.1 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.16.0 (2026-11-03)
+
+- **A members directory people can contact from.** `[scout_directory contact="yes"]` adds where each speaker or vendor works and how to reach them to their card: Website, Book, Email, phone, and their social and shop links named by site (Instagram, Facebook, Linktree, Etsy and so on). Search also finds them by city. Off by default, so a public directory shows what it showed before. Built for Bliss Boogie's members Portal; it turns on there once each educator has approved what members see.
+- **A list layout.** `[scout_directory layout="list"]` shows speakers or vendors the way people look for help: a search box, a Kind of work choice and a Where choice (plain dropdowns), everyone A to Z with a letter rail, and a name that opens to its sheet in place (contact in contact mode, topics, the link to their page). Works without JavaScript; filters as you type with it. Built for Bliss Boogie's members Portal from Joy's approved review page.
+- **Public contact fields.** Speakers gain Where they work, Booking or services link, Business email and Business phone; vendors gain Business email, Business phone and social links. They show only in a `contact="yes"` directory, never on the public speaker page, and stay separate from the private presenter and vendor details. The CSV import takes `city`, `booking`, `email`, `phone` (speakers) and `email`, `phone`, `links` (vendors).
+- Email links are encoded against address harvesters; each link carries the person's name for screen readers.
+
+## 0.15.0 (2026-11-03)
+
+- **Paid tickets, end to end, up to the payment step.** "Create a ticket" on an event makes a simple, virtual WooCommerce product (name, price, how many, sales open and close, the name on receipts, what it includes) already ticked as the event's ticket. Checkout asks for each ticket holder's name. When the order is paid, each ticket becomes an attendee in the sign-ups table: the same QR ticket, door list, check-in and day-before reminder as free sign-ups, counted in places left. The buyer gets one email with every ticket and the calendar file; a holder with their own email gets a copy. Tested with WooCommerce's offline method renamed "Test payment"; a real payment service is a WooCommerce setting.
+- **Refunds void tickets.** A full refund, a cancelled order or a partial refund turns the refunded tickets void ("This ticket was refunded"; they never check in). Partial refunds void tickets not yet checked in first.
+- **Name on receipts.** A ticket can carry a plain name for the order, the WooCommerce emails and the payment service (such as "Workshop registration"), while the event page shows its own name.
+- **Sales window and capacity for shop tickets.** Each ticket has its own sales open and close dates ("On sale December 1", "Sales closed"). The event's Capacity caps free and paid tickets together, in the quantity box, the cart and Sold out.
+- **Agreements per person.** An event can ask each ticket holder to agree to the site's community agreements (one link under Settings) and a waiver the owner writes, confirm their age when the event has a minimum age, and choose yes or no for photos, then type their name to sign. Asked on the sign-up form and once per ticket at checkout. The ticket keeps the signature, the time and the version of the words; every version's words stay on the event. The door list and a scanned ticket show "Agreed" or "Has not agreed yet" and "No photos", and the ticket page asks anyone who still owes an answer. The spreadsheet download gains Ticket, Order, Agreed at, Signature, Agreement version, Age confirmed, Photos and Newsletter requested.
+- **Newsletter opt-in.** An unticked "Send me the newsletter" box on sign-ups and checkout, shown when a newsletter connector listens. Consent is stored with its time, and `scout_newsletter_optin` ( $email, $first_name, $source, $tags, $context ) fires for the connector, with `$source` `event` (free sign-up) or `ticket` (paid checkout), no per-event tags, and the exact box wording, the event's address and its slug in `$context` (`wording`, `page`, `url`, `campaign`). Four-argument listeners keep working. Nothing is sent to a newsletter service from here.
+- While the cart holds tickets, a block checkout page shows the classic checkout form, which has room for per-ticket fields (`scout_events_classic_checkout` to keep the block one). Paid attendees stay off on sites running FooEvents (`scout_events_paid_attendees`).
+- The sign-ups table gains columns for the source, order, agreements, photo choice and newsletter time (it updates itself). events.csv takes `agree`, `waiver` and `photo_ask`. The Ready to share list counts shop tickets as the ticket link and price.
+
+## 0.14.3 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.14.2 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.14.1 (2026-10-23)
+
+- **Easier for themes to restyle.** Rules that reach inside a block now count only their outer class (`.se-facts :where(dt)`, `.se-addcal :where(span)`; 53 rules), so a theme's own `.entry-content dt` or `.se-addcal span` wins without `!important` or a longer selector. Rules that hide something keep their strength. Checked on 11 pages at 1440 and 390 with the Bliss theme: no layout change (theme session, 2026-10-23).
+- The vendor form's Yes/No buttons sit next to their words. Field styling had stretched each radio button across the form, and made the choices bold.
+
+## 0.14.0 (2026-10-23)
+
+- **Topic pages, for search.** A topic can have its own public page listing every class, speaker and vendor on it, so someone searching "water purification class" or "solar vendors" lands on a page about exactly that. Events, Topics: tick "Make a draft page for this topic", or tick several and use **Make topic pages**. Pages start as drafts (under a "Topics" page when there is one), with the topic's description as the introduction and search description, so a person reads each before it goes live. A Page column shows Draft or Live.
+- `[scout_topic topic="water"]` lists the topic's classes, speakers and vendors with an ItemList in structured data; `show`, `region`, and `classes`/`speakers`/`vendors` headings (such as `speakers="Instructors"`) adjust it. `[scout_topics]` shows a card for every topic with a live page, busiest first.
+- Speaker and class pages link to the live pages of their topics.
+- A class taught by two speaker entries with the same name lists the name once.
+
+## 0.13.0 (2026-10-23)
+
+- **Tickets from a WooCommerce shop.** A Tickets from the shop box on each event picks its ticket products. The event page lists them with price, "N left", Sold out and Add to cart; the event's price and on sale / sold out state, cards and Google listing follow the products; product pages name their event; the events list gets Tickets sold. Paid orders fire `scout_events_ticket_bought` once per ticket line. Only active when WooCommerce is.
+- New filter `scout_events_event` ( $event, $id ) on the site side, so other features can stand in for fields. Edit screens still show what was typed.
+- New action `scout_events_person` ( $person ) when someone signs up, volunteers, or applies as a vendor or presenter: email, name, role, event, and phone and org when known. Scout CRM Sync listens to it.
+
+## 0.12.0 (2026-10-23)
+
+- **Regions.** For events in more than one place (Prepper Camp Nation's six regions). Set once on the event; sessions, speakers and vendors follow, and can carry their own. `[scout_regions]` region cards linking to each region's page, `[scout_events region=""]`, a Region line in event details, Events → Regions, and a `regions` column on all four CSV files.
+- **One directory for speakers, classes and vendors.** `[scout_directory type="classes"]` (a repeated class is one card with each time) and `type="vendors"`, with `region`, `show="upcoming"` for classes, and region buttons beside the topics when there is more than one region. Topics now work on sessions and vendors too, with `topics` columns in sessions.csv and vendors.csv.
+- More than one directory on a page keeps its own ids.
+- New actions `scout_events_imported_session` and `scout_events_imported_vendor` ( $id, $row ).
+
+## 0.11.0 (2026-10-23)
+
+- **Speaker directory.** `[scout_directory]`: every speaker as a card with search and topic buttons, filtering as people type or tap, with the choice kept in the address. Works without JavaScript. Compact cards on phones. `topic`, `event` and `search` options.
+- **Topics** on speakers: a Topics box on each speaker, Events → Topics, and a `topics` column in speakers.csv ("|" between).
+- New action `scout_events_imported_speaker` ( $id, $row ) after each speaker row, so other features can read their own columns.
+
+## 0.10.1 (2026-10-23)
+
+- Photos box: **No photo for now, on purpose** keeps a speaker out of the "No photo yet" reminder in Needs you, for a speaker whose photo is waiting on approval. Adding a photo clears it.
+
+## 0.10.0 (2026-10-23)
+
+- **More than one photo per speaker** (Joy asked). A Photos box on each speaker shows every photo of them: tick **Main photo** to choose the one on their card and page, add more from the Media Library, and turn on a small strip of the others on their public page. Swapping the main photo by any route (the Featured image box, an approved presenter change, an import) keeps the old one as an option. Presenters can send up to four more photos from their profile, and they wait for approval like any other change. speakers.csv takes a `photos` column (file names separated by `|`). When a speaker already has a main photo, the import adds a different one from the photo column as an option instead of replacing it.
+
+## 0.9.0 (2026-10-23)
+
+- **Volunteer shifts.** A Volunteer shifts box on each event lists the jobs it needs (job, day, from, to, how many people, a note). `[scout_volunteer event="..."]` shows them by day with spots left, and volunteers pick one or more with their name, email and phone. They get a confirmation listing every shift, a link to see or drop their shifts, and a reminder the day before. **Events, Volunteers** is the roster: each shift with who is on it, what is still open, Take off shift, and a spreadsheet download. Open spots in the next two weeks show in Needs you. Volunteers live in their own table and are in the privacy export and erase tools.
+
+## 0.8.0 (2026-10-23)
+
+- **Add to calendar.** Every upcoming event shows "Add to calendar: Google · Apple or Outlook" under its ticket button or sign-up form. The .ics file (`?se_ics=1` on the event address) also rides along with each ticket email. Events without a start time go in as all-day.
+- **Day-before reminders.** Everyone going to an event that takes sign-ups gets one email in the 24 hours before it starts, with their ticket link and QR code. People who signed up inside that window are skipped, since their ticket just arrived. An hourly check sends them; the sign-ups table gains a `reminded` column on update.
+
+## 0.7.1 (2026-10-23)
+
+- Speaker cards answer to their address word, so a link to `/summit-speakers#nick-blum` lands on that card (the first time a speaker appears on the page).
+- Event lists longer than eight fall under month headings, and on phones those lists show name, date, place and price without the summary line. `[scout_events group="month"]` or `group="none"` sets it either way.
+
+## 0.7.0 (2026-10-23)
+
+- **Sign-ups and check-in.** Tick "Take sign-ups on this site" on an event and its page takes sign-ups: name, email and any guests allowed. Each person gets an email with their ticket and a QR code (an image attachment and a ticket page link). At the door, anyone who can edit the site scans the code with a phone camera and taps Check in; no app needed. When the event reaches its capacity, new sign-ups join a waitlist.
+- **Events, Sign-ups**: one event's door list with headcounts, a search box, Check in for people without their ticket, Move in from the waitlist (which emails their ticket), cancel and put back, and a spreadsheet download. Works at a phone's width.
+- People cancel from their ticket page. Signing up twice sends the same ticket again instead of taking a second place.
+- Ticket pages are never cached or indexed. Sign-ups are in the WordPress privacy export and erase tools.
+- Waitlisted people while places are open show in Needs you, and the Coming up table shows how many signed up.
+- events.csv takes `signup` and `signup_guests`. A `scout_events_signup_allowed` filter lets Scout Members keep members-only sign-ups for members.
+- QR codes are drawn on the site by a bundled MIT-licensed library (lib/), so no ticket link is sent to an outside service.
+- **Vendors.** `[scout_vendor_apply]` is an application form for people who want to sell at an event; each one arrives as a pending vendor and in Needs you. Publishing approves them and emails them, naming the events ticked. Approved vendors show as a Vendors list on each event page they are at, and anywhere with `[scout_vendors event="..."]`. Contact details (name, email, phone, power and setup needs) stay in a private box on the edit screen and in the privacy tools; the import takes public details only (vendors.csv).
+
+## 0.6.0 (2026-10-22)
+
+- Hooks for Scout Members and other Scout features: `scout_events_detail_rows`, `scout_events_ticket_html` and `scout_events_card_tags` filters on the event panel, ticket button and event cards, and a `scout_events_imported_event` action after each events.csv row, carrying every column. Nothing changes on a site without them.
+
+## 0.5.3 (2026-10-22)
+
+- Import: rows that share a title but name different slugs now stay separate entries. A calendar with Pause & Play in January, April and August imports as three events instead of one updated three times.
+- Overview: Needs you lists the three soonest unfinished events one by one and counts the rest in one line that jumps to Coming up, so a year-long calendar no longer buries the other items. "Google" keeps its capital in those lines.
+
+## 0.5.2 (2026-10-22)
+
+- **Events in the top toolbar**, right after Scout and with the same bolt (Joy asked). A small count shows how many things need you; the menu opens Overview, Needs you, Add event, Add session and Add speaker, from the dashboard and from the site.
+
+## 0.5.1 (2026-10-22)
+
+- Fix: a speaker page no longer says the same thing twice when the full bio opens with the short bio (seven 2026 Bliss Boogie presenters, Kai among them). The short bio still feeds cards and schema.
+
+## 0.5.0 (2026-10-22)
+
+- **Presenters apply and keep their own profile.** `[scout_presenter_portal event="..."]` on any page shows an application (name, pronouns, email, phone, what they do, bios, links, photo, up to two class ideas, what they need in the room, a photo release). Sending it creates a Presenter account (WordPress emails them a set-password link), a speaker in Pending Review and draft sessions for their classes. Logged in, a presenter sees their status and sessions and can update their profile.
+- **The owner approves everything.** Publishing a pending speaker approves the application and emails them. Profile updates wait on the speaker's edit screen with a before-and-after view and Approve or Discard. New applications and waiting changes lead the Needs you list.
+- **Private stays private.** Phone, pronouns, room needs, notes and the photo release show only on the speaker's edit screen, never on the site or in schema.
+- Presenters never see the dashboard: it sends them to their profile page, and the toolbar is hidden for them.
+- Spam guard on the forms: a hidden field, a minimum time on the form, and a nonce.
+- **Events sits right under Scout** in the sidebar with the identical Scout bolt (Joy: "near each other at the top... the same bolt").
+
+## 0.4.1 (2026-10-22)
+
+- **Import keeps one copy when a session changes event.** A row now also matches a session with the same title and the same speaker in any event, so moving a session to its right year on a second run updates it instead of adding a copy.
+- Shortcodes take an event's address word as well as its number: `[scout_speakers event="bliss-boogie-2026"]`, so a page keeps working when moved between sites.
+
+## 0.4.0 (2026-10-22)
+
+- **Events has its own place in the sidebar**, marked with the Scout bolt, instead of sitting inside the Scout menu with the site's settings (Joy asked: "so it's clear it's ours"). Under it: Overview, All events, Sessions, Speakers, Import and Settings. Partner sites without Scout branding get a calendar icon.
+- Other Scout features join the menu on the `scout_events_menu` action (replaces the `scout_events_hub_tabs` filter from 0.3.0).
+
+## 0.3.0 (2026-10-22)
+
+- **One Events hub.** Scout → Events opens on an Overview: upcoming events, sessions, speakers and the next date at a glance, a **Needs you** list (draft sessions, events missing details, sessions without a time, speakers without a photo, sales that should have closed), and Coming up with Add event, Add session and Add speaker. Tabs lead to every list, the spreadsheet import, and settings. Editors see all of it; only administrators change settings.
+- Other Scout features add their own tabs and Needs you items (`scout_events_hub_tabs`, `scout_events_needs_you`, `scout_events_hub_overview`), so tickets, members and applications land in the same place.
+
+## 0.2.0 (2026-10-22)
+
+- **Bring in a spreadsheet.** Scout → Events takes up to three CSV files (events, speakers, sessions) and adds them in one go. Every run is a preview first; tick "Bring them in" to write. Running the same files again updates what is there instead of making copies, and empty cells never wipe a field. Photos come from a file name already in the Media Library or a web address.
+- Fix: after saving settings, the screen came back as "not allowed" on sites with a Scout menu. Forms now return to the screen they came from.
+
+## 0.1.0 (2026-10-22)
+
+- First release. Events, sessions and speakers as three content types under Scout Build (or Site Build) → Events, each edited in a plain form: dates and times, status, venue or online link, ticket link and button words, price range, sales dates, minimum age, capacity, and a "What to know" list.
+- Event pages fill themselves in: a details panel with the ticket button, the description, What to know, the schedule day by day, and the speakers. Session and speaker pages link to each other.
+- Shortcodes for any page: `[scout_events]`, `[scout_event]`, `[scout_schedule]` (list or room grid) and `[scout_speakers]`.
+- Event schema (Event, EducationEvent, Festival or SocialEvent) with offers, place, organizer and performers, and Person schema on speaker pages. Joins Scout Core's graph when it is active.
+- A "Ready to share" checklist on every event and an Events overview that lists what each upcoming event still needs.
+- No archives, so an existing /events/ page on the site is never taken over. Deleting the plugin keeps every event, session and speaker.

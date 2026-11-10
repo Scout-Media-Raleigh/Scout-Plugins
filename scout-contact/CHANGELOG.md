@@ -1,0 +1,83 @@
+# Scout Call Buttons changelog
+
+## 0.1.18 (2026-11-05)
+
+- **Colors and fonts from DESIGN.md (Site Standard rule 3):** the call sheet's colors and fonts now read the theme's DESIGN.md (the `--scout-*` names from `design-tokens.css`) when the theme's own `--surface`, `--accent` and the rest are not set. Sites that set them, or set neither, look exactly the same.
+- **Status line is a headline and one sentence.** The note about computers and the analytics event names sit behind More under the buttons. "More options: wording & photos". Shorter help.
+
+## 0.1.17 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **The phone number reads Business info live.** The Phone number field on Call buttons is now an optional override. Leave it blank and the call bar uses the phone in Business info at the moment the page shows, so a change there reaches the bar at once. Before, the screen copied Business info's number into its own setting the first time it was saved, and the two could drift apart. A number already saved here keeps showing exactly as before. The field's hint now reads "Leave blank to use Business info." and shows that number as its placeholder.
+- **Shorter help text.** The screen's intro and the phone hint are one short sentence each.
+
+## 0.1.16 (2026-11-05)
+
+- **The Call buttons screen opens with one status line.** The three status cards are now one line: on or off on phones, how many options, hidden on computers, and whether taps are counted. The wording and photos move into a closed More options box. One Save changes button. Same fields and option.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.1.15 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.1.14 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.1.13 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.1.12 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.1.11 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.1.10 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.1.9 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.1.8 (2026-10-14)
+
+- **Faster first paint.** The call bar's small stylesheet (under 5 KB) prints inside the page instead of loading as a separate file, which PageSpeed listed as holding up the first paint on phones. The `scout_contact_inline_css` filter turns it back into a file.
+
+## 0.1.7 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.6 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.1.5 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.4 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.3 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 0.1.2 (2026-10-13)
+- Ships admin kit 1.2.0: the Scout menu bar is grouped into five tabs (Overview, Search, Website, Reviews, Chat), with the open group's screens underneath.
+
+## 0.1.1 (2026-10-13)
+- Ships the current Scout admin kit (1.1.1), so the settings screen shows the shared section nav and the kit check passes.
+
+## 0.1.0 (2026-10-13)
+- First release. A call, text and "Let's talk" bar pinned to the bottom of the screen on phones (design 4b).
+- "Let's talk" opens a sheet with numbered options: call, send a text, book a time. "Book a time" opens the booking page.
+- Settings under Build → Call buttons: phone, texting number (or Text off), booking link, wording, up to three photos, pages to hide on.
+- Phone and booking link fill in from Scout Core business info and the Scout booking page when present.
+- Taps are counted through Scout Analytics as contact_call, contact_text, contact_book and contact_open.
+- Moves the cookie notice and the chat button up so the bar never covers them.

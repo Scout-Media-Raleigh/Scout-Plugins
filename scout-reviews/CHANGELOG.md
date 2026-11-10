@@ -1,5 +1,202 @@
 # Scout Reviews: Changelog
 
+## 0.7.1 (2026-11-09)
+
+- **A review with "&" in the name is no longer added twice.** WordPress can save "Mr. & Mrs. Sowinski" as "Mr. &amp; Mrs. Sowinski", so the theme's duplicate check missed it and Fill from theme added it again each run. The check now compares the names as plain text.
+
+## 0.7.0 (2026-11-09)
+
+- **Google totals every day, with an API key.** Review settings has a new box, Check Google every day, with a Google place ID and a Google API key (Places API, New). With both set, the site asks Google once a day for the rating and review count and puts them in the Google row, marking the totals as checked today. Check Google now runs one check on demand, and saving the box runs the first one. No sign-in is needed and no reviews are brought in.
+- **The key is kept safe.** It is stored encrypted with the site's own security keys, shows only as "Saved" with a Replace button, and can be set as `SCOUT_REVIEWS_PLACES_KEY` in wp-config.php instead. It never goes in scout-setup.json, the update report, logs, REST output or the Hub API. If the site's security keys change, the box says the key can't be read and asks for it again.
+- **When a check fails, nothing changes.** The last reason is kept in plain words (never the key, never Google's raw reply) and shown on Review settings. Scout Build's Site status turns it into a look after three days of failures.
+- **The place ID can come from the theme:** `reviews.google_place_id` in scout-setup.json, filled when the field is blank.
+- While the Business Profile sign-in is connected, its sync keeps the Google numbers and the daily check stands down.
+- Deleting the plugin removes the key, the place ID and the daily check. Nothing about visitors changed. `tools/tests/reviews-places.php` checks it with a stand-in for Google, so no real request is made.
+
+## 0.6.0 (2026-11-09)
+
+- **Review totals from the theme.** Scout keeps track of each client's review profiles, so the theme's `scout-setup.json` can now carry each platform's rating, review count and profile link, with the date Scout checked them (`reviews.totals`). Scout Build's Fill from theme hands them here. The newest check wins: the theme's totals replace the saved ones only when their date is a real date, not in the future, and newer than the last time that platform was checked. Saving Review settings by hand counts as a check, so a newer typed number stays. "Totals last updated" and Site status show the date Scout checked, not the day the theme went in, so the month-old warning still means what it says.
+- **Each platform remembers when it was checked.** Saving the form, a Google sync and the theme each stamp the rows they write, so a fresh Google number no longer makes an old Yelp number look fresh. Rows saved before this release use the old single date until they are next saved.
+- **Reviews from the theme.** `reviews.items` adds single reviews (source, reviewer, stars, date, text, link) as published reviews, once each, matched on source, reviewer and date. Reviews already on the site, hidden ones and ones in the trash are never edited, removed or brought back.
+- While Google is connected and syncing, Google's own numbers and reviews win, and the theme's Google totals and Google reviews are skipped.
+- Nothing changes on sites whose theme has no totals or reviews. `tools/tests/reviews-from-theme.php` checks it.
+
+## 0.5.13 (2026-11-05)
+
+- **Colors and fonts from DESIGN.md (Site Standard rule 3):** review cards now read the theme's DESIGN.md (the `--scout-*` names from `design-tokens.css`) for surface, line, muted text, links, corners and the label font when the theme's own `--surface`, `--line` and the rest are not set. Sites that set them, or set neither, look exactly the same. The review page and the stars are unchanged.
+- **New reviews rows stack.** Each review is a name line with stars and one outlined button (Approve and add to site, or Mark as read) and a quiet Skip on the right, then a line of tags (source, date, OK to show). Ask for a Google review too moved into the Read it all fold. "Private: not OK to show" is a calm grey pill, no longer amber.
+- **Fix: the review screens lost their look on WordPress 6.9.1.** Ask for reviews' stylesheet was queued before the shared kit, so WordPress dropped both and New reviews, Ask for reviews and Review settings showed unstyled. The kit now loads first.
+- **Wording.** "QR code & printed cards" and "More options: review page & cards". The QR row's "For printers, signs and invoices" is a plain line under the link. The Law disclaimer note names the menu group from the kit (Legal pages → Disclaimers) instead of "Scout → Legal pages → Disclaimers", so white-label sites read right. Shorter help on New reviews and Review settings.
+
+## 0.5.12 (2026-11-05)
+
+- **Visitor data list covers privacy requests.** The private note form asks for no email, so WordPress's privacy tools cannot find a note. The list now says to delete one by hand in New reviews. No code changed.
+
+## 0.5.11 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Private notes use the shared notice address.** "Send private notes to" is now an optional override. When it is blank, notes go to the notice address in Business info (its "Send notices to" email, else its email, else the site admin email). Before, a blank field always meant the site admin email. An address already saved here keeps getting the notes. The hint now reads "Leave blank to use Business info."
+- **Plainer labels.** Review inbox is now New reviews (menu and screen). The Google box is now Bring in Google reviews, the Display box is now How reviews look, and the closed box with the shortcodes is now Add to a page. Page addresses and saved settings are unchanged.
+- **Shorter, plainer help text.** Screen notes and status lines say one thing each, for example "Your review link is ready." is now "Ready." and the Google box opens with one setup step. The Law firm note now points to Scout → Legal pages → Disclaimers, the new menu name.
+
+## 0.5.10 (2026-11-05)
+
+- **Ask for reviews, Review inbox and Review settings now use the one Scout screen layout.** Each opens with the Scout bar, breadcrumb and section list, then one status line, then the thing you use most, then lists, with rarely changed settings in a closed "More options" box at the bottom. One column throughout, so nothing squeezes beside the section list.
+- **Ask for reviews.** The status line says whether your review link is ready, and links to Review settings when it isn't. Your review link comes first, with Copy link as the screen's one main button. The QR code and the three printed card layouts are one list, each with a small preview and an outlined Print or Download button. The text and email messages sit one above the other. The page settings moved into More options, which opens on its own when the review page is off. The screen no longer loads its own fonts or colors: it uses the shared Scout look, and the printed cards still use the client's brand fonts and colors.
+- **Review inbox.** The status line says how many new reviews are waiting, with "Add all with suggested pages" beside it. Each review is one row: who, stars, platform, date, a short line of the text, and one outlined Approve and add to site (or Mark as read for a private note), with Skip as a text button. "Read it all and pick pages" opens the full text, the page checkboxes (suggested ones still ticked) and Featured.
+- **Review settings.** A status line says which platforms have a "leave a review" link and when the totals were last updated. Each platform is one row showing its rating and review count; click it to change the rating, count and both links, stacked so they fit any screen width. The wide five-column table is gone. The Google sync box matches the other boxes, with outlined Connect and Sync now buttons. Built-in design and On delete moved into More options, and the shortcode help into its own closed box.
+- Nothing about how the screens work changed: the same fields, buttons, links and saved settings.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.5.9 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+- **Points to Law firm tools when it's on.** The disclaimer box says the wording set on Scout → Policies → Disclaimers prints under the reviews instead.
+
+## 0.5.8 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.5.7 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.5.6 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.5.5 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+- **The site notes when the review totals were last updated.** Saving Review settings, or a Google sync, records the time. Scout Build 0.7.8 shows it in Site health as "Review totals" and asks for a look after 30 days, so the counts on the site keep up with the platforms. Andy's site said 17 Google reviews when Google showed 20.
+
+## 0.5.4 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.5.3 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.5.2 (2026-10-13)
+
+- **Fix: business cards print on one page in Safari.** The ten-card sheet filled a letter page exactly, so Safari's print margins pushed the last row onto a second page. Printed cards now come out at 94% size (about 3.3 x 1.9 in) and always fit one page. Screen previews are unchanged.
+
+## 0.5.1 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.5.0 (2026-10-13)
+
+- **The review page and printed cards wear the client's brand.** Ask for reviews > Settings adds page background, text color, and heading, body and small-label fonts next to the brand color. The /review/ and /review/note/ pages use them, text colors adjust to a light or dark background, and the button text picks white or near-black for contrast. The counter card, business cards and table tent print in the same fonts, with the brand color as the headline (deepened if too pale for paper). Fonts come from a fixed list of Google Fonts with each one's real weights, so the font request never fails. Defaults stay Scout's own look, and a client theme can supply its own with the `scout_reviews_brand` filter.
+
+## 0.4.13 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.4.12 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.4.11 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.4.10 (2026-10-13)
+
+- **Shorter Scout sidebar.** The shared admin kit (1.3.0) shows a long Scout menu as one sidebar link per group (Home, Search, Website, Business, Reviews, Chat; Business is new and holds hours, team, case results, cards, call buttons, booking and proposals), in the same order as the tabs on each screen. Every screen still works and is one tap away in the tabs; only the sidebar got shorter. Count bubbles (like unanswered chat questions) carry over to the group's link.
+
+## 0.4.9 (2026-10-13)
+
+- **Cleaner Scout menu bar.** The shared admin kit (1.2.0) sorts the screens into five groups (Overview, Search, Website, Reviews, Chat). The open group's screens show as tabs underneath, so a site with many features no longer gets a wall of links, and on a phone the bar fits on one line.
+
+## 0.4.8 (2026-10-13)
+
+- **New 5-star Google reviews can go live on their own.** Review settings > "New 5-star reviews": when on, each new 5-star review from the Google sync is published on the pages it matches (topic keywords). Lower ratings and notes from the review page still wait in the Review inbox. Off by default; leave it off for law firms.
+
+## 0.4.7 (2026-10-13)
+
+- **TripAdvisor is a review source**, with stars and a "View on TripAdvisor" link. For RV parks, restaurants and venues.
+- **Choose who gets private notes.** Ask for reviews > Page settings > "Send private notes to". Empty keeps the site admin email.
+- **The badge on direct reviews can be renamed** with the `scout_reviews_direct_badge` filter (default "Client testimonial"), so a park can say "Guest".
+
+## 0.4.6 (2026-10-13)
+
+- **Fix: the section nav was unstyled on theme screens.** A theme carrying an older copy of the admin kit loaded its old stylesheet. The kit (1.1.1) now always loads the stylesheet that matches its own code.
+
+## 0.4.5 (2026-10-12)
+
+- **One section nav on every Scout screen.** The shared admin kit (1.1.0) prints the same row of pills on every screen in the Scout menu (Features, Site health, Business info, SEO, AI search, Image optimizer and so on), read live from the sidebar, so the screens read as one product and a new feature appears in the row by itself.
+
+## 0.4.4 (2026-10-12)
+
+- **Printable cards print on one page in every browser.** Print now opens
+  only the chosen sheet in a hidden frame, so Safari no longer spreads the
+  business cards over five pages.
+- **The previews look right in Safari.** They are scaled with a transform
+  instead of zoom, so the QR code and text stay inside each card.
+- **Shorter name on cards and messages.** When no business name is set, the
+  site title is used without its tagline: "Smith Law | Raleigh, NC" prints as
+  "Smith Law". Set a name under Ask for reviews, Page settings to override it.
+
+## 0.4.3 (2026-10-12)
+
+- **Reviews moved into the Build section.** On a site with Scout Build (or
+  Recon Build, or Site Build), the Reviews screens now sit inside it with the
+  other features: Reviews, Review inbox, Ask for reviews and Review settings.
+  The separate Reviews menu in the sidebar is gone on those sites. Old
+  bookmarks still work and land on the new screen. Sites without a Build
+  section keep the Reviews menu as before.
+
+## 0.4.2 (2026-10-12)
+
+- **A new look for every settings screen.** The plugin's screens now share
+  one Scout design: a clear page header with the section name, settings
+  grouped into rounded boxes, pill buttons, and a short sign-off footer with
+  how to reach us. On client sites the header reads "Site Build" instead of
+  "Scout". Nothing about how the settings work changed.
+
+## 0.4.1 (2026-10-12)
+
+- **Fix: a site crash when two Scout plugins load together.** Every Scout
+  plugin carries the shared updater. On hosts that cache compiled PHP
+  (OPcache, as on WP Engine), a copy could be declared the moment its file
+  loaded, so a second plugin loading first crashed the site with "Cannot declare
+  class Scout_Plugin_Updater". The class now sits inside a conditional, and the
+  updater loads on `plugins_loaded`, after every plugin's own file.
+
+## 0.4.0 (2026-10-12)
+
+Ask for reviews: a review page on the client's own domain, a private note
+form, a QR code, printable cards, and ready-to-send messages.
+
+- **`/review/`** is a dark phone page (Scout features spec 5.21): business
+  name, optional team photo, the ask line, a "Leave a Google review" button,
+  smaller buttons for any other platform with a link, and a quiet "Prefer to
+  send us a note privately?" link at the bottom. A setting skips the page and
+  goes straight to the main platform instead. The address is a setting.
+  Printed cards point here, so a changed review link never breaks a card.
+- **`/review/note/`**: stars (optional), the note, name, business (optional)
+  and an "OK to show this on {domain}" box. Notes arrive in Reviews > Inbox as
+  drafts and by email. A note without that OK can never be published: the
+  inbox only offers "Mark as read", and pressing Publish in the editor keeps
+  it a draft. Spam: hidden field, signed timestamp, five notes an hour per
+  connection.
+- **Reviews > Ask for reviews**: copy the link, download the QR code (SVG,
+  PNG), print a 4 by 6 counter card, a sheet of 10 business cards, or a table
+  tent ("Tell Google how we did."), and copy a text and an email with the
+  business name and link filled in. Monthly visit counts by source (QR, text,
+  email, other); link-preview bots and signed-in staff are not counted, and no
+  visitor data is stored.
+- **Reviews > Inbox** shows notes from the website with a "New · from the
+  website" pill and their consent state, plus "Ask for a Google review too".
+- Both screens use the light product look (spec 4.3).
+- **No review gating and no incentive wording,** by design: every client sees
+  the same page and the same ask. The page lists the rules, including the
+  state bar check for law firms.
+- `assets/qrcode.min.js`: qrcode-generator 1.4.4 by Kazuhiko Arase (MIT),
+  the same file Scout Cards uses.
+
 ## 0.3.0 (2026-10-01)
 
 Review inbox, topics, and theme slots: reviews land on the right pages in one click.

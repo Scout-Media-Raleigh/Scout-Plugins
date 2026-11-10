@@ -26,6 +26,10 @@ final class Scout_Core_Meta_Box {
 				'normal',
 				'high'
 			);
+			// The type supports custom-fields (for REST, see post-types.php), so
+			// WordPress adds its generic Custom Fields box. It would list every
+			// scout_* key a second time, raw, next to the Details box.
+			remove_meta_box( 'postcustom', $slug, 'normal' );
 		}
 	}
 

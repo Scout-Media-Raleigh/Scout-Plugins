@@ -1,0 +1,74 @@
+# Scout Partners
+
+Partners and sponsors for a site that sells placements: Founding, National
+and Regional partners (or whatever the owner calls their levels), each with a
+logo, a link and the places on the site they appear. Change a partner once
+and every placement follows. Built for Prepper Camp Nation's partner program
+and kept general, so any event or nonprofit client with sponsors can use it.
+
+## Where it lives
+
+**Partners** has its own sidebar item with the Scout bolt (a plain award icon
+when `SCOUT_HUB_BRAND` is false). Editors and administrators can manage
+partners; only administrators change Settings.
+
+- **Home**: how many partners are on the site, by level, what ends in the
+  next 30 days, and clicks to each partner this month and last.
+- **All partners / Add partner**: name, logo (the featured image), and the
+  **Partner details** box: level, website, one line, where they appear, and
+  optional dates. Outside its dates a partner comes off the site by itself.
+  The Order field sets the order within a level.
+- **Settings**: the levels (highest first) and the places partners can
+  appear, one per line, and, with Scout Events, partners on event pages.
+
+## On the site
+
+- `[scout_partners]` every partner on the site, grouped by level.
+- `level="founding"`, `placement="home-page"`, `region="midwest"` narrow it.
+- `layout="rail"` one row of logos (a header strip or sidebar);
+  `layout="logos"` logos only; `title="Our partners"` adds a heading.
+- With Scout Events and its regions, a partner can carry regions. Beside a
+  region's events it shows that region's partners and the national ones (no
+  region). Settings can add partners to every event page.
+
+Links go through the site once (`admin-post.php?action=scout_partner&p=ID`),
+which counts the click and sends the visitor to the partner's saved website,
+never anywhere else. Links are marked `rel="sponsored"`. Search engines and
+link checkers are not counted, and no visitor details are kept: only a number
+per month, for two years.
+
+## What this feature needs from the theme
+
+- **DESIGN.md:** fonts and text color come from the theme. The card
+  border and corner read the DESIGN.md roles line and card corner, as
+  `--scout-line` and `--scout-radius-card`. These are the `--scout-*` variables `tools/design-build.php` writes to the theme's `assets/css/design-tokens.css` from DESIGN.md, so the theme loads that file. The plugin's own variables
+  still win when the theme sets them: `--scout-partners-line`,
+  `--scout-partners-radius` (`14px`). The plate behind each logo stays white
+  (`--scout-partners-logo-bg`, `#fff`) so every logo reads.
+- **Where it lands:** where `[scout_partners]` sits, and on event pages
+  through `the_content` when Settings or a region puts partners there.
+  `title=""` adds an H2; level names are H3.
+- **Images:** each partner's logo is its featured image. A partner with no
+  logo shows its name.
+- **Class names:** `.sp-partners`, `.sp-grid`, `.sp-rail`, `.sp-logos`,
+  `.sp-title`, `.sp-level`, `.sp-level-name`, `.sp-list`, `.sp-partner`,
+  `.sp-link`, `.sp-logo`, `.sp-name`, `.sp-line`.
+- **scout-setup.json:** nothing.
+
+## Data
+
+Post type `scout_partner` (not public), details in `_scout_partner`, monthly
+clicks in `_scout_partner_clicks`, settings in the `scout_partners` option.
+Deleting the plugin keeps partners.
+
+<!-- visitor-data:start -->
+## Visitor data
+
+| What | Where it is kept | How long | Shared with |
+|---|---|---|---|
+| A count of clicks on each partner's link, kept as one total per month. No name, IP address or device details are saved with it. (When a visitor clicks a partner link. Clicks from search engines and link checkers are not counted.) | This website's database, on each partner's record | The last 24 months of totals. Older months are dropped. | Nobody |
+
+The click goes through this website and then on to the partner's own website, which sees the visit like any other. The plugin reads the browser type only to skip search engines and does not save it.
+
+Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
+<!-- visitor-data:end -->

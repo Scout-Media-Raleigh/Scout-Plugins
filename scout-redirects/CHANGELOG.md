@@ -1,0 +1,95 @@
+# Scout Redirects changelog
+
+## 0.2.0 (2026-11-05)
+
+- **One status line instead of three stat cards (Joy, 2026-11-05).** "4 redirects live. Visitors tried 12 missing addresses in the last 7 days, and 1 link on your own pages is broken." It turns amber only when a link on the site's own pages is broken, with a quiet link down to them.
+- **One primary button.** Add redirect is the screen's main button; Save settings and Import in More options are outlined.
+- **Kit colors only.** The broken-link "!" badge uses the kit's warn tint instead of a typed-in amber, and the stat card styles are gone.
+- **Shorter help.** The opening line, the add form hint, the missing pages and broken links intros and the list intro are one sentence each. The fold reads "More options: settings, import & export".
+- **Broken links are real links now.** Scanners fake where they came from, so "/ links to /terraform.tfvars" showed as a broken link. A missing page now counts as a broken link only when that page's content, or one of the site's menus, really links to it. Links from other sites, from the missing address itself, from a sitemap file, or from a page that is missing too stay as plain missing pages. Entries an older version flagged are checked again once, and the list is checked again each time it shows.
+- **Site status uses the same checked list,** so it stops asking for a look at scanner probes.
+- **More scanner probes are left out of Missing pages:** any file other than an .html or .htm page (like /terraform.tfvars or /db.sql), index.php in a folder, and addresses under /actuator, /api, /auth, /ckfinder, /wk, /files, /vendor, /cgi-bin, /phpmyadmin, /server-status, /console, /portal, /onboarding, /register, /forgot-password, /settings, /api-docs, /swagger and /graphql, plus WordPress's demo /sample-page and /hello-world. Ones already logged are cleared the first time the screen opens. An address saved as a redirect is never left out, and a site with a real page on that list can remove that one entry with the new `scout_redirects_noise_patterns` filter.
+- **Missing pages people really hit come first:** visits from a search engine and broken links on your pages, then the rest by visits. "Came from" reads as before.
+- **Back to "Redirects".** The menu, screen title and Site status link say Redirects again; it is a real word people know.
+
+## 0.1.16 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Plainer names.** The menu item and screen title are both "Moved pages" (was "Redirects" and "Old pages, forwarded to new ones"), the list box is "Your moved pages", and the opening sentence is plainer. The Site Health link reads "Open Moved pages". Same address, settings and redirects.
+- **Shorter, plainer help text** (Sean's voice, admin kit DESIGN.md 2a). The opening line says what a redirect is in one line, and the form, missing pages, list and import help are one short sentence each. Broken links point to Site status, the new name for Site health.
+
+## 0.1.15 (2026-11-05)
+
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.1.14 (2026-11-05)
+
+- **A cleaner Redirects screen (Joy, 2026-11-05).** One column, top to bottom: Add a redirect, Broken links on your pages (only when there are some), Missing pages people asked for, the Redirect list, then More options (settings, import and export, closed until opened). The two side-by-side columns are gone, so addresses no longer wrap one letter per line.
+- **Missing pages are a table** with Address, Visits, Last seen and Came from ("Typed or bookmarked", one of your pages, or another website), then Forward it and Ignore.
+- **Break-in attempts are left out.** Dot paths like `/.env.local` and `/.git/config`, and log-in or admin probes like `/admin`, `/login`, `/wp-login.php` and `/administrator`, are never logged as missing pages. Ones an older version logged are cleared the first time the screen opens.
+
+## 0.1.13 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+- Fix: the current page number in the redirects list sat white on bright cerulean, which fails contrast. It now uses the deeper fill (`--sh-accent-fill`) that every Scout button uses.
+
+## 0.1.12 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.1.11 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.1.10 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.1.9 (2026-10-30)
+
+- **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
+
+## 0.1.8 (2026-10-28)
+
+- **Fix: a new redirect works the moment it is saved.** Saving a redirect checked the old address first, which cached "no redirect here", and the cache clear that followed did nothing on hosts whose object cache cannot clear one group (WP Engine among them). New and imported redirects returned 404 for up to an hour. Lookups now use a generation number that every change bumps, which works on every object cache.
+
+## 0.1.7 (2026-10-28)
+
+- **Fix: every screen that holds items has the section nav.** Plugins load the Scout styles on their list screens (chat questions, reviews, case results, site checks, team members), which made the shared kit skip its tab row there, so there was no way back to the plugin's settings. The kit now prints the tab row on WordPress's own list and edit screens too. Shared admin kit 1.5.1.
+
+## 0.1.6 (2026-10-16)
+
+- **Whose site is this, at a glance.** Every Scout screen shows the client's logo (theme logo, else Site Icon) and name top right, beside the Scout mark, so a Scout screen never leaves you guessing which client's site you are on. Joy asked for "them and us together". Shared admin kit 1.5.0.
+
+## 0.1.5 (2026-10-13)
+
+- **Fix: missed updates on shared hosts.** Version checks read one version list the Release workflow publishes as a plain download, instead of GitHub's API, which allows only 60 calls an hour per server address and ran out on WP Engine. The API stays as a fallback.
+
+## 0.1.4 (2026-10-13)
+
+- **No dead ends in the Scout menu.** WordPress's own list screens inside the shortened Scout menu (the Reviews list, Chat questions, team members, case results) now show the same tabs as every Scout screen, so Review inbox, Ask for reviews and Review settings are one tap away from the Reviews list. Shared admin kit 1.4.0.
+
+## 0.1.3 (2026-10-13)
+
+- **Fix: newer versions were being missed.** GitHub lists releases by tag name as text, so "0.4.9" came before "0.4.11" and the updater offered the wrong one (Scout Reviews stopped at 0.4.9). It now compares version numbers and reads up to three pages of releases instead of one.
+
+## 0.1.2 (2026-10-13)
+
+- **Fix: no more "Bad gateway" from update checks.** Every Scout plugin used to download the same release list from GitHub on its own, one after another (up to 10 seconds each). When those caches expired, one dashboard page could wait on all of them, past WP Engine's 60-second limit, and show a 502 "Bad gateway". The plugins now share one download, cached for six hours; a failed download is retried after 15 minutes instead of hiding updates for six hours.
+
+## 0.1.1 (2026-10-13)
+
+- Ships the shared admin kit 1.3.0: the Scout menu bar is grouped into tabs (Home, Search, Website, Business, Reviews, Chat), and a long Scout sidebar shows one link per group.
+
+## 0.1.0 (2026-10-13)
+
+- First release. Redirect list with 301 and 302 redirects, hit counts and
+  last-used dates, under Scout Build / Site Build → Redirects.
+- Missing-page watch: logs page requests that end on the missing-page screen,
+  leaves out crawlers and file probes, keeps a capped list, and turns an entry
+  into a redirect in one click.
+- Broken links on the site's own pages, from internal referrers, listed on the
+  screen and reported in Site Health.
+- Published pages that change address forward automatically, child pages
+  included, with an Undo notice.
+- CSV import and export.

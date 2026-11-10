@@ -1,0 +1,45 @@
+# Scout Newsletter changelog
+
+## 0.1.8 (2026-11-05)
+
+- **Status line is a headline and one sentence** ("Connected to …" and whether sending is on). The counts moved to tags in Who said yes. Queued and waiting records use a calm pill, failed ones red.
+- **One filled button.** Send them to Beehiiv is outlined so Save is the screen's one primary. Tables have no zebra stripes. On white-label sites the note for people who can't change settings says "Your web team looks after these settings". Shorter help.
+
+## 0.1.7 (2026-11-05)
+
+- **Privacy tools reach Who said yes.** WordPress's Export and Erase Personal Data tools now find a person's newsletter records by email. Erasing keeps each record as proof of the yes, with the email replaced by a one-way code and the first name and extra fields removed, and stops any send still waiting. Beehiiv keeps its own copy, so remove the person there too.
+
+## 0.1.6 (2026-11-05)
+
+- **Shared admin kit 1.11.0.** Plain menu names: To do, Business, People, Site features, Search, Legal pages and Site status (labels only, the group keys are the same). Ligatures on where the font has them, and one shared copy of the menu finder.
+- **Newsletter owns the one checkout box.** While Scout Newsletter is on, Scout Events prints no ticket box of its own. Newsletter's box shows on any checkout with event tickets, even with the checkout box setting off, and skips a checkout that only pays for bookings already asked on the booking form. One box, one consent record. New `scout_newsletter_checkout_box` filter.
+- **Fixed a wrong consent record on ticket orders.** An order ticked in Scout Events' old box was recorded with a time where the words belong, and could be recorded twice. It is now recorded once, with the words "Send me the newsletter". Ticket orders also keep the event's address word as the campaign.
+- **Plainer words.** "Beehiiv connection" is now "Email list connection" (the help line names Beehiiv), "Consent records" is now "Who said yes", the long More options title is now "More options", "Download every record (CSV)" is now "Download spreadsheet", and "Save settings" is now "Save". Long help text is cut to one short line.
+
+## 0.1.5 (2026-11-05)
+
+- **The Newsletter screen opens with one status line.** The three status cards are now one line: the Beehiiv connection, whether sending is on, and the sign-up counts. The Beehiiv connection stays in view; tags, what Beehiiv receives and the box on this site move into a closed More options box. The settings form has one Save settings button (it had two), and Test connection is an outlined button. Recent activity is a closed box under the consent records. Same fields, actions and nonces.
+- **Shared admin kit 1.10.0.** Side-by-side boxes stack by the width of the main column, not the window, so nothing squeezes beside the section list. The kit adds one status line for the top of a screen, list rows and a closed More options box.
+
+## 0.1.4 (2026-11-04)
+
+- **Files by the redesigned Scout menu: Home, Inbox, Reports, Your business, Your website, Get found, Policies, Site health and Scout tools.** Shared admin kit 1.8.0. Staff (anyone who cannot change site settings) see Home, Inbox and Your business. Greyed "Turn on" items show for operators only, so clients only see what their site has. Scout tools reads Build tools on white-label sites (dashboard redesign, Joy 2026-11-04).
+
+## 0.1.3 (2026-11-04)
+
+- **Files by the new Scout menu map (Overview, Your business, Content, Search and AI, Site health, Inbox, Build).** Shared admin kit 1.7.0: the same seven items on every site, the Build group hidden from everyone who is not an operator (Site Standard §7 v1.2, Joy 2026-11-04).
+
+## 0.1.2 (2026-11-04)
+
+- **Updates group in the shared Scout nav, and every group always shows.** Site Sync and the Change log sit under Updates (Scout → Updates holds every way of updating the site), Spam protection under Website, and the Events, Members, Partners, RV Park, Newsletter and CRM screens under Business. The seven groups show on every site; one with nothing on is greyed with a Turn on hint. Shared admin kit 1.6.0 (Scout Site Standard rules 11 and 12).
+
+## 0.1.1 (2026-11-04)
+
+- **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
+
+## 0.1.0 (2026-11-03)
+
+- First release. Sends people who tick a newsletter box to Beehiiv, tagged by where they joined: Scout Events sign-ups, paid tickets and shop orders (classic checkout and the checkout block), the Scout Members application, Gravity Forms (a per-form Newsletter consent field), the `[scout_newsletter]` sign-up box and block, and any plugin that fires `scout_newsletter_optin`.
+- Every agreement is saved with the date, the page and the words shown, and downloads as a CSV. Nobody is added without a ticked box, and someone who unsubscribed is never added back.
+- Sends run in the background with retries (Action Scheduler with WooCommerce, WP-Cron otherwise), so a Beehiiv error never stops a checkout or a form. Sending stays off until an operator connects Beehiiv and switches it on.
+- Scout, Newsletter: the API key (stored encrypted, or `SCOUT_BEEHIIV_KEY` in `wp-config.php`), publication ID, Test connection, the tag map, Beehiiv options, the consent records and a privacy-safe activity log.
