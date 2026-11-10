@@ -142,7 +142,114 @@ final class Scout_Contact {
 		} else {
 			wp_enqueue_style( 'scout-contact', SCOUT_CONTACT_URL . 'assets/contact.css', array(), SCOUT_CONTACT_VERSION );
 		}
+		$look = self::design_css();
+		if ( '' !== $look ) {
+			wp_add_inline_style( 'scout-contact', $look );
+		}
 		wp_enqueue_script( 'scout-contact', SCOUT_CONTACT_URL . 'assets/contact.js', array(), SCOUT_CONTACT_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
+	}
+
+	/**
+	 * The bar's look from DESIGN.md's "### Feature: call buttons" section, laid
+	 * over the stylesheet. Empty when the theme has no such section (or Scout
+	 * Core is older than 1.11.0), so the bar stays dark glass. Keys: bar,
+	 * bar_text, bar_blur, bar_line, bar_shadow, primary_fill, primary_text,
+	 * secondary_border, label_font, label_size, label_tracking, label_case.
+	 */
+	public static function design_css( ?array $f = null, ?array $tokens = null ): string {
+		if ( null === $f ) {
+			if ( ! function_exists( 'scout_design_feature' ) ) {
+				return '';
+			}
+			$f      = scout_design_feature( 'call buttons' );
+			$tokens = function_exists( 'scout_design' ) ? scout_design() : array();
+		}
+		if ( ! $f ) {
+			return '';
+		}
+		$v = static function ( string $key ) use ( $f ): string {
+			$value = isset( $f[ $key ] ) && is_scalar( $f[ $key ] ) ? trim( (string) $f[ $key ] ) : '';
+			return (string) preg_replace( '/[^\w\s#,.()%"\'-]/', '', $value ); // Nothing that could close the style tag.
+		};
+		$rules = array();
+		$bar   = $v( 'bar' );
+		if ( '' !== $bar ) {
+			$light  = self::is_light( $bar );
+			$text   = '' !== $v( 'bar_text' ) ? $v( 'bar_text' ) : ( $light ? (string) ( $tokens['colors']['text'] ?? '#1D1D1F' ) : '#F5F5F7' );
+			$hover  = $light ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.08)';
+			$shadow = '' !== $v( 'bar_shadow' ) ? $v( 'bar_shadow' ) : ( $light ? '0 8px 24px rgba(0,0,0,.12)' : '' );
+			$rules[] = '.scc-bar{background:' . $bar . ( '' !== $shadow ? ';box-shadow:' . $shadow : '' ) . '}';
+			$rules[] = '.scc-bar .scc-btn,.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{color:' . $text . '}';
+			$rules[] = '.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{background:' . $hover . '}';
+		} elseif ( '' !== $v( 'bar_text' ) ) {
+			$rules[] = '.scc-bar .scc-btn,.scc-bar .scc-btn:hover,.scc-bar .scc-btn:focus-visible{color:' . $v( 'bar_text' ) . '}';
+		}
+		if ( '' !== $v( 'bar_blur' ) ) {
+			$rules[] = '.scc-bar{-webkit-backdrop-filter:blur(' . $v( 'bar_blur' ) . ');backdrop-filter:blur(' . $v( 'bar_blur' ) . ')}';
+		}
+		if ( '' !== $v( 'bar_line' ) ) {
+			$rules[] = '.scc-bar{border-color:' . $v( 'bar_line' ) . '}';
+		}
+		$main = array();
+		if ( '' !== $v( 'primary_fill' ) ) {
+			$main[] = 'background:' . $v( 'primary_fill' );
+		}
+		if ( '' !== $v( 'primary_text' ) ) {
+			$main[] = 'color:' . $v( 'primary_text' );
+		}
+		if ( $main ) {
+			$rules[] = '.scc-bar .scc-main{' . implode( ';', $main ) . '}';
+		}
+		if ( '' !== $v( 'secondary_border' ) ) {
+			$rules[] = '.scc-bar .scc-btn{box-shadow:inset 0 0 0 1px ' . $v( 'secondary_border' ) . '}'; // A border would change the button size.
+		}
+		$label = array();
+		$font  = $v( 'label_font' );
+		if ( '' !== $font ) {
+			$label[] = 'font-family:' . $font;
+		}
+		if ( '' !== $v( 'label_size' ) ) {
+			$label[] = 'font-size:' . $v( 'label_size' );
+		}
+		// "label_font: label" takes the label role's case and tracking unless the section says otherwise.
+		$role     = (array) ( $tokens['fonts']['label'] ?? array() );
+		$is_label = '' !== $font && class_exists( 'Scout_Core_Design' ) && $role && Scout_Core_Design::font_stack( $role ) === (string) ( $f['label_font'] ?? '' );
+		$tracking = '' !== $v( 'label_tracking' ) ? $v( 'label_tracking' ) : ( $is_label ? (string) ( $role['tracking'] ?? '' ) : '' );
+		$case     = '' !== $v( 'label_case' ) ? $v( 'label_case' ) : ( $is_label ? (string) ( $role['case'] ?? '' ) : '' );
+		if ( '' !== $tracking ) {
+			$label[] = 'letter-spacing:' . preg_replace( '/[^\w.%-]/', '', $tracking );
+		}
+		if ( in_array( strtolower( $case ), array( 'upper', 'uppercase' ), true ) ) {
+			$label[] = 'text-transform:uppercase';
+		} elseif ( in_array( strtolower( $case ), array( 'none', 'lower', 'lowercase', 'capitalize' ), true ) ) {
+			$label[] = 'text-transform:' . ( 'lower' === strtolower( $case ) ? 'lowercase' : strtolower( $case ) );
+		}
+		if ( $label ) {
+			$rules[] = '.scc-bar .scc-btn span,.scc-bar .scc-main{' . implode( ';', $label ) . '}';
+		}
+		return implode( '', $rules );
+	}
+
+	/** Is a hex or rgb()/rgba() color light? Transparency is ignored: the bar is nearly opaque. */
+	private static function is_light( string $color ): bool {
+		$rgb = null;
+		if ( preg_match( '/^#([0-9a-f]{3}|[0-9a-f]{6})$/i', $color, $m ) ) {
+			$h   = 3 === strlen( $m[1] ) ? preg_replace( '/(.)/', '$1$1', $m[1] ) : $m[1];
+			$rgb = array( hexdec( substr( $h, 0, 2 ) ), hexdec( substr( $h, 2, 2 ) ), hexdec( substr( $h, 4, 2 ) ) );
+		} elseif ( preg_match( '/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i', $color, $m ) ) {
+			$rgb = array( (int) $m[1], (int) $m[2], (int) $m[3] );
+		}
+		if ( ! $rgb ) {
+			return false;
+		}
+		$lin = array_map(
+			static function ( int $c ): float {
+				$s = $c / 255;
+				return $s <= 0.03928 ? $s / 12.92 : pow( ( $s + 0.055 ) / 1.055, 2.4 );
+			},
+			$rgb
+		);
+		return ( 0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2] ) > 0.4;
 	}
 
 	private static function icon( string $name ): string {

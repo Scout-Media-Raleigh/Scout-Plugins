@@ -8,6 +8,10 @@
  * exist. Text colors are worked out from the background, so a light or dark
  * background both stay readable without more settings.
  *
+ * The theme's DESIGN.md can set the same six keys in a "### Feature: review
+ * page" section (Scout Core 1.11.0+). Each key it sets wins over the saved
+ * setting; the rest keep the setting. Without the section nothing changes.
+ *
  * @package ScoutReviews
  */
 
@@ -45,6 +49,9 @@ final class Scout_Reviews_Brand {
 		'Space Mono'          => 'wght@400;700',
 		'Work Sans'           => 'wght@400;500;600;700',
 	);
+
+	/** The keys DESIGN.md's "### Feature: review page" can set. */
+	const DESIGN_KEYS = array( 'background', 'text_color', 'accent', 'heading_font', 'body_font', 'label_font' );
 
 	const SANS  = '-apple-system, "Segoe UI", system-ui, sans-serif';
 	const MONO  = 'ui-monospace, Menlo, monospace';
@@ -89,11 +96,63 @@ final class Scout_Reviews_Brand {
 		);
 	}
 
+	/**
+	 * The review page look from the theme's DESIGN.md, "### Feature: review
+	 * page": only the keys it sets, cleaned. [] when the theme has no such
+	 * section or Scout Core is older than 1.11.0, so the saved settings apply.
+	 * Colors must be hex (a color role that is hex counts), because the page
+	 * works out its text and link colors from them. Fonts arrive from Scout
+	 * Core as stacks ("Marcellus", serif) and are used as written.
+	 *
+	 * @param array|null $f The section as scout_design_feature() returns it (for tests).
+	 */
+	public static function design( ?array $f = null ): array {
+		if ( null === $f ) {
+			$f = function_exists( 'scout_design_feature' ) ? (array) scout_design_feature( 'review page' ) : array();
+		}
+		$out = array();
+		foreach ( self::DESIGN_KEYS as $key ) {
+			$value = isset( $f[ $key ] ) && is_scalar( $f[ $key ] ) ? trim( (string) $f[ $key ] ) : '';
+			if ( '_font' === substr( $key, -5 ) ) {
+				$value = self::clean_stack( $value );
+			} elseif ( preg_match( '/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i', $value, $m ) ) {
+				$value = '#' . $m[1] . $m[1] . $m[2] . $m[2] . $m[3] . $m[3]; // The color field needs six digits.
+			} elseif ( ! preg_match( '/^#[0-9a-f]{6}$/i', $value ) ) {
+				$value = '';
+			}
+			if ( '' !== $value ) {
+				$out[ $key ] = $value;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Settings with DESIGN.md's review page keys laid over them.
+	 *
+	 * @param array      $s      Saved settings.
+	 * @param array|null $design Brand::design(), or null to read it.
+	 */
+	public static function apply( array $s, ?array $design = null ): array {
+		return array_merge( $s, null === $design ? self::design() : $design );
+	}
+
+	/** A font-family value with nothing that could close a style tag or a rule. */
+	public static function clean_stack( string $value ): string {
+		return trim( (string) preg_replace( '/[^\w\s#,.()%"\'-]/', '', $value ) );
+	}
+
+	/** The family a setting names: the name itself, or the first family of a stack. */
+	public static function family( string $value ): string {
+		$first = explode( ',', $value )[0];
+		return trim( $first, " \t\"'" );
+	}
+
 	/** One Google Fonts request for the fonts in use, or '' when none are web fonts. */
 	public static function fonts_url( array $s ): string {
 		$families = array();
 		foreach ( array( 'heading_font', 'body_font', 'label_font' ) as $key ) {
-			$name = (string) ( $s[ $key ] ?? '' );
+			$name = self::family( (string) ( $s[ $key ] ?? '' ) );
 			if ( isset( self::FONTS[ $name ] ) ) {
 				$families[ $name ] = 'family=' . str_replace( ' ', '+', $name ) . ':' . self::FONTS[ $name ];
 			}
@@ -101,8 +160,12 @@ final class Scout_Reviews_Brand {
 		return $families ? 'https://fonts.googleapis.com/css2?' . implode( '&', $families ) . '&display=swap' : '';
 	}
 
-	/** A CSS font-family value for a saved choice. */
+	/** A CSS font-family value for a saved choice, or a stack from DESIGN.md as written. */
 	public static function stack( string $name, string $fallback = self::SANS ): string {
+		if ( false !== strpbrk( $name, ',"\'' ) ) {
+			$stack = self::clean_stack( $name );
+			return '' !== $stack ? $stack : $fallback;
+		}
 		if ( ! isset( self::FONTS[ $name ] ) ) {
 			return $fallback;
 		}

@@ -43,6 +43,9 @@ scout-core/includes/schema/class-scout-schema.php | apply_filters( 'scout_schema
 scout-core/includes/schema/class-scout-schema.php | home_url( '/#business' ) | scout-events (Event organizer points at the business)
 scout-core/includes/design.php | function scout_design( string $feature = '' ): array | scout-build and every plugin with a front-end look (DESIGN.md tokens from the theme)
 scout-core/includes/design.php | function scout_design_issues(): array | scout-build (Site health: design contrast)
+scout-core/includes/design.php | function scout_design_feature( string $name ): array | scout-contact, scout-cards, scout-reviews (the call bar, cards and review looks from DESIGN.md Feature sections)
+scout-core/includes/design.php | public static function font_stack( array $font ): string | scout-contact, scout-cards (label, body and heading font stacks)
+scout-core/includes/design.php | public static function defaults(): array | scout-cards (corners equal to the Scout defaults stay with the stylesheet)
 scout-core/includes/design.php | function scout_core_owns( string $job ): bool | every Scout theme through the theme kit (fallbacks stand down when a plugin owns the job)
 scout-core/includes/schema/class-scout-schema.php | public static function add_webpage( array $graph ) | scout-law (Reviewed by: builds the WebPage node before adding reviewedBy)
 CONTRACT

@@ -189,7 +189,12 @@ Scout Build has no visitor-facing output. It reads these from the theme:
   when that date is newer than the last check, and `items` (single reviews)
   are only ever added, never edited or removed. `google_place_id` fills
   the place ID for Scout Reviews' daily Google check when it is blank.
-  Details: Scout Reviews' README. The `brand` section dresses the login screen and the admin: `logo`,
+  Details: Scout Reviews' README. The file carries facts only (Site Standard
+  §5): Build no longer copies look keys (`reviews`: `background`,
+  `text_color`, `accent`, `heading_font`, `body_font`, `label_font`;
+  `cards`: `mode`, `accent`, `font`). The look comes from the theme's
+  DESIGN.md, which each plugin reads itself. Values already saved on a site
+  stay, and Fill from theme names any look keys a theme still carries. The `brand` section dresses the login screen and the admin: `logo`,
   `logo_width`, `color`, `background`, `text`, `message`, `hide_menus`, `off`.
   Format: `includes/class-scout-hub-setup.php`.
 - **DESIGN.md** through `scout_design()`: `colors.accent_fill` as the

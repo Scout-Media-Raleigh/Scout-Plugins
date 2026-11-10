@@ -154,7 +154,12 @@ Release order: Scout Cards first (it rests while the old theme runs), then the t
 
 ## What this feature needs from the theme
 
-- **DESIGN.md: none yet.** The card's own look takes its accent, font and light or dark mode from the Cards screen (`accent`, `font`, `mode`, default cerulean `#0E8FE6` and dark), printed as `--scc-accent` and `--scc-font`. Moving these to DESIGN.md is on the Site Standard list (gap 11).
+- **DESIGN.md: `### Feature: cards` (optional, needs Scout Core 1.11.0).** The card's look changes only when the theme's DESIGN.md has this section. Without it, or with an older Scout Core, or with Scout Core off, the pages print exactly what they did before: the accent, font and light or dark mode from the Cards screen (`accent`, `font`, `mode`, default cerulean `#0E8FE6` and dark). With it, the plugin reads these keys, and each one present wins over the Cards screen:
+  - `mode`: `light` or `dark`.
+  - `accent`: a color, or a color role such as `accent` or `accent_fill`.
+  - `font`: a family (`Mulish`) or a font role (`body`). Without it, a font typed on the Cards screen stays; with neither, the body and heading fonts come from the theme's `fonts` roles.
+
+  It also takes these tokens from `scout_design()`: in light mode the page and card colors from `bg`, `surface`, `surface_2`, `text`, `text_2` (also the faint text, unless the theme has `text_3`) and `line`; in dark mode `night`, `on_night` and `on_night_2` when the theme has them (otherwise today's dark colors stay); `on_accent` for the text on the accent buttons; and the `radius` map (`card`, `control`, `pill`, `chip`) where it differs from the Scout defaults. The `--scc-*` names are the plugin's own CSS variables, set from DESIGN.md through `scout_design()` in the one inline style block each page prints. Values are stripped to CSS characters. A `photo` line is not read yet: the cards have no cover photo to put it on. The theme's own card look (below) ignores the section, since the theme's stylesheet draws it.
 - **Where it lands:** its own pages at `/card/`, `/card/<name>/`, each card's `/share/` page, and `/links/`. They are standalone, so the theme's header and footer do not print there. Nothing lands on the theme's other pages.
 - **Logo:** the site icon (Settings → General) for the main card when no photo is set.
 - **Photos and words:** each person's photo, intro, why talk to them and tags come from their People profile; the main card's name and email come from Business info.

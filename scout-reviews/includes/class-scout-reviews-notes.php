@@ -75,7 +75,7 @@ final class Scout_Reviews_Notes {
 <link rel="stylesheet" href="<?php echo esc_url( $fonts ); ?>">
 <?php endif; ?>
 <link rel="stylesheet" href="<?php echo esc_url( SCOUT_REVIEWS_URL . 'assets/review-page.css?ver=' . SCOUT_REVIEWS_VERSION ); ?>">
-<style>:root{<?php echo wp_strip_all_tags( Scout_Reviews_Brand::page_vars( $s ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hex colors and fonts from a fixed list. ?>}</style>
+<style>:root{<?php echo wp_strip_all_tags( Scout_Reviews_Brand::page_vars( $s ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hex colors, and fonts from a fixed list or cleaned DESIGN.md stacks. ?>}</style>
 </head>
 <body>
 <main class="rp">

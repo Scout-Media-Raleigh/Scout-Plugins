@@ -211,12 +211,30 @@ $GLOBALS['opts'] = array();
 $GLOBALS['posts'] = array();
 $section = array(
 	'headline'          => 'How did we do?',
+	// Look keys an older theme may still carry. Build 0.15.0 leaves them alone: the look is DESIGN.md's.
+	'background'        => '#FBF9F6',
+	'text_color'        => '#23212A',
+	'accent'            => '#7A5C2C',
+	'heading_font'      => 'Lora',
+	'body_font'         => 'Mulish',
+	'label_font'        => 'Mulish',
 	'google_review_url' => 'https://g.page/r/abc/review',
 	'totals'            => array( 'checked' => days_ago( 2 ), 'profiles' => array( 'google' => array( 'rating' => 4.7, 'count' => 20 ) ) ),
 	'items'             => array( array( 'source' => 'google', 'author' => 'Ann', 'rating' => 5, 'date' => '2026-10-10', 'text' => 'Lovely.' ) ),
 );
 ok( true === job( $section ), 'the reviews job runs' );
-ok( 'How did we do?' === ( $GLOBALS['opts']['scout_review_page']['headline'] ?? '' ), 'the look settings still fill' );
+ok( 'How did we do?' === ( $GLOBALS['opts']['scout_review_page']['headline'] ?? '' ), 'the review page words still fill' );
+$look = array_intersect_key( (array) ( $GLOBALS['opts']['scout_review_page'] ?? array() ), array_flip( array( 'background', 'text_color', 'accent', 'heading_font', 'body_font', 'label_font' ) ) );
+ok( array() === $look, 'the look keys are no longer filled from scout-setup.json (DESIGN.md sets them)' );
+ok( array( 'reviews.background', 'reviews.text_color', 'reviews.accent', 'reviews.heading_font', 'reviews.body_font', 'reviews.label_font', 'cards.mode', 'cards.font' ) === Scout_Hub_Setup::look_keys( array( 'reviews' => $section, 'cards' => array( 'mode' => 'dark', 'font' => 'Inter', 'accent' => '', 'name' => 'x' ) ) ), 'look_keys() names the look keys a setup file still carries, skipping blanks' );
+ok( '' === Scout_Hub_Setup::look_notice( array( 'reviews' => array( 'headline' => 'x' ) ) ), 'no look keys: no notice' );
+ok( false !== strpos( Scout_Hub_Setup::look_notice( array( 'cards' => array( 'accent' => '#000000' ) ) ), 'cards.accent' ), 'the notice names the keys' );
+
+// A value someone saved before stays: Build stops writing, it never clears.
+$GLOBALS['opts']['scout_review_page']['accent'] = '#123456';
+job( array( 'accent' => '#7A5C2C', 'headline' => 'Other' ) );
+ok( '#123456' === $GLOBALS['opts']['scout_review_page']['accent'], 'an accent already saved on the site is kept' );
+unset( $GLOBALS['opts']['scout_review_page']['accent'] );
 ok( 'https://g.page/r/abc/review' === profile( 'google' )['write_url'], 'the Google review link still fills' );
 ok( 20 === profile( 'google' )['count'] && 4.7 === profile( 'google' )['rating'], 'the job applies the totals' );
 ok( 1 === count( $GLOBALS['posts'] ), 'the job adds the reviews' );

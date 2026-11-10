@@ -1,5 +1,12 @@
 # Scout Cards changelog
 
+## 1.2.0 (2026-11-10)
+
+- **The card pages follow the theme's DESIGN.md (Site Standard gap 11).** With Scout Core 1.11.0 and a `### Feature: cards` section in the theme's DESIGN.md, its `mode`, `accent` and `font` lines win over the Cards screen for the keys they set. In light mode the page and card colors come from the theme's `bg`, `surface`, `surface_2`, `text`, `text_2` and `line`; in dark mode from `night`, `on_night` and `on_night_2` when the theme has them. The text on the accent buttons uses `on_accent`, the corners follow the theme's `radius` map, and with no font set anywhere the body and heading fonts come from the theme's font roles. The browser bar color and the home-screen app color follow the page color.
+- **Nothing changes without the section.** No section, an older Scout Core or Scout Core off, and every card, share and links page prints the same style block as 1.1.0, from the saved settings.
+- **The Cards screen says so.** Under More options, Look shows a short line naming what DESIGN.md sets.
+- Every DESIGN.md value is stripped to CSS characters, so none can close the style tag. New CSS variables `--scc-font-heading` and `--scc-radius-card`, `-control`, `-pill` and `-chip`, each falling back to today's value. A `photo` line is not read yet.
+
 ## 1.1.0 (2026-11-05)
 
 - **Takes over the business cards from the Scout Media theme, with nothing changing for visitors (Site Standard rules 6, 7 and 20).** Scout Cards now stands down only while the theme still draws cards (its Cards screen and its card builder both loaded). Scout Media 1.54.0 loads neither while this plugin is active, so the plugin takes over every card address.

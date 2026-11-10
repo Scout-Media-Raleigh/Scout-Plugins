@@ -14,14 +14,13 @@
  * {
  *   "team":    [ { "name", "role", "bio", "email", "military_branch", "photo", "order" } ],
  *   "reviews": { "business", "headline", "ask", "photo", "card_headline", "google_review_url", "google_place_id",
- *                "background", "text_color", "accent", "heading_font", "body_font", "label_font",
  *                "totals": { "checked": "YYYY-MM-DD", "profiles": { "google": { "rating", "count", "url" } } },
  *                "items": [ { "source", "author", "rating", "date", "text", "url" } ] },
  *   "chat":    { "name", "team", "notify", "book_url", "work_url", "photo_1", "photo_2" },
  *   "hours":   { "confirmed": true, "days": { "tuesday": [ ["09:00", "17:00"] ] } },
  *   "analytics": { "gtm": "GTM-XXXXXXX" },
  *   "features":  { "use": [ "scout-core", "scout-forms-guard" ], "skip": [ "scout-chat" ] },
- *   "cards":   { "mode", "accent", "font", "name", "phone", "email", "city", "region", "postal",
+ *   "cards":   { "name", "phone", "email", "city", "region", "postal",
  *                "footer", "note", "team_intro", "links_intro", "photo", "spot_heading", "spot_text",
  *                "pick_heading", "spot_label", "spot_sub", "spot_url", "logo", "share_card", "share_links",
  *                "people": [ { "name", "slug", "title", "email", "intro", "pick", "tags", "photo", "share" } ],
@@ -31,6 +30,13 @@
  * "brand" is read live by Scout_Hub_Brand (login screen, admin bar, footer, menus, Dashboard message).
  * Having the section at all turns that layer on; a theme without it changes nothing.
  * "photo" values are a path inside the theme (assets/img/joy.webp) or a full https:// address.
+ *
+ * Facts only (Site Standard §5). The look lives in the theme's DESIGN.md, which
+ * the plugins read themselves: the review page from "### Feature: review page"
+ * (Scout Reviews 0.8.0+). Build no longer copies the old look keys (reviews:
+ * background, text_color, accent, heading_font, body_font, label_font; cards:
+ * mode, accent, font). Values already saved on a site stay; look_keys() lists
+ * the ones a theme still carries, for the Fill from theme notice.
  *
  * @package Scout_Build
  */
@@ -246,13 +252,13 @@ final class Scout_Hub_Setup {
 		if ( ! class_exists( 'Scout_Reviews_Requests' ) ) {
 			return false;
 		}
-		$keys = array( 'business', 'headline', 'ask', 'card_headline', 'background', 'text_color', 'accent', 'heading_font', 'body_font', 'label_font' );
+		$keys = array( 'business', 'headline', 'ask', 'card_headline' ); // Facts only: the look comes from DESIGN.md.
 		$fill = array_intersect_key( $in, array_flip( $keys ) );
 		if ( ! empty( $in['photo'] ) ) {
 			$fill['photo'] = self::url( (string) $in['photo'] );
 		}
-		// A setting still on the plugin's own default counts as blank, so the client's look wins
-		// on sites where the review page was saved before the theme carried it (North Crest, Oct 15).
+		// A setting still on the plugin's own default counts as blank, so the client's words win
+		// on sites where the review page was saved before the theme carried them.
 		self::fill_option( Scout_Reviews_Requests::OPTION, array_map( 'sanitize_text_field', $fill ), Scout_Reviews_Requests::defaults() );
 
 		$write = esc_url_raw( (string) ( $in['google_review_url'] ?? '' ), array( 'https' ) );
@@ -356,7 +362,7 @@ final class Scout_Hub_Setup {
 		if ( ! class_exists( 'Scout_Cards_Settings' ) ) {
 			return false;
 		}
-		$keys = array( 'mode', 'accent', 'font', 'name', 'phone', 'email', 'city', 'region', 'postal', 'footer', 'note', 'team_intro', 'links_intro', 'pick_heading', 'spot_heading', 'spot_text', 'spot_label', 'spot_sub', 'spot_url' );
+		$keys = array( 'name', 'phone', 'email', 'city', 'region', 'postal', 'footer', 'note', 'team_intro', 'links_intro', 'pick_heading', 'spot_heading', 'spot_text', 'spot_label', 'spot_sub', 'spot_url' );
 		$fill = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $in[ $key ] ) || '' === (string) $in[ $key ] ) {
@@ -451,6 +457,45 @@ final class Scout_Hub_Setup {
 	}
 
 	/* ---------- helpers ---------- */
+
+	/** Look keys Build no longer copies, by section. They belong in DESIGN.md. */
+	const LOOK_KEYS = array(
+		'reviews' => array( 'background', 'text_color', 'accent', 'heading_font', 'body_font', 'label_font' ),
+		'cards'   => array( 'mode', 'accent', 'font' ),
+	);
+
+	/**
+	 * The look keys a setup file still carries, as "section.key" ("reviews.accent").
+	 *
+	 * @param array|null $data The setup file, or null to read the theme's.
+	 * @return string[]
+	 */
+	public static function look_keys( ?array $data = null ): array {
+		$data = null === $data ? self::data() : $data;
+		$out  = array();
+		foreach ( self::LOOK_KEYS as $section => $keys ) {
+			$in = is_array( $data[ $section ] ?? null ) ? $data[ $section ] : array();
+			foreach ( $keys as $key ) {
+				if ( isset( $in[ $key ] ) && '' !== (string) $in[ $key ] ) {
+					$out[] = $section . '.' . $key;
+				}
+			}
+		}
+		return $out;
+	}
+
+	/** One plain sentence about the look keys a setup file still carries, or ''. */
+	public static function look_notice( ?array $data = null ): string {
+		$keys = self::look_keys( $data );
+		if ( ! $keys ) {
+			return '';
+		}
+		return sprintf(
+			/* translators: %s: setup file keys such as reviews.accent, cards.font. */
+			__( 'The setup file still has look settings (%s). Build no longer copies them: the look comes from the theme\'s DESIGN.md. What is already saved stays.', 'scout-build' ),
+			implode( ', ', $keys )
+		);
+	}
 
 	/** Set keys that are missing or blank in an option; leave everything else. */
 	/**

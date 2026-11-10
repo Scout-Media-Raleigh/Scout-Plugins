@@ -67,7 +67,17 @@ final class Scout_Reviews_Requests {
 		) + Scout_Reviews_Brand::defaults();
 	}
 
+	/**
+	 * The settings in use: what is saved, with any look the theme's DESIGN.md
+	 * sets ("### Feature: review page") laid over it. Without that section
+	 * this is exactly what is saved.
+	 */
 	public static function get(): array {
+		return Scout_Reviews_Brand::apply( self::saved() );
+	}
+
+	/** The saved settings on their own, before DESIGN.md. The form keeps these. */
+	public static function saved(): array {
 		$saved = get_option( self::OPTION, array() );
 		$s     = array_merge( self::defaults(), is_array( $saved ) ? $saved : array() );
 		if ( '' === trim( $s['business'] ) ) {
@@ -345,6 +355,8 @@ final class Scout_Reviews_Requests {
 			return;
 		}
 		$s            = self::get();
+		$raw          = self::saved();                // What the form saves.
+		$theme        = Scout_Reviews_Brand::design(); // Look keys DESIGN.md sets: shown, not edited.
 		$links        = self::write_links();
 		$target       = self::target();
 		$msg          = self::messages( $s, $target );
@@ -580,20 +592,46 @@ final class Scout_Reviews_Requests {
 						<th scope="row"><label for="srk-card-headline"><?php esc_html_e( 'Card headline', 'scout-reviews' ); ?></label></th>
 						<td><input id="srk-card-headline" type="text" class="regular-text" placeholder="<?php echo esc_attr( self::card_headline( array( 'card_headline' => '' ) ) ); ?>" name="<?php echo esc_attr( $name . '[card_headline]' ); ?>" value="<?php echo esc_attr( $s['card_headline'] ); ?>" /></td>
 					</tr>
+					<?php
+					// Keys the theme's DESIGN.md sets show its value, disabled, with the saved value
+					// kept in a hidden field so a save never loses it.
+					$from_theme = __( 'From the theme\'s DESIGN.md (Feature: review page). Change it there.', 'scout-reviews' );
+					?>
 					<tr>
 						<th scope="row"><label for="srk-accent"><?php esc_html_e( 'Brand color', 'scout-reviews' ); ?></label></th>
+						<?php if ( isset( $theme['accent'] ) ) : ?>
+						<td><input id="srk-accent" type="color" value="<?php echo esc_attr( $theme['accent'] ); ?>" disabled />
+							<input type="hidden" name="<?php echo esc_attr( $name . '[accent]' ); ?>" value="<?php echo esc_attr( $raw['accent'] ); ?>" />
+							<p class="description"><?php echo esc_html( $from_theme ); ?></p></td>
+						<?php else : ?>
 						<td><input id="srk-accent" type="color" name="<?php echo esc_attr( $name . '[accent]' ); ?>" value="<?php echo esc_attr( $s['accent'] ); ?>" />
 							<p class="description"><?php esc_html_e( 'Used for the review button and the card headline.', 'scout-reviews' ); ?></p></td>
+						<?php endif; ?>
 					</tr>
 					<tr>
 						<th scope="row"><label for="srk-background"><?php esc_html_e( 'Page background', 'scout-reviews' ); ?></label></th>
+						<?php if ( isset( $theme['background'] ) ) : ?>
+						<td><input id="srk-background" type="color" value="<?php echo esc_attr( $theme['background'] ); ?>" disabled />
+							<input type="hidden" name="<?php echo esc_attr( $name . '[background]' ); ?>" value="<?php echo esc_attr( $raw['background'] ); ?>" />
+							<p class="description"><?php echo esc_html( $from_theme ); ?></p></td>
+						<?php else : ?>
 						<td><input id="srk-background" type="color" name="<?php echo esc_attr( $name . '[background]' ); ?>" value="<?php echo esc_attr( $s['background'] ); ?>" />
 							<p class="description"><?php esc_html_e( 'The review page background. Use the site\'s own background color so the page feels like part of the site.', 'scout-reviews' ); ?></p></td>
+						<?php endif; ?>
 					</tr>
 					<tr>
 						<th scope="row"><label for="srk-text-color"><?php esc_html_e( 'Text color', 'scout-reviews' ); ?></label></th>
+						<?php if ( isset( $theme['text_color'] ) ) : ?>
+						<td><input id="srk-text-color" type="color" value="<?php echo esc_attr( $theme['text_color'] ); ?>" disabled />
+							<input type="hidden" name="<?php echo esc_attr( $name . '[text_color]' ); ?>" value="<?php echo esc_attr( $raw['text_color'] ); ?>" />
+							<?php if ( '' === $raw['text_color'] ) : ?>
+								<input type="hidden" name="<?php echo esc_attr( $name . '[text_auto]' ); ?>" value="1" />
+							<?php endif; ?>
+							<p class="description"><?php echo esc_html( $from_theme ); ?></p></td>
+						<?php else : ?>
 						<td><span class="srk-inline-fields"><input id="srk-text-color" type="color" name="<?php echo esc_attr( $name . '[text_color]' ); ?>" value="<?php echo esc_attr( '' !== $s['text_color'] ? $s['text_color'] : '#1D1D1F' ); ?>" />
 							<label><input type="checkbox" name="<?php echo esc_attr( $name . '[text_auto]' ); ?>" value="1" <?php checked( '' === $s['text_color'] ); ?> /> <?php esc_html_e( 'Pick it for me from the background', 'scout-reviews' ); ?></label></span></td>
+						<?php endif; ?>
 					</tr>
 					<?php
 					$fonts = array_keys( Scout_Reviews_Brand::FONTS );
@@ -606,6 +644,11 @@ final class Scout_Reviews_Requests {
 						?>
 					<tr>
 						<th scope="row"><label for="srk-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $row[0] ); ?></label></th>
+						<?php if ( isset( $theme[ $key ] ) ) : ?>
+						<td><select id="srk-<?php echo esc_attr( $key ); ?>" disabled><option selected><?php echo esc_html( $theme[ $key ] ); ?></option></select>
+							<input type="hidden" name="<?php echo esc_attr( $name . '[' . $key . ']' ); ?>" value="<?php echo esc_attr( $raw[ $key ] ); ?>" />
+							<p class="description"><?php echo esc_html( $from_theme ); ?></p></td>
+						<?php else : ?>
 						<td><select id="srk-<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $name . '[' . $key . ']' ); ?>">
 							<?php if ( $row[1] ) : ?>
 								<option value="same" <?php selected( $s[ $key ], 'same' ); ?>><?php esc_html_e( 'Same as body', 'scout-reviews' ); ?></option>
@@ -618,6 +661,7 @@ final class Scout_Reviews_Requests {
 						<?php if ( 'heading_font' === $key ) : ?>
 							<p class="description"><?php esc_html_e( 'Match the fonts the website uses. They show on the review page and the printed cards.', 'scout-reviews' ); ?></p>
 						<?php endif; ?></td>
+						<?php endif; ?>
 					</tr>
 					<?php endforeach; ?>
 				</table>

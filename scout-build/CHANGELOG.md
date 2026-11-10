@@ -1,5 +1,11 @@
 # Scout Build changelog
 
+## 0.15.0 (2026-11-10)
+
+- **Fill from theme copies facts only.** The setup file is for facts (Site Standard §5), so Build no longer copies the look keys: in `reviews`, `background`, `text_color`, `accent`, `heading_font`, `body_font` and `label_font`; in `cards`, `mode`, `accent` and `font`. The look now comes from the theme's DESIGN.md, which each plugin reads itself (the review page from `### Feature: review page` in Scout Reviews 0.8.0, which needs Scout Core 1.11.0). Values already saved on a site stay as they are. The words on the review page and the cards (business, headline, ask, photo, card headline, name, phone and the rest) fill exactly as before.
+- When a theme's `scout-setup.json` still carries look keys, the Fill from theme row and its done notice name them ("reviews.accent, cards.font") so they can move to DESIGN.md. A theme without them sees no change.
+- `tools/tests/reviews-from-theme.php` checks that the review look keys are no longer copied.
+
 ## 0.14.5 (2026-11-10)
 
 - **A calmer Scout box on the WordPress Dashboard (Joy, Nov 10: "a bit crowded").** A business owner should read it in five seconds. Top to bottom it is now:

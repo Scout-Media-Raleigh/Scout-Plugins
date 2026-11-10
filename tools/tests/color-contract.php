@@ -94,7 +94,7 @@ $exceptions = array(
 		array( '--ssc-line:#dcdcde', 'The .ssc-admin rows sit in wp-admin and use its colors.' ),
 	),
 	'scout-reviews/assets/scout-reviews.css'   => array(
-		array( '--sr-star: #fbb024', 'Review stars are a fixed amber on every site (README).' ),
+		array( '--sr-star: #fbb024', 'Amber is the star fallback when DESIGN.md has no Feature: reviews star line (README).' ),
 	),
 	'scout-booking/assets/scout-booking.css'   => array(
 		array( '--scout-booking-danger', 'Cancel and error red is a status color; DESIGN.md has none.' ),
