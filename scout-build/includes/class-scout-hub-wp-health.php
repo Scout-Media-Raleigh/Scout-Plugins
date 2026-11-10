@@ -28,6 +28,9 @@ final class Scout_Hub_WP_Health {
 	/** Labels only the host can change, for tests whose key is not known. */
 	const HOST_WORDS = '/disk space|opcode|object cache|page cache|php extension|php module|server/i';
 
+	/** Tests Scout's own Site status rows already show, so they are not listed twice. */
+	const COVERED = array( 'search_engine_visibility' );
+
 	public static function boot(): void {
 		add_action( Scout_Hub_Watch::HOOK, array( __CLASS__, 'run' ) );
 		add_action( self::HOOK, array( __CLASS__, 'run' ) );
@@ -152,8 +155,10 @@ final class Scout_Hub_WP_Health {
 				'note'  => __( 'Scout runs WordPress\'s own checks once a day. The first run is going now; reload in a minute.', 'scout-build' ),
 			);
 		}
-		$act  = array_values( array_filter( $last['items'], static fn( $i ) => ! $i['host'] ) );
-		$host = array_values( array_filter( $last['items'], static fn( $i ) => $i['host'] ) );
+		// Search engine visibility is Scout's own Search engines row; listing it here too made two rows for one setting.
+		$items = array_values( array_filter( $last['items'], static fn( $i ) => ! in_array( $i['test'], self::COVERED, true ) ) );
+		$act   = array_values( array_filter( $items, static fn( $i ) => ! $i['host'] ) );
+		$host  = array_values( array_filter( $items, static fn( $i ) => $i['host'] ) );
 		$crit = count( array_filter( $act, static fn( $i ) => 'critical' === $i['status'] ) );
 		$note = array();
 		foreach ( $act as $i ) {
