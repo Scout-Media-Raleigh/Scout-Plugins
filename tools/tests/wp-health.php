@@ -44,5 +44,8 @@ ok( 'All clear' === $W::row()['value'] && 'good' === $W::row()['state'], 'with o
 $GLOBALS['opts']['scout_hub_wp_health']['items'][] = array( 'test' => 'https_status', 'label' => 'Your site does not use HTTPS', 'status' => 'critical', 'host' => false );
 ok( 'bad' === $W::row()['state'], 'a critical item turns the row red' );
 
+$GLOBALS['opts']['scout_hub_wp_health']['items'] = array( array( 'test' => 'search_engine_visibility', 'label' => 'Your site is set to discourage search engines from indexing its content', 'status' => 'recommended', 'host' => false ) );
+ok( 'All clear' === $W::row()['value'] && false === strpos( $W::row()['note'], 'discourage' ), 'search engine visibility is left to Scout\'s own Search engines row, not listed twice' );
+
 echo $fail ? "\n$fail FAILED\n" : "\nAll WordPress check checks passed\n";
 exit( $fail ? 1 : 0 );

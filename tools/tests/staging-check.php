@@ -44,6 +44,9 @@ $r = row( 'https://example-firm.com', 'local', '1' );
 ok( 'warn' === $r['state'], 'environment type local, allowed: warn' );
 $r = row( 'https://examplestage.wpenginepowered.com', 'production', '0' );
 ok( 'warn' === $r['state'] && 'Hidden' === $r['value'], 'staging address, hidden: reads as it always has' );
+ok( true === $r['staging'], 'staging address, hidden: marked staging so the Dashboard box lists it last' );
+$r = row( 'https://example-firm.com', 'production', '0' );
+ok( false === $r['staging'], 'live site, hidden: not marked staging, it stays a real look' );
 $r = row( 'https://wpenginepowered.com.example-firm.com', 'production', '1' );
 ok( 'good' === $r['state'], 'a live domain that only contains a staging suffix stays good' );
 
