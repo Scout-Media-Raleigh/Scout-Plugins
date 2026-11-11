@@ -32,7 +32,7 @@ person came to do, and the menu stays the same on every site.
 | `search` | Search & analytics | owner, operator | SEO, AI search, Analytics and the cookie notice, robots.txt, site search and the sitemap | Does this help Google, AI tools or visitors find things? |
 | `policies` | Legal pages | owner, operator | Trust and legal pages reviewed every year: accessibility statement, law-firm disclaimers (Scout Law Firm Tools), and later the privacy policy and terms | Is this a trust or legal page? |
 | `health` | Site status | owner, operator | Reports on whether things are working: the health report, Search health, Spam protection, the image optimizer, accessibility checks | Does this tell us if something is working? |
-| `build` | Scout tools (Build tools on white-label sites) | operators only | Features and plan, Updates, Site log, Email, Site Sync, the Change log, a theme's own screen. The client's own "What's new on your site" view of the Site log sits under Home. | Is this only for Sean and Joy? |
+| `build` | Scout tools (Build tools on white-label sites) | operators only | Updates (its first screen), Features and plan, Site log, Email, Site Sync, the Change log, a theme's own screen. The client's own "What's new on your site" view of the Site log sits under Home. | Is this only for Sean and Joy? |
 
 Plus modules are not in this menu. Each one is its own sidebar section (see
 "Plus sections" below).
@@ -59,6 +59,17 @@ Page: https://claude.ai/artifact/Wa5es7egHrE7fTSRvHK8DH. Every recommended optio
 10. Empty groups are hidden for clients and greyed for Scout.
 11. The Writing room and the RV park live only in their own Plus sections.
 12. Dark mode waits.
+
+### Open on what needs doing (Joy, 2026-11-11)
+
+> "on a normal basis, make the first screen the things that are most important to do first"
+
+Every group, Plus section and plugin opens on the screen a person most often needs: what is
+waiting, what is ready to update, what is broken. Reference screens (what is on, settings,
+history) come after it. Inside a screen, the same order holds: the things that need someone
+come first and open, the rest closed below. Scout tools opens on Updates, then Features
+(Scout Build 0.16.1). The first screen of every group and plugin is checked against this rule
+in the next dashboard audit.
 
 **One home, plus "Looking for" links.** A screen lives in exactly one group.
 Where it also fits another group, that group's screen list ends with one quiet
