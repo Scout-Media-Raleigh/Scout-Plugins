@@ -147,7 +147,7 @@ final class Scout_Schema {
 		$node = array(
 			'@type' => $type,
 			'@id'   => home_url( '/#business' ),
-			'name'  => ( '' !== $b['name'] ) ? $b['name'] : get_bloginfo( 'name' ),
+			'name'  => ( '' !== $b['name'] ) ? $b['name'] : self::plain( get_bloginfo( 'name' ) ),
 			'url'   => home_url( '/' ),
 		);
 
@@ -206,7 +206,7 @@ final class Scout_Schema {
 			'@type'           => 'WebSite',
 			'@id'             => home_url( '/#website' ),
 			'url'             => home_url( '/' ),
-			'name'            => get_bloginfo( 'name' ),
+			'name'            => self::plain( get_bloginfo( 'name' ) ),
 			'publisher'       => array( '@id' => home_url( '/#business' ) ),
 			'potentialAction' => array(
 				'@type'       => 'SearchAction',
