@@ -1,16 +1,15 @@
 # Docs
 
-Specs for the Scout Build hub and its Site log, plus the history files each site imports into
-that log. Each plugin's own README stays in its plugin folder.
+Specs for the Scout Build hub and its Site log. Each plugin's own README stays in its plugin folder.
 
 ## What's here
 - `site-build-hub-spec.md`: the spec for the Site Build hub, the one dashboard screen that shows
   and switches a site's Scout features. Drafted 2026-10-12.
 - `site-log-spec.md`: the spec for the Site log, one line on the site for every change made to it,
   written by the plugins that make the change. Approved 2026-11-04.
-- `site-log-import/`: one JSON history file per Scout WordPress site. Scout Build's one-time
-  import reads them and skips any line already in the log (`import_id`).
-  `tools/tests/site-log.php` checks every file here.
+- Each site's one-time Site log history file is kept in Scout's private ops folder, not here,
+  because it holds a client site's update history. `tools/tests/site-log.php` checks the import
+  against a made-up sample, `tools/tests/site-log-sample.json`.
 
 ## Who owns it
 Joy and Sean at Scout Media.

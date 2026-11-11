@@ -100,8 +100,8 @@ brief asks for them when a client repo moved and the site log did not.
   quiet flag, "no client wording yet", so the monthly draft is never built from an internal title.
 - **Add a note** at the top: Title, Client wording, Topic, Version, Measure, Status, Show the client.
 - **Export CSV** of the current filter.
-- **Import history** (operators only, hidden once used): takes one of the JSON files in
-  `docs/site-log-import/`. Uses `import_id` to skip lines already in. Shows "N added, M skipped".
+- **Import history** (operators only, hidden once used): takes the site's JSON history file
+  (kept in Scout's private ops folder). Uses `import_id` to skip lines already in. Shows "N added, M skipped".
 
 ### The read endpoint (for the Sheet and for Claude)
 
@@ -138,19 +138,12 @@ partner-side sites unless `SCOUT_HUB_LOG_API` is true.
 
 ## Importing the history
 
-`docs/site-log-import/` holds one file per Scout WordPress site, generated from
-`Scout-Internal/ops/site-updates.md` as it stood on 2026-11-02 (43 rows, 75 lines after the eight
-"Every site" rows are copied to all five sites):
-
-| Site (each file is named for its site) | Lines | Client-visible |
-|---|---|---|
-| A golf cart repair site | 20 | 13 |
-| A banquet hall site | 16 | 9 |
-| An RV park site | 13 | 8 |
-| A salon site | 13 | 8 |
-| scoutraleigh.com (`scoutraleigh.json`) | 13 | 8 |
-
-Two clients without a Scout WordPress site (one on Squarespace, one not built yet) have no file.
+Each Scout WordPress site has one history file, generated from Scout's internal site-updates
+record as it stood on 2026-11-02 (43 rows, 75 lines after the eight "Every site" rows are copied
+to all five sites). The files hold client sites' update history, so they live in Scout's private
+ops folder (`Scout-Internal/ops/site-log-import/`, moved there 2026-11-11), not in this public
+repo. `tools/tests/site-log.php` checks the import against a made-up sample with the same shape,
+`tools/tests/site-log-sample.json`.
 
 How the columns map:
 

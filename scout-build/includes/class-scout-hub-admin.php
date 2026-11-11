@@ -2518,7 +2518,7 @@ final class Scout_Hub_Admin {
 			<div class="sh-log-part">
 				<h3><?php esc_html_e( 'Import history', 'scout-build' ); ?></h3>
 				<?php if ( $show_import ) : ?>
-					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s file from docs/site-log-import. Lines already here are skipped.', 'scout-build' ); ?></p>
+					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s history file, which Scout keeps in its private ops folder. Lines already here are skipped.', 'scout-build' ); ?></p>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Log::ACTION ); ?>">
 						<input type="hidden" name="do" value="import">

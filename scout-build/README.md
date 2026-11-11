@@ -104,8 +104,8 @@ Client sees on.
 **Hub keys:** operators press Make keys on the Site history screen; the read key goes in the Scout
 Client Hub Sheet, the write key is for Scout's tools. Shown once, stored encrypted.
 
-One-time import: upload the site's file from `docs/site-log-import/` on the
-Site history screen. Spec and the hub it feeds: `../docs/site-log-spec.md`.
+One-time import: upload the site's history file, which Scout keeps in its
+private ops folder, on the Site history screen. Spec and the hub it feeds: `../docs/site-log-spec.md`.
 
 ## The monthly update to the client
 
