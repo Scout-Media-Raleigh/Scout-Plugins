@@ -64,8 +64,28 @@ final class Scout_AEO {
 		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		$live = '1' === (string) get_option( 'blog_public' )
 			&& in_array( wp_get_environment_type(), array( 'production' ), true )
-			&& ! preg_match( '/(wpengine\.com|wpenginepowered\.com|staging|\.local$|\.test$|localhost|^127\.|^10\.|^192\.168\.)/i', $host );
+			&& ! self::staging_host( $host );
 		return (bool) apply_filters( 'scout_aeo_is_live', $live );
+	}
+
+	/**
+	 * A staging, local or private address. The hosting providers' staging
+	 * suffixes come from Scout Core's list (Scout_Core_Staging::HOSTS) when
+	 * Scout Core is active, so every Scout plugin agrees on what staging is;
+	 * without it, the two WP Engine suffixes this plugin always knew.
+	 */
+	public static function staging_host( string $host ): bool {
+		$host     = strtolower( $host );
+		$suffixes = ( class_exists( 'Scout_Core_Staging' ) && defined( 'Scout_Core_Staging::HOSTS' ) )
+			? (array) Scout_Core_Staging::HOSTS
+			: array( '.wpengine.com', '.wpenginepowered.com' );
+		foreach ( $suffixes as $suffix ) {
+			$suffix = strtolower( (string) $suffix );
+			if ( '' !== $suffix && ( str_ends_with( $host, $suffix ) || ltrim( $suffix, '.' ) === $host ) ) {
+				return true;
+			}
+		}
+		return (bool) preg_match( '/(staging|\.local$|\.test$|localhost|^127\.|^10\.|^192\.168\.)/i', $host );
 	}
 
 	/**

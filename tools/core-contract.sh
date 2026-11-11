@@ -54,6 +54,8 @@ scout-core/includes/changelog/class-scout-changelog.php | public static function
 scout-core/includes/changelog/class-scout-changelog.php | public static function enabled(): bool | scout-build (Updates step 5: says when the Change log is off)
 scout-core/includes/changelog/class-scout-changelog-admin.php | public static function allowed(): bool | scout-build (Updates step 5: only Scout sees the Change log)
 scout-core/includes/changelog/class-scout-changelog-admin.php | public static function url( array $args = array() ): string | scout-build (Updates step 5: Open Change log)
+scout-core/includes/staging-guard.php | final class Scout_Core_Staging | scout-aeo, scout-analytics (staging hosts, class_exists guarded)
+scout-core/includes/staging-guard.php | const HOSTS = array( | scout-aeo, scout-analytics (Scout_Core_Staging::HOSTS, hosting staging suffixes)
 CONTRACT
 
 exit "$fail"

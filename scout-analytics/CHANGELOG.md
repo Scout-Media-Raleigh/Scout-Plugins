@@ -1,5 +1,10 @@
 # Scout Analytics changelog
 
+## 0.1.23 (2026-11-11)
+
+- **Every staging address Scout Core knows counts as staging.** Tracking stays off on a staging copy at any hosting provider Scout Core lists (WP Engine, Kinsta, Flywheel, Pantheon and Cloudways), not only WP Engine. Without Scout Core it keeps the WP Engine pair. Local and private addresses are treated as before. Live sites see no change.
+- A code comment describes the client site it came from by type.
+
 ## 0.1.22 (2026-11-05)
 
 - **Two fields had the same label.** The Tag Manager field is now "Tag Manager code" and the one in More options "GA4 code (no Tag Manager)". The setting keys are unchanged.
