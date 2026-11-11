@@ -6,7 +6,7 @@
  * Gravity Forms loads about 40 KB of CSS and, through its scripts, jQuery plus
  * the wp-i18n, wp-hooks, wp-a11y and wp-dom-ready helpers in <head> on every
  * page with a form. On phones PageSpeed counted 1 to 2 seconds of
- * render-blocking from them (Andy's staging and scoutraleigh.com, Oct 2026).
+ * render-blocking from them (a client staging site and scoutraleigh.com, Oct 2026).
  * Forms sit below the first screen, so none of that has to load first.
  *
  *  - Gravity Forms stylesheets (and any handle in scout_async_styles) load at
@@ -20,7 +20,7 @@
  * scout_jquery_in_footer to false for the script move alone, or define
  * SCOUT_OPTIMIZE_SPEED as false in wp-config.php.
  *
- * Moved here from the Scout Media and Andy's themes (the same fix, copied per
+ * Moved here from the Scout Media theme and a client theme (the same fix, copied per
  * theme). A theme that still carries its own copy is harmless: each filter
  * skips a tag the other already changed.
  *

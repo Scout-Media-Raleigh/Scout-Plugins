@@ -308,6 +308,15 @@ line runs only while `! scout_core_owns( 'hours' )`.
   `scout-setup.json`, yet.
 - **The email guard** rewrites addresses on the finished page. The theme does
   nothing for it.
+- **No single word alone on a line (1.14.0):** a theme with
+  `add_theme_support( 'scout-no-orphans' )` gets the last two words of its
+  headings and FAQ questions (`summary`) tied with a non-breaking space on the
+  finished page. Only headings of three words or more, only pairs up to 22
+  characters. A theme can pass `elements`, `max` and `skip` (classes left
+  alone, such as narrow footer column heads) as the second argument. A theme
+  that ties words itself (`inc/typography.php`) deletes that file in the same
+  release that adds the support. Filters: `scout_core_no_orphans`,
+  `scout_core_no_orphans_args`.
 
 ## Breadcrumbs, verification, thank-you pages, hardening and cache purge (1.8.0+)
 
