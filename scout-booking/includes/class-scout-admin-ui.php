@@ -39,7 +39,7 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 
 	final class Scout_Admin_UI {
 
-		const VERSION = '1.11.0';
+		const VERSION = '1.11.1';
 
 		/** Show the Scout mark and sign-off. */
 		public static function branded(): bool {
@@ -368,9 +368,12 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 
 		/**
 		 * The nav groups, in the order they show (dashboard redesign, Joy 2026-11-04).
-		 * Keys stay stable so filters keep working: overview is shown as Home, search
-		 * as Search, build as Scout tools. Plus modules (Bookings, Events, Members,
-		 * Partners, Writing room) keep their own sidebar sections and are not listed here.
+		 * Keys stay stable so filters keep working (Site Standard rule 37): overview is
+		 * shown as Home, search as Search & analytics, build as Scout tools. Reports is
+		 * reserved and empty: Recon's numbers are never shown in WordPress (Joy,
+		 * 2026-11-05), so no screen is filed there. Plus modules (Bookings, Events,
+		 * Members, Partners, Writing room) keep their own sidebar sections and are not
+		 * listed here.
 		 */
 		const GROUPS = array(
 			'overview' => 'Home',
@@ -722,8 +725,6 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 				$group = 'policies';
 			} elseif ( preg_match( '/tab=seo\b/', $s ) || preg_match( '/scout-(ai-search|analytics|search|sitemap)|site-build-robots/', $page ) ) {
 				$group = 'search';
-			} elseif ( preg_match( '/scout-recon/', $page ) || 'reports' === $l ) {
-				$group = 'reports';
 			} elseif ( preg_match( '/^scout-(team|people)\b|post_type=scout_team\b|taxonomy=scout_people_group\b/', $s ) ) {
 				$group = 'people'; // Everyone the public sees: team, speakers, writers, listed members (kit 1.11.0, Joy 2026-11-05).
 			} elseif ( preg_match( '/scout-(contact|redirects|cards|newsletter|sitecheck|reviews-settings|reviews-ask|chat)\b|post_type=scout_review\b/', $s ) ) {
