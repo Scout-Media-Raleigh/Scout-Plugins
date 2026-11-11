@@ -27,6 +27,8 @@ permissions:
 
 jobs:
   release:
+    # Releases come from main only: a run started by hand on another branch is skipped.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       SLUG: client-theme                   # EDIT: the theme folder name, same as "Scout Release:"
