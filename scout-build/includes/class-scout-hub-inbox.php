@@ -249,7 +249,8 @@ final class Scout_Hub_Inbox {
 				'done'    => ! empty( $item['done'] ),
 			);
 		}
-		usort( $clean, static fn( $a, $b ) => $b['when'] <=> $a['when'] );
+		// What still waits on someone comes first, newest first inside each part (Joy, 2026-11-11).
+		usort( $clean, static fn( $a, $b ) => ( (int) ( ! $a['waiting'] || $a['done'] ) <=> (int) ( ! $b['waiting'] || $b['done'] ) ) ?: $b['when'] <=> $a['when'] );
 		// "Remind me tomorrow" hides an item from that person until then. The digest (no one signed in) still sees it.
 		$later = function_exists( 'get_current_user_id' ) && get_current_user_id() ? (array) get_user_meta( get_current_user_id(), self::LATER, true ) : array();
 		if ( $later ) {

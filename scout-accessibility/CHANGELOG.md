@@ -1,5 +1,9 @@
 # Scout Accessibility changelog
 
+## 0.1.21 (2026-11-11)
+
+- **The statement screen shows checks to fix (Joy, 2026-11-11).** With the page live and the weekly checks finding something, the status line reads "Published, with N checks to fix" and links to the checks.
+
 ## 0.1.20 (2026-11-09)
 
 - **Describe a featured image right on Weekly checks (Joy, Nov 9).** When a featured image has no description, Show where now shows the image, a "Describe the image" box and Save. Saving writes the image's alt text in the Media Library and clears it from the results at once, with no new run. Images inside the page content still link to the editor. Visitors see the new alt text on that image everywhere it is used.

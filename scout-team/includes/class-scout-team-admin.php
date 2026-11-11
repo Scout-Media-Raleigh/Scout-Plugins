@@ -276,6 +276,8 @@ final class Scout_Team_Admin {
 			$people[] = $row;
 		}
 		$total = count( $people );
+		// People who need a look come first, each part in team page order (Joy, 2026-11-11).
+		usort( $people, static fn( $a, $b ) => (int) ! $a['look'] <=> (int) ! $b['look'] );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filters.
 		$group = isset( $_GET['group'] ) ? sanitize_key( wp_unslash( $_GET['group'] ) ) : '';

@@ -68,8 +68,10 @@ Every group, Plus section and plugin opens on the screen a person most often nee
 waiting, what is ready to update, what is broken. Reference screens (what is on, settings,
 history) come after it. Inside a screen, the same order holds: the things that need someone
 come first and open, the rest closed below. Scout tools opens on Updates, then Features
-(Scout Build 0.16.1). The first screen of every group and plugin is checked against this rule
-in the next dashboard audit.
+(Scout Build 0.16.1). Audited 2026-11-11: Site features opens on Redirects, Legal pages on Firm
+approvals and Attorney sign-offs (law sites), and Business, Search settings, the Accessibility
+statement, RV park, the Writing room, People, To do and Site status each show what needs doing
+first (Build 0.17.1 and the plugin releases with it). Copy the report stays on top of Site status.
 
 **One home, plus "Looking for" links.** A screen lives in exactly one group.
 Where it also fits another group, that group's screen list ends with one quiet

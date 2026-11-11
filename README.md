@@ -22,17 +22,17 @@ instead of a data-loss event.
 
 | Plugin | Version | Kind | What it does | Requires |
 |---|---|---|---|---|
-| [`scout-core`](scout-core/) | 1.13.1 | Core | The engine: business facts typed once, the content model (post types, fields, Block Bindings), the JSON-LD schema graph, the in-house SEO head tags and sitemap, Page copy (Site Sync) and the Change log. | WP 6.5+, PHP 8.0+ |
-| [`scout-build`](scout-build/) | 0.17.0 | Core | The Scout dashboard hub: Home, To do, Site status, Features and plan, Updates with the update order, Site history, Request a change, theme self-updates from the client's own repo. | WP 6.5+, PHP 8.0+ |
+| [`scout-core`](scout-core/) | 1.13.2 | Core | The engine: business facts typed once, the content model (post types, fields, Block Bindings), the JSON-LD schema graph, the in-house SEO head tags and sitemap, Page copy (Site Sync) and the Change log. | WP 6.5+, PHP 8.0+ |
+| [`scout-build`](scout-build/) | 0.17.1 | Core | The Scout dashboard hub: Home, To do, Site status, Features and plan, Updates with the update order, Site history, Request a change, theme self-updates from the client's own repo. | WP 6.5+, PHP 8.0+ |
 | [`scout-aeo`](scout-aeo/) | 0.2.13 | Core | AI search readiness: names the AI crawlers in robots.txt, serves `/llms.txt`, sends IndexNow pings, and adds a questions-and-answers box with matching FAQ schema to every page. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
 | [`scout-optimize`](scout-optimize/) | 0.9.10 | Core | Image optimizer: every upload is resized and compressed, WebP and AVIF twins are served, and the original is kept as a backup. | WP 6.5+, PHP 8.1+ |
 | [`scout-forms-guard`](scout-forms-guard/) | 0.3.7 | Core | Spam protection for Gravity Forms: honeypot, time trap and a signed token. Refuses files sent to hidden File Upload fields and List answers that carry hidden code. No reCAPTCHA, no third-party calls. | Gravity Forms |
 | [`scout-analytics`](scout-analytics/) | 0.1.23 | Core | Google Tag Manager with consent mode set first, a small opt-out cookie notice, and one click-reporting API every Scout feature uses. | WP 6.5+, PHP 8.0+ |
 | [`scout-contact`](scout-contact/) | 0.2.0 | Core | Call buttons: a Call, Text and Let's talk bar pinned to the bottom of the screen on phones. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
-| [`scout-redirects`](scout-redirects/) | 0.2.0 | Core | Moved pages: forward old addresses, log the missing pages people hit, fix a broken link in one click, auto-forward when a page's address changes, CSV import and export. | WP 6.5+, PHP 8.0+ |
+| [`scout-redirects`](scout-redirects/) | 0.2.1 | Core | Moved pages: forward old addresses, log the missing pages people hit, fix a broken link in one click, auto-forward when a page's address changes, CSV import and export. | WP 6.5+, PHP 8.0+ |
 | [`scout-hours`](scout-hours/) | 0.1.15 | Core | Weekly hours and holiday closures in one place: an Open now line, hours in the schema, and a reminder to update the Google Business Profile before each holiday. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
-| [`scout-accessibility`](scout-accessibility/) | 0.1.20 | Core | An honest accessibility statement page, a footer link, weekly checks for what a computer can find, and a launch checklist for what needs a person. No overlays, ever. | WP 6.5+, PHP 8.0+ |
-| [`scout-team`](scout-team/) | 0.4.1 | Core | People: one profile per person that feeds the bio page, the team page, bylines, business cards, speaker pages and Person schema. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
+| [`scout-accessibility`](scout-accessibility/) | 0.1.21 | Core | An honest accessibility statement page, a footer link, weekly checks for what a computer can find, and a launch checklist for what needs a person. No overlays, ever. | WP 6.5+, PHP 8.0+ |
+| [`scout-team`](scout-team/) | 0.4.2 | Core | People: one profile per person that feeds the bio page, the team page, bylines, business cards, speaker pages and Person schema. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
 | [`scout-law`](scout-law/) | 0.4.4 | Core, law firms | Law firm tools: disclaimer lines set once and shown where they belong, approval before publishing kept as the firm's advertising record, Reviewed by stamps on a review schedule, form entries that delete themselves. | WP 6.5+, PHP 8.0+ (Gravity Forms, Scout Case Results, Scout Reviews optional) |
 | [`scout-results`](scout-results/) | 0.1.16 | Bonus, law firms | Case results, each approved by the firm, with the firm's disclaimer next to every result and practice-area filters. | WP 6.5+, PHP 8.0+ |
 | [`scout-reviews`](scout-reviews/) | 0.8.0 | Plan feature | Reviews from Google, Facebook, Yelp and the rest in one place, a daily Google sync into an inbox, a `/review/` page with QR code and printable cards for asking clients. Honest totals, no review schema. | WP 6.5+, PHP 8.0+ |
@@ -44,9 +44,9 @@ instead of a data-loss event.
 | [`scout-booking`](scout-booking/) | 0.3.0 | Plus | Private sessions booked on the site: session types, open times from the working hours, requests the owner approves or deposits through WooCommerce, reminders and a calendar feed. | WP 6.5+, PHP 8.0+ (WooCommerce, Scout Hours optional) |
 | [`scout-partners`](scout-partners/) | 0.1.9 | Plus | Partners and sponsors by level, each with a logo, link and the places they appear, with monthly click counts. | WP 6.5+, PHP 8.0+ (Scout Events optional) |
 | [`scout-crm`](scout-crm/) | 0.1.6 | Plus | One customer list in FluentCRM: ticket buyers, sign-ups, volunteers, vendors, presenters and members, tagged by what they did. | WP 6.5+, PHP 8.0+, FluentCRM (Scout Events, Scout Members) |
-| [`scout-writing`](scout-writing/) | 0.1.8 | Plus | A private writing room in the dashboard: prompts in steps, answers that save as they type, voice memos, Send to Scout. | WP 6.5+, PHP 8.0+ |
+| [`scout-writing`](scout-writing/) | 0.1.9 | Plus | A private writing room in the dashboard: prompts in steps, answers that save as they type, voice memos, Send to Scout. | WP 6.5+, PHP 8.0+ |
 | [`scout-sitecheck`](scout-sitecheck/) | 0.2.12 | Site-specific | The free website check on scoutraleigh.com: eight checks, results on the page and by email, every request in an inbox. | WP 6.5+, PHP 8.0+ |
-| [`scout-rvpark`](scout-rvpark/) | 0.2.4 | Companion example | The worked example of the companion pattern: one client's specific content types, registered without forking Scout Core. | `scout-core` |
+| [`scout-rvpark`](scout-rvpark/) | 0.2.5 | Companion example | The worked example of the companion pattern: one client's specific content types, registered without forking Scout Core. | `scout-core` |
 
 > `scout-schema` and `scout-seo` shipped separately until Scout Core 1.0.0 folded
 > them in as `includes/schema/` and `includes/seo/`. They are retired as

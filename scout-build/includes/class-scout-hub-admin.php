@@ -157,7 +157,9 @@ final class Scout_Hub_Admin {
 			if ( self::PAGE === $page || 'site-build' === $page ) {
 				return 0;
 			}
-			$order = array( 'scout' => 200, 'scout-ai-search' => 400, 'scout-optimize' => 500 );
+			// Each group opens on its to-do screen (Joy, 2026-11-11): Redirects (broken links) leads
+			// Site features, and on law sites Firm approvals and Attorney sign-offs lead Legal pages.
+			$order = array( 'scout-approvals' => 110, 'scout-page-reviews' => 120, 'scout-redirects' => 150, 'scout' => 200, 'scout-ai-search' => 400, 'scout-optimize' => 500 );
 			if ( 'scout' === $page && false !== strpos( $slug, 'tab=' ) ) {
 				return 300 + $i; // SEO and any companion settings, after Business info.
 			}
@@ -2091,12 +2093,30 @@ final class Scout_Hub_Admin {
 	 *
 	 * @param array<int, array{label:string, value:string, state:string, note:string, items?:array, item_links?:array, details?:string, link?:string, link_text?:string, link_all?:bool}> $checks
 	 */
+	/**
+	 * Rows that need someone first (bad, then warn), each kind in its old order
+	 * (Joy, 2026-11-11: open on what needs doing).
+	 *
+	 * @param array<int,array<string,mixed>> $checks
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function problems_first( array $checks ): array {
+		$weight = array( 'bad' => 0, 'warn' => 1 );
+		$keyed  = array();
+		foreach ( array_values( $checks ) as $i => $c ) {
+			$keyed[] = array( $weight[ (string) ( $c['state'] ?? '' ) ] ?? 2, $i, $c );
+		}
+		usort( $keyed, static fn( $x, $y ) => $x[0] <=> $y[0] ?: $x[1] <=> $y[1] );
+		return array_column( $keyed, 2 );
+	}
+
 	private static function check_list( string $id, string $title, array $checks ): void {
 		if ( ! $checks ) {
 			return;
 		}
 		$good     = count( array_filter( $checks, static fn( $c ) => 'good' === $c['state'] ) );
 		$operator = Scout_Hub_Access::is_operator();
+		$checks   = self::problems_first( $checks );
 		?>
 		<section class="sh-box" id="<?php echo esc_attr( $id ); ?>">
 			<h2 class="sh-title"><?php echo esc_html( $title ); ?></h2>

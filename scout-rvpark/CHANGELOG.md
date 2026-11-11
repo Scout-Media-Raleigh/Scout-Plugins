@@ -1,5 +1,9 @@
 # Scout RV Park: changelog
 
+## 0.2.5 (2026-11-11)
+
+- **Site types with no rate are flagged (Joy, 2026-11-11).** The Home status line names any site type with neither a nightly nor a monthly rate, so visitors never see one without a price.
+
 ## 0.2.4 (2026-11-11)
 
 - **Plainer plugin name.** The Plugins screen lists it as Scout RV Park, with a description of what it adds (amenities, and site types with their rates and rig lengths). The folder, slug, text domain, post types and every saved field are unchanged, so nothing on the site moves.

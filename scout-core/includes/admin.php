@@ -406,9 +406,37 @@ final class Scout_Core_Admin {
 
 	/* ---------- Business tab ---------- */
 
+	/** The details search listings need most, in the order the form shows them. */
+	const BUSINESS_MAIN = array( 'name', 'business_type', 'phone', 'email', 'city', 'region', 'postal' );
+
+	/**
+	 * Which of the main details are still empty, as field labels. The screen
+	 * opens on this so the gaps come first (Joy, 2026-11-11).
+	 *
+	 * @return string[]
+	 */
+	public static function business_missing( ?array $values = null ): array {
+		$values  = $values ?? Scout_Core_Business::get();
+		$labels  = Scout_Core_Business::fields();
+		$missing = array();
+		foreach ( self::BUSINESS_MAIN as $key ) {
+			if ( '' === trim( (string) ( $values[ $key ] ?? '' ) ) ) {
+				$missing[] = (string) ( $labels[ $key ] ?? $key );
+			}
+		}
+		return $missing;
+	}
+
 	public static function tab_business() {
-		$values = Scout_Core_Business::get();
-		$help   = Scout_Core_Business::help();
+		$values  = Scout_Core_Business::get();
+		$help    = Scout_Core_Business::help();
+		$missing = self::business_missing( $values );
+		if ( $missing ) {
+			/* translators: %d: number of details */
+			self::ui_status( 'warn', sprintf( _n( '%d main detail is missing.', '%d main details are missing.', count( $missing ), 'scout-core' ), count( $missing ) ), implode( ', ', $missing ) . '.' );
+		} else {
+			self::ui_status( 'good', __( 'The main details are all in.', 'scout-core' ), __( 'Search listings and the site footer read them from here.', 'scout-core' ) );
+		}
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'scout_business_group' );
 		echo '<table class="form-table" role="presentation"><tbody>';
@@ -452,6 +480,21 @@ final class Scout_Core_Admin {
 
 	public static function tab_seo() {
 		$values = Scout_Core_SEO_Settings::get();
+		$look   = array_filter( self::checks(), static fn( $c ) => 'good' !== ( $c['status'] ?? '' ) );
+		if ( $look ) {
+			$first = reset( $look );
+			$go    = ! empty( $first['action'] ) ? '<a class="button" href="' . esc_url( $first['action'] ) . '">' . esc_html( (string) $first['action_label'] ) . '</a>' : '';
+			/* translators: %d: number of checks */
+			self::ui_status( 'warn', sprintf( _n( '%d search check needs a look.', '%d search checks need a look.', count( $look ), 'scout-core' ), count( $look ) ), implode( ', ', wp_list_pluck( $look, 'label' ) ) . '.', $go );
+		} else {
+			self::ui_status( 'good', __( 'Every search check passes.', 'scout-core' ) );
+		}
+		// Searches that found nothing are things to do, so they come first while the list has any.
+		$searches_first = class_exists( 'Scout_SEO_Empty_Searches' ) && Scout_SEO_Empty_Searches::on()
+			&& Scout_SEO_Empty_Searches::prune( Scout_SEO_Empty_Searches::saved(), function_exists( 'wp_date' ) ? (string) wp_date( 'Y-m-d' ) : gmdate( 'Y-m-d' ) );
+		if ( $searches_first ) {
+			Scout_SEO_Empty_Searches::render_box();
+		}
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'scout_seo_group' );
 		echo '<table class="form-table" role="presentation"><tbody>';
@@ -477,8 +520,8 @@ final class Scout_Core_Admin {
 		echo '</tbody></table>';
 		submit_button();
 		echo '</form>';
-		if ( class_exists( 'Scout_SEO_Empty_Searches' ) ) {
-			Scout_SEO_Empty_Searches::render_box();
+		if ( class_exists( 'Scout_SEO_Empty_Searches' ) && ! $searches_first ) {
+			Scout_SEO_Empty_Searches::render_box(); // Off or empty: it stays under the switch that turns it on.
 		}
 	}
 
