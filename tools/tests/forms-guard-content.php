@@ -17,6 +17,8 @@ function plugin_dir_path( $f ) { return dirname( $f ) . '/'; }
 function plugin_basename( $f ) { return basename( $f ); }
 function register_activation_hook( ...$a ) {}
 function is_admin() { return false; }
+// Gravity Forms' own helper, which the plugin only ever calls with Gravity Forms loaded.
+function rgar( $a, $k, $d = null ) { return ( is_array( $a ) && isset( $a[ $k ] ) ) ? $a[ $k ] : $d; }
 require dirname( __DIR__, 2 ) . '/scout-forms-guard/scout-forms-guard.php';
 $fail = 0;
 function ok( $c, $m ) { global $fail; echo ( $c ? 'PASS ' : 'FAIL ' ) . $m . "\n"; if ( ! $c ) { $fail++; } }

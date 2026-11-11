@@ -23,7 +23,9 @@ releases safe. Run every command from the repo root.
   `--check`, fails when a list is missing or out of step (Site Standard rule 24).
 - `tests/`: PHP checks for the plugins and kits, one file per area. Some of them (for example
   `newsletter.php` and `site-sync.php`) wipe data and run only against a disposable local
-  WordPress.
+  WordPress. `tests/wp-fresh-install.sh` builds that WordPress with every Scout plugin active
+  (Scout Core first) and fails on any activation error or PHP warning; the Lint workflow's
+  WordPress job runs it, then those tests. Every test file here runs in the Lint workflow.
 
 ## Who owns it
 Joy and Sean at Scout Media.
