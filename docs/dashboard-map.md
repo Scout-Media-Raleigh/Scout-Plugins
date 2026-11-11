@@ -390,7 +390,7 @@ Each works on its own branch; merge one, then rebase the other.
 1. Law firm tools: check approval before publishing (0.2.0) in a live block editor, then "Reviewed by" stamps with a six-month review list, then form entries that delete themselves (90 days by default).
 2. Search and sitemap: a visitor search box on every site, and a list of searches that found nothing.
 3. One profile per person and one email per person: see "People" above for the full plan and Joy's decisions. Order: practice areas and "Handled by" on case results; Cards read profiles (card links never change); Chat picks up to two profiles; the Team screen and My profile, as designed on the canvas; Former status; the responsible attorney in the advertising line; bookings, volunteers and the newsletter save the login; the People screen in the Contacts, with orders; shared accounts and couples plans (first client: an events site, couples tickets and a couples membership price, with its move to WordPress).
-4. Nightly form test in Site health.
+4. Nightly form test in Site health. Built in Scout Build 0.17.0 (off until switched on in Scout tools, Features).
 5. Policies pages: privacy policy and terms templates filled from business info. The client or firm approves each one.
 6. One screen for every client site, built on the Client Hub sheet.
 7. Recon capture: one install path for the pieces Recon needs from a site (waits on Sean). No viewer (Joy, 2026-11-05).

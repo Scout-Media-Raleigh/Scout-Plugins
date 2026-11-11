@@ -839,6 +839,12 @@ final class Scout_Hub_Admin {
 					<p class="sh-note sh-brand-status"><?php echo esc_html( Scout_Hub_Brand::status_text() ); ?></p>
 				<?php endif; ?>
 			<?php self::fold_close(); ?>
+			<?php
+			// The nightly form test: the switch and the forms (Scout_Hub_Form_Test, Site Standard rule 31).
+			if ( class_exists( 'Scout_Hub_Form_Test' ) ) {
+				Scout_Hub_Form_Test::render_settings();
+			}
+			?>
 		<?php endif; ?>
 		<?php
 	}

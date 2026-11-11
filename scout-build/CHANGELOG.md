@@ -1,5 +1,16 @@
 # Scout Build changelog
 
+## 0.17.0 (2026-11-11)
+
+- **A nightly form test (Site Standard rule 31).** Once a night, around 2 am, each form you pick is sent with made-up answers. Its own emails go to their usual addresses with "[Test]" at the start of the subject and a first line that says it is a test. Then Site status shows one row: "Form test: Sent last night" in green, or "Failed: Contact did not send" in red.
+- **One miss is not an alarm.** A form has to fail two nights in a row before the row turns red. Then the site's notice address gets one email, and one a week after that while it keeps failing. Nothing is emailed when the test passes.
+- **It is off until you switch it on.** Updating changes nothing for visitors or clients. Switch it on in Scout tools, Features, More options: nightly form test, and tick the forms. The theme's `scout-setup.json` can suggest forms with `"form_test": { "forms": [ 3, "Contact" ] }`, but only you can turn it on.
+- **It leaves nothing behind.** The test entry is deleted right after. Mailchimp, CRMs and other add-ons are skipped, so no fake lead lands anywhere. It never counts in analytics or in the Form emails sent row. It waits on staging copies, where the staging email guard is on.
+- **Spam protection stays the same.** The test carries the same signed token a real page gives a visitor, made with the site's own secret. Scout Forms Guard is not changed.
+- **What "sent" means.** The site can confirm the email was handed to the mailer (or the mail server it signs in to). It can't see the inbox, so the row says that, and you should check that a [Test] email arrives now and then.
+- Forms the test can't fill by itself (payments, a CAPTCHA, a required upload, a login and a few others) are listed with the reason, so you can test them by hand.
+- `tools/tests/form-test.php` checks the scheduling, the answers, the two-failure rule, the cleanup and a full run with Forms Guard (Lint workflow).
+
 ## 0.16.0 (2026-11-11)
 
 - **Site status lists outside plugins (Site Standard rules 8 and 34).** A new Outside plugins row under Plugins names every active plugin that is not a Scout plugin and not Gravity Forms. One the site has said yes to reads "approved". Any other reads "needs a decision", so it gets kept with a dated entry in the site's decisions file or turned off. With none, the row reads "None".

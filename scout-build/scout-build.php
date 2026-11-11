@@ -3,7 +3,7 @@
  * Plugin Name:       Scout Build
  * Plugin URI:        https://scoutraleigh.com
  * Description:       The Scout menu on every site: Home with the Today list, an Inbox with everything waiting on a person, Site health, and for operators Scout tools: features, every update in one place, and the Site log.
- * Version:           0.16.0
+ * Version:           0.17.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Scout Media & Consulting
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Prefixed SCOUT_HUB_ on purpose: the Scout Media theme already defines a
 // SCOUT_BUILD_MENU constant for its own menu.
-define( 'SCOUT_HUB_VERSION', '0.16.0' );
+define( 'SCOUT_HUB_VERSION', '0.17.0' );
 define( 'SCOUT_HUB_FILE', __FILE__ );
 define( 'SCOUT_HUB_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCOUT_HUB_URL', plugin_dir_url( __FILE__ ) );
@@ -53,6 +53,7 @@ require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-today.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-inbox.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-mail.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-form-mail.php';
+require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-form-test.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-dashboard.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-themes.php';
 require_once SCOUT_HUB_DIR . 'includes/class-scout-hub-rings.php';
@@ -76,6 +77,7 @@ Scout_Hub_Robots::boot();
 Scout_Hub_Setup::boot();
 Scout_Hub_Mail::boot();
 Scout_Hub_Form_Mail::boot();
+Scout_Hub_Form_Test::boot();
 Scout_Hub_Dashboard::boot();
 Scout_Hub_Themes::boot();
 Scout_Hub_Rings::boot();
@@ -92,3 +94,4 @@ Scout_Hub_Report::boot();
 register_deactivation_hook( __FILE__, array( 'Scout_Hub_Watch', 'unschedule' ) );
 register_deactivation_hook( __FILE__, array( 'Scout_Hub_Inbox', 'unschedule' ) );
 register_deactivation_hook( __FILE__, array( 'Scout_Hub_Report', 'unschedule' ) );
+register_deactivation_hook( __FILE__, array( 'Scout_Hub_Form_Test', 'unschedule' ) );
