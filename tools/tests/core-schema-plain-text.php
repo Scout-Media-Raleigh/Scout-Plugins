@@ -77,7 +77,7 @@ function get_the_excerpt() { return ''; }
 function has_post_thumbnail() { return false; }
 function get_the_author_meta() { return 'Joy'; }
 // WordPress stores the site title escaped: an apostrophe comes back as &#039;.
-function get_bloginfo() { return 'Andy&#039;s Example Venue'; }
+function get_bloginfo() { return 'Joe&#039;s Example Venue'; }
 function get_site_icon_url() { return ''; }
 function wp_reset_postdata() {}
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
@@ -141,11 +141,11 @@ $node = Scout_SEO_Breadcrumbs::node( array( array( 'name' => 'Home', 'url' => 'h
 ok( "New Year\u{2019}s Eve" === $node['itemListElement'][1]['name'], 'a breadcrumb name is plain text' );
 
 // The site title (Scout Core 1.14.0): WordPress stores it escaped, so the WebSite name
-// came out as "Andy&#039;s ...".
+// came out as "Joe&#039;s ...".
 $m = new ReflectionMethod( 'Scout_Schema', 'website_node' );
 $m->setAccessible( true );
 $site = $m->invoke( null );
-ok( "Andy's Example Venue" === ( $site['name'] ?? '' ), 'the WebSite name is the plain site title' );
+ok( "Joe's Example Venue" === ( $site['name'] ?? '' ), 'the WebSite name is the plain site title' );
 
 // An encoded tag must not come back as markup.
 ok( 'x' === Scout_Schema::plain( '&lt;b&gt;x&lt;/b&gt;' ), 'decoding never turns an encoded tag into markup' );

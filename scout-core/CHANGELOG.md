@@ -4,7 +4,7 @@
 
 - **No single word alone on a line.** Scout's typography rule moves from theme code into Core: on a theme with `add_theme_support( 'scout-no-orphans' )`, the last two words of each heading and FAQ question are tied with a non-breaking space on the finished page. Headings of three words or more and pairs up to 22 characters only, so a tied pair can't push past a 320px phone; a heading that is already tied is left alone. A theme can name its own `elements`, `max` and `skip` classes. Off until a theme asks, so no live page changes on update (Site Standard rule 20). Settings came from a client's first design gate, where tying list items made a narrow phone footer spill.
 - Filters: `scout_core_no_orphans`, `scout_core_no_orphans_args`.
-- **The site name in schema is plain text.** WordPress stores the site title escaped, so the WebSite name (and the business name when Business info has none) printed as `Andy&#039;s ...`. Both now go through the same plain-text step as every other schema name (1.10.5). Test added to `tools/tests/core-schema-plain-text.php`.
+- **The site name in schema is plain text.** WordPress stores the site title escaped, so the WebSite name (and the business name when Business info has none) printed as `Joe&#039;s ...`. Both now go through the same plain-text step as every other schema name (1.10.5). Test added to `tools/tests/core-schema-plain-text.php`.
 - Test: `php tools/tests/core-typography.php` (no WordPress needed), in CI.
 
 ## 1.13.1 (2026-11-11)
