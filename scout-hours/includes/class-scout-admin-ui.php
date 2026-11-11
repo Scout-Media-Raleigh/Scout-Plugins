@@ -39,7 +39,7 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 
 	final class Scout_Admin_UI {
 
-		const VERSION = '1.11.1';
+		const VERSION = '1.12.0';
 
 		/** Show the Scout mark and sign-off. */
 		public static function branded(): bool {
@@ -694,6 +694,18 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 		 * Which nav group a sidebar screen belongs to. Plugins can move a screen
 		 * with the scout_admin_nav_group filter (group key, slug, label).
 		 */
+		/**
+		 * A screen only Sean and Joy use: it imports, exports, sets up, syncs or migrates. Plus
+		 * sections keep their own "Add from spreadsheet" screens, which their staff use.
+		 */
+		public static function is_operator_tool( string $page, string $label ): bool {
+			if ( preg_match( '/^scout-(events|members|booking|partners|rvpark|writing)\b/', $page ) ) {
+				return false;
+			}
+			return (bool) preg_match( '/\b(import|imports|importer|export|exports|setup|set up|sync|syncing|migrate|migration|tools|developer|debug)\b/', $label )
+				|| (bool) preg_match( '/[-_](import|importer|export|setup|sync|migrate|migration|tools|debug)$/', $page );
+		}
+
 		public static function group( string $slug, string $label ): string {
 			$s = strtolower( $slug );
 			$l = strtolower( $label );
@@ -715,12 +727,17 @@ if ( ! class_exists( 'Scout_Admin_UI', false ) ) :
 				$group = 'health';
 			} elseif ( in_array( $l, array( 'google checks', 'search health' ), true ) ) {
 				$group = 'health';
-			} elseif ( preg_match( '/tab=(changes|sync)\b/', $s ) || 'scout-mail' === $page || false !== strpos( $l, 'theme' ) ) {
-				$group = 'build'; // Operator tools: Email, Chat settings, Site Sync, the Change log, a theme's own screen.
+			} elseif ( preg_match( '/tab=(changes|sync|protect)\b/', $s ) || 'scout-mail' === $page || false !== strpos( $l, 'theme' ) || self::is_operator_tool( $page, $l ) ) {
+				// Operator tools: Email, Site Sync, the Change log, Spam protection switches, a theme's own
+				// screen, and anything that imports, exports, sets up or syncs, from any plugin, theme or
+				// companion (Joy, 2026-11-11: "move import pages into scout tools... on all sites and plugins").
+				$group = 'build';
+			} elseif ( preg_match( '/post_type=scout_writing\b/', $s ) || preg_match( '/^(all )?writing\b/', $l ) ) {
+				$group = 'build'; // The Writing room lives in its own Plus section (Joy, 2026-11-04); a theme's copy in the Scout menu is for Scout only.
 			} elseif ( preg_match( '/scout-reviews-inbox|post_type=scout_chat_q|post_type=scout_hub_request|post_type=scout_sitecheck/', $s ) || preg_match( '/^(review inbox|chat questions|request a change|inbox|site checks)$/', $l ) ) {
 				$group = 'inbox';
-			} elseif ( preg_match( '/tab=protect\b/', $s ) || preg_match( '/scout-optimize|scout-accessibility-checks/', $page ) ) {
-				$group = 'health'; // Spam protection and the image optimizer report on whether things are working.
+			} elseif ( preg_match( '/scout-optimize|scout-accessibility-checks/', $page ) ) {
+				$group = 'health'; // The image optimizer and the accessibility checks report on whether things are working.
 			} elseif ( preg_match( '/scout-(accessibility|policies|disclaimers|privacy)/', $page ) ) {
 				$group = 'policies';
 			} elseif ( preg_match( '/tab=seo\b/', $s ) || preg_match( '/scout-(ai-search|analytics|search|sitemap)|site-build-robots/', $page ) ) {

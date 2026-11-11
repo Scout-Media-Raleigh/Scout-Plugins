@@ -1,5 +1,9 @@
 # Scout Analytics changelog
 
+## 0.1.24 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.1.23 (2026-11-11)
 
 - **Every staging address Scout Core knows counts as staging.** Tracking stays off on a staging copy at any hosting provider Scout Core lists (WP Engine, Kinsta, Flywheel, Pantheon and Cloudways), not only WP Engine. Without Scout Core it keeps the WP Engine pair. Local and private addresses are treated as before. Live sites see no change.
