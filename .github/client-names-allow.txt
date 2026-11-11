@@ -1,0 +1,11 @@
+# Intentional client or partner name mentions, for tools/client-names.py.
+#
+# One path glob per line, optionally followed by the deny-list entry ids it
+# allows (every id when none are listed). Put a dated reason in a comment above
+# each line. An allowance is a deviation from Scout Repo Standard rule 5, so it
+# ends when its reason does. Find an entry's id locally with:
+#   python3 tools/client-names.py --which "the text"
+#
+# Example (not active):
+#   # 2026-11-11, Joy: the RV park plugin's README names its own kind of business.
+#   # scout-rvpark/README.md c99
