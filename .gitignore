@@ -19,3 +19,6 @@ node_modules/
 
 # Build artifacts (zips are generated for upload, not tracked)
 *.zip
+
+# Python bytecode
+__pycache__/
