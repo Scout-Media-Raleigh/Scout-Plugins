@@ -189,6 +189,13 @@ final class Scout_Sync {
 				$errors[] = 'A field entry names no field, seo, meta or post_field.';
 				continue;
 			}
+			// 1.12.0: a post meta field may carry a list or object ("_scout_aeo_faqs": rows of
+			// {q, a}). It is compared as canonical JSON and written as a real array.
+			$is_array = is_array( $f['value'] ?? null );
+			if ( $is_array && ! self::is_meta( $field ) ) {
+				$errors[] = 'Field "' . $field . '" on ' . ( $f['slug'] ?? '' ) . ' takes text only. A list or object value needs a "meta" or "field" entry.';
+				continue;
+			}
 			$items[] = array(
 				'kind'      => 'post',
 				'post_type' => sanitize_key( $f['post_type'] ?? 'page' ),
@@ -198,7 +205,7 @@ final class Scout_Sync {
 				'source'    => $f['source'] ?? null,
 				'image'     => $f['image'] ?? null,
 				'previous'  => $f['previous'] ?? array(),
-			);
+			) + ( $is_array ? array( 'array' => true ) : array() );
 		}
 		foreach ( (array) ( $manifest['settings'] ?? array() ) as $s ) {
 			$items[] = array( 'kind' => 'setting', 'group' => sanitize_key( $s['group'] ?? '' ), 'key' => sanitize_key( $s['key'] ?? '' ), 'value' => $s['value'] ?? null, 'source' => $s['source'] ?? null, 'previous' => $s['previous'] ?? array() );
@@ -225,7 +232,9 @@ final class Scout_Sync {
 
 		foreach ( $items as &$item ) {
 			$item['id']       = self::item_id( $item );
-			$item['previous'] = array_map( 'strval', (array) ( $item['previous'] ?? array() ) );
+			$item['previous'] = empty( $item['array'] )
+				? array_map( 'strval', (array) ( $item['previous'] ?? array() ) )
+				: array_map( array( __CLASS__, 'canon' ), array_values( (array) ( $item['previous'] ?? array() ) ) );
 			if ( ! empty( $item['image'] ) ) {
 				$file = self::source( $item['image'] );
 				if ( ! $file ) {
@@ -241,6 +250,8 @@ final class Scout_Sync {
 					$item['broken'] = true;
 				}
 				$item['theme'] = $file ? (string) file_get_contents( $file ) : '';
+			} elseif ( ! empty( $item['array'] ) ) {
+				$item['theme'] = self::json( $item['value'] );
 			} else {
 				$item['theme'] = (string) ( $item['value'] ?? '' );
 			}
@@ -354,11 +365,85 @@ final class Scout_Sync {
 			return $post ? (string) $post->{'post_' . $field} : '';
 		}
 		$sub = self::meta_sub( $field );
+		if ( ! empty( $item['array'] ) ) {
+			$value = get_post_meta( $id, self::meta_key( $field ), true );
+			$value = '' !== $sub ? self::dig( $value, $sub ) : $value;
+			if ( is_array( $value ) ) {
+				return self::json( $value );
+			}
+			return is_scalar( $value ) ? (string) $value : '';
+		}
 		if ( '' !== $sub ) {
 			$value = self::dig( get_post_meta( $id, self::meta_key( $field ), true ), $sub );
 			return is_scalar( $value ) ? (string) $value : '';
 		}
 		return (string) get_post_meta( $id, self::meta_key( $field ), true );
+	}
+
+	/** Whether a field names post meta (a "field:" or "meta:" entry), the only kind that can hold an array. */
+	private static function is_meta( $field ) {
+		return 0 === strpos( (string) $field, 'meta:' ) || 0 === strpos( (string) $field, 'field:' );
+	}
+
+	/**
+	 * An array value as JSON, in the order it was given: what the Page copy screen
+	 * shows and what is written. An empty list is '', the same as no field, so
+	 * "[]" in the theme and a field never saved agree.
+	 *
+	 * @param mixed $value
+	 */
+	public static function json( $value ) {
+		if ( ! is_array( $value ) ) {
+			return is_scalar( $value ) ? (string) $value : '';
+		}
+		return $value ? (string) wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) : '';
+	}
+
+	/**
+	 * An array value as canonical JSON, for comparing: object keys sorted at
+	 * every level, list order kept (the order of a list of questions is part of
+	 * the copy). The same rows give the same text however they were saved.
+	 *
+	 * @param mixed $value An array, or the JSON text of one.
+	 */
+	public static function canon( $value ) {
+		$value = is_array( $value ) ? $value : self::unpack( $value );
+		return is_array( $value ) ? self::json( self::sorted( $value ) ) : self::normalize( $value );
+	}
+
+	/** @param mixed $value */
+	private static function sorted( $value ) {
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+		if ( ! array_is_list( $value ) ) {
+			ksort( $value, SORT_STRING );
+		}
+		return array_map( array( __CLASS__, 'sorted' ), $value );
+	}
+
+	/**
+	 * What an array row writes: the decoded array for JSON text, '' to remove
+	 * the field (undo of a field that was empty), or the text itself (undo of a
+	 * plain value someone had saved there).
+	 *
+	 * @return array|string
+	 */
+	private static function unpack( $text ) {
+		$text = (string) $text;
+		if ( '' === $text ) {
+			return '';
+		}
+		$data = json_decode( $text, true );
+		return is_array( $data ) ? $data : $text;
+	}
+
+	/** Whether two copies of a row are the same: canonical JSON for arrays, normalized text otherwise. */
+	private static function same( array $row, $a, $b ) {
+		if ( ! empty( $row['array'] ) ) {
+			return self::canon( $a ) === self::canon( $b );
+		}
+		return self::normalize( $a ) === self::normalize( $b );
 	}
 
 	/** Themes may let Site Sync set keys inside their own array options. */
@@ -466,6 +551,9 @@ final class Scout_Sync {
 
 	/** What the saved value means for comparison: text as is, images by file. */
 	private static function comparable( array $item, $raw ) {
+		if ( ! empty( $item['array'] ) ) {
+			return self::canon( $raw );
+		}
 		if ( empty( $item['image'] ) ) {
 			return self::normalize( $raw );
 		}
@@ -479,6 +567,14 @@ final class Scout_Sync {
 			$hash = $path && is_file( $path ) ? hash_file( 'sha256', $path ) : 'missing';
 		}
 		return 'img:' . $hash;
+	}
+
+	/** The theme copy as compared: image hash, canonical JSON for a list, or normalized text. */
+	private static function theme_text( array $item ) {
+		if ( ! empty( $item['image'] ) ) {
+			return $item['theme'];
+		}
+		return empty( $item['array'] ) ? self::normalize( $item['theme'] ) : self::canon( $item['theme'] );
 	}
 
 	/** Line endings and trailing space never count as an edit. */
@@ -510,7 +606,7 @@ final class Scout_Sync {
 				if ( ! $item['post_id'] ) {
 					// A page the manifest says to create is a safe write: nothing is overwritten.
 					$item['state'] = empty( $item['new'] ) ? self::MISSING : self::CREATE;
-					$item['t']     = self::hash( empty( $item['image'] ) ? self::normalize( $item['theme'] ) : $item['theme'] );
+					$item['t']     = self::hash( self::theme_text( $item ) );
 					$item['d']     = self::hash( '' );
 					$rows[]        = $item;
 					continue;
@@ -531,7 +627,7 @@ final class Scout_Sync {
 				continue;
 			}
 			$item['raw']   = self::read( $item );
-			$theme         = empty( $item['image'] ) ? self::normalize( $item['theme'] ) : $item['theme'];
+			$theme         = self::theme_text( $item );
 			$db            = self::comparable( $item, $item['raw'] );
 			$item['t']     = self::hash( $theme );
 			$item['d']     = self::hash( $db );
@@ -690,7 +786,7 @@ final class Scout_Sync {
 				'front'   => array(),
 				'rows'    => array_map(
 					static function ( $r ) {
-						return array_intersect_key( $r, array_flip( array( 'id', 'kind', 'post_type', 'slug', 'field', 'group', 'key', 'option', 'post_id', 'email', 'user_id', 'image', 'raw', 'write' ) ) );
+						return array_intersect_key( $r, array_flip( array( 'id', 'kind', 'post_type', 'slug', 'field', 'group', 'key', 'option', 'post_id', 'email', 'user_id', 'image', 'array', 'raw', 'write' ) ) );
 					},
 					$pick
 				),
@@ -887,10 +983,10 @@ final class Scout_Sync {
 					continue;
 				}
 				$now = self::read( $row );
-				if ( self::normalize( $now ) === self::normalize( $row['raw'] ) ) {
+				if ( self::same( $row, $now, $row['raw'] ) ) {
 					continue; // Never written, or already back.
 				}
-				if ( self::normalize( $now ) !== self::normalize( $row['write'] ) || ! self::write( $row, $now, $row['raw'] ) ) {
+				if ( ! self::same( $row, $now, $row['write'] ) || ! self::write( $row, $now, $row['raw'] ) ) {
 					$skipped[] = self::label( $row );
 					continue;
 				}
@@ -909,7 +1005,7 @@ final class Scout_Sync {
 
 	/** Compare and write one field. False when it changed underneath us. */
 	private static function write( array $row, $expected, $value ) {
-		if ( self::normalize( self::read( $row ) ) !== self::normalize( $expected ) ) {
+		if ( ! self::same( $row, self::read( $row ), $expected ) ) {
 			return false;
 		}
 		if ( 'setting' === $row['kind'] ) {
@@ -935,13 +1031,24 @@ final class Scout_Sync {
 			if ( is_wp_error( $result ) ) {
 				return false;
 			}
+		} elseif ( ! empty( $row['array'] ) ) {
+			$key  = self::meta_key( $row['field'] );
+			$sub  = self::meta_sub( $row['field'] );
+			$data = self::unpack( $value );
+			if ( '' !== $sub ) {
+				update_post_meta( (int) $row['post_id'], $key, wp_slash( self::plant( get_post_meta( (int) $row['post_id'], $key, true ), $sub, $data ) ) );
+			} elseif ( '' === $data ) {
+				delete_post_meta( (int) $row['post_id'], $key );
+			} else {
+				update_post_meta( (int) $row['post_id'], $key, wp_slash( $data ) );
+			}
 		} elseif ( '' !== self::meta_sub( $row['field'] ) ) {
 			$key = self::meta_key( $row['field'] );
 			update_post_meta( (int) $row['post_id'], $key, wp_slash( self::plant( get_post_meta( (int) $row['post_id'], $key, true ), self::meta_sub( $row['field'] ), $value ) ) );
 		} else {
 			update_post_meta( (int) $row['post_id'], self::meta_key( $row['field'] ), wp_slash( $value ) );
 		}
-		return self::normalize( self::read( $row ) ) === self::normalize( $value );
+		return self::same( $row, self::read( $row ), $value );
 	}
 
 	/** Add a theme image to the media library once, tagged with its file hash. */
