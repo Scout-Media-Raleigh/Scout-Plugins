@@ -3,7 +3,7 @@ name: Scout dashboard
 scope: ".sh (every Scout screen inside a client's WordPress dashboard)"
 tokens: tools/admin-kit/tokens.json
 css: tools/admin-kit/scout-admin.css
-kit: 1.11.0
+kit: 1.11.1
 design-system-branch: Dashboard (project/tokens/dashboard.css in the Scout design system)
 ---
 
@@ -57,7 +57,7 @@ Before and after: "Get found" became "Search". "Your website" became "Site featu
 
 ### Menu group names (kit 1.11.0)
 
-Home, To do, Reports, Business, People, Site features, Search & analytics, Legal pages, Site status, Scout tools. Labels only: the group keys (`inbox`, `business`, `website`, `search`, `policies`, `health`) never change.
+Home, To do, Reports, Business, People, Site features, Search & analytics, Legal pages, Site status, Scout tools. Labels only: the group keys (`inbox`, `business`, `website`, `search`, `policies`, `health`) never change. Reports (`reports`) is reserved and empty: no screen is filed there, because Recon's numbers are never shown in WordPress (kit 1.11.1, Joy 2026-11-05).
 
 ## 3. Color
 
