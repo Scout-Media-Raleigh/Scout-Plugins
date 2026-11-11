@@ -34,7 +34,16 @@ $map = array(
 	'edit.php?post_type=scout_sitecheck'      => array( 'Check requests', 'inbox' ),
 	'site-build-features&tab=health'          => array( 'Site status', 'health' ),
 	'scout'                                   => array( 'Google checks', 'health' ),
-	'scout&tab=protect'                       => array( 'Spam protection', 'health' ),
+	'scout&tab=protect'                       => array( 'Spam protection', 'build' ), // Setup switches, Scout only (Joy, 2026-11-11).
+	'example-import'                          => array( 'Import pages', 'build' ), // Any import, setup or sync screen, from any plugin or theme.
+	'example-companion'                       => array( 'Import pages', 'build' ),
+	'scout-build'                             => array( 'Setup & Tools', 'build' ),
+	'example-companion-setup'                 => array( 'Menus', 'build' ),
+	'example-companion-sync'                  => array( 'Content', 'build' ),
+	'scout-events-import'                     => array( 'Add from spreadsheet', 'business' ), // Plus staff screens stay in their section.
+	'scout-members-import'                    => array( 'Import members', 'business' ),
+	'scout-reviews-ask'                       => array( 'Ask for reviews', 'website' ),
+	'scout-hours'                             => array( 'Hours', 'business' ),
 	'scout-optimize'                          => array( 'Image optimizer', 'health' ),
 	'scout-accessibility'                     => array( 'Accessibility', 'policies' ),
 	'scout-disclaimers'                       => array( 'Disclaimers', 'policies' ),
@@ -68,6 +77,7 @@ $map = array(
 	'scout-rvpark'                            => array( 'Home', 'business' ),
 	'site-build-features&tab=features&group=inbox' => array( 'To do', 'inbox' ),
 	'site-build-features&tab=features&group=policies' => array( 'Legal pages', 'policies' ),
+	'edit.php?post_type=scout_writing'        => array( 'Writing (all)', 'build' ), // A theme's copy in the Scout menu; the Plus section is its home.
 );
 foreach ( $map as $slug => list( $label, $want ) ) {
 	$got = Scout_Admin_UI::group( $slug, $label );

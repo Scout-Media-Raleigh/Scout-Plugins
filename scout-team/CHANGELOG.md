@@ -1,5 +1,9 @@
 # Scout Team changelog
 
+## 0.4.3 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.4.2 (2026-11-11)
 
 - **People who need a look come first (Joy, 2026-11-11).** The People list shows anyone with something missing or waiting at the top, then everyone else, each part in team page order.

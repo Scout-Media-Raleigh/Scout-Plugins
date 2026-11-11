@@ -1,5 +1,9 @@
 # Scout Reviews: Changelog
 
+## 0.8.1 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.8.0 (2026-11-10)
 
 - **Stars and the review font from the theme's DESIGN.md.** When DESIGN.md has a `### Feature: reviews` section, `star` sets the filled star color in review cards and the rating summary, and `quote_font` sets the font of the review text. Without the section the stars stay amber and the text keeps the page's font, exactly as before.

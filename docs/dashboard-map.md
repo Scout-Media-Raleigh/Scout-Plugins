@@ -31,8 +31,8 @@ person came to do, and the menu stays the same on every site.
 | `website` | Site features | owner, operator | What visitors see and use: Call buttons, Chat and its settings, Reviews on the site, Ask for reviews, Cards and links, Newsletter, Redirects | Is this something visitors see or use? |
 | `search` | Search & analytics | owner, operator | SEO, AI search, Analytics and the cookie notice, robots.txt, site search and the sitemap | Does this help Google, AI tools or visitors find things? |
 | `policies` | Legal pages | owner, operator | Trust and legal pages reviewed every year: accessibility statement, law-firm disclaimers (Scout Law Firm Tools), and later the privacy policy and terms | Is this a trust or legal page? |
-| `health` | Site status | owner, operator | Reports on whether things are working: the health report, Search health, Spam protection, the image optimizer, accessibility checks | Does this tell us if something is working? |
-| `build` | Scout tools (Build tools on white-label sites) | operators only | Updates (its first screen), Features and plan, Site log, Email, Site Sync, the Change log, a theme's own screen. The client's own "What's new on your site" view of the Site log sits under Home. | Is this only for Sean and Joy? |
+| `health` | Site status | owner, operator | Reports on whether things are working: the health report, Search health, the image optimizer, accessibility checks | Does this tell us if something is working? |
+| `build` | Scout tools (Build tools on white-label sites) | operators only | Updates (its first screen), Features and plan, Spam protection, every import, export, setup, sync or migration screen from any plugin, theme or companion (Site Standard rule 40), Site log, Email, Site Sync, the Change log, a theme's own screen. The client's own "What's new on your site" view of the Site log sits under Home. | Is this only for Sean and Joy? |
 
 Plus modules are not in this menu. Each one is its own sidebar section (see
 "Plus sections" below).
@@ -72,6 +72,17 @@ come first and open, the rest closed below. Scout tools opens on Updates, then F
 approvals and Attorney sign-offs (law sites), and Business, Search settings, the Accessibility
 statement, RV park, the Writing room, People, To do and Site status each show what needs doing
 first (Build 0.17.1 and the plugin releases with it). Copy the report stays on top of Site status.
+
+### Setup tools go to Scout tools (Joy, 2026-11-11)
+
+> "move import pages into scout tools... on all sites and plugins"
+
+Admin kit 1.12.0 (`Scout_Admin_UI::is_operator_tool()`): a Scout menu screen whose name or
+slug says import, export, setup, sync, migrate or tools files under Scout tools, whatever made
+it. That covers a theme's "Import pages" and a companion's setup screen. Spam protection's
+switches moved there from Site status. Plus sections keep their own "Add from spreadsheet"
+screens. A theme's copy of the Writing list files there too, until the theme drops it (Site
+Standard rule 41: link to the plugin's screen, never copy it).
 
 **One home, plus "Looking for" links.** A screen lives in exactly one group.
 Where it also fits another group, that group's screen list ends with one quiet

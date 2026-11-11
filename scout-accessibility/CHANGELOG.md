@@ -1,5 +1,9 @@
 # Scout Accessibility changelog
 
+## 0.1.22 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.1.21 (2026-11-11)
 
 - **The statement screen shows checks to fix (Joy, 2026-11-11).** With the page live and the weekly checks finding something, the status line reads "Published, with N checks to fix" and links to the checks.
