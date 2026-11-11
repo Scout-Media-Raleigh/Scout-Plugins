@@ -1,5 +1,11 @@
 # Scout Core — Changelog
 
+## 1.13.1 (2026-11-11)
+
+- README: the Language versions (hreflang) section no longer says unreleased. It shipped in 1.10.0.
+- **Shared admin kit 1.11.1.** Reports stays reserved and empty: no screen is filed there, a Recon screen included, because Recon's numbers are never shown in WordPress (Joy, 2026-11-05).
+- Code comments describe client sites by type instead of by name. Nothing a person sees changes.
+
 ## 1.13.0 (2026-11-11)
 
 - **Change log.** When someone who isn't Scout edits the site, Scout Core records who, when and what changed, so the change can be folded into the repo and the next theme update keeps it (Joy, 2026-10-27). It covers pages, posts and Site Editor templates (title, text, excerpt, status, with a link to the WordPress revision), the Scout SEO fields, menus, photos (uploads, details, alt text, deletions), key settings (site title, tagline, home page, permalinks, Business info, SEO and spam settings), plugins and themes (turned on or off, installed, updated, deleted, switched), users and roles (never passwords), the Customizer and Gravity Forms. Several saves of the same thing by one person within five minutes become one entry. Scout's own edits (Scout Build operators), cron, WP-CLI, plugin auto-updates and Site Sync's writes are not logged; theme setup code can call `Scout_Changelog::pause()` and `resume()`.

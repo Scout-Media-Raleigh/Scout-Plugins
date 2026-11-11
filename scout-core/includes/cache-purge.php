@@ -5,7 +5,7 @@
  * When the active theme (or its parent) or any Scout plugin is updated or
  * replaced, cached pages still point at the old style and script versions
  * until someone purges by hand. Core now purges WP Engine's caches (and WP
- * Rocket's, where a site runs it) right after the update. Bliss Boogie's theme
+ * Rocket's, where a site runs it) right after the update. One client theme
  * did this for itself; every site gets it now.
  *
  * Cloudflare is not purged: that needs the site's Cloudflare key, which a

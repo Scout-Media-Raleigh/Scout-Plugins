@@ -331,7 +331,7 @@ line runs only while `! scout_core_owns( 'hours' )`.
   Rocket caches purge by themselves (`scout_core_purge_after_update`). Cloudflare is
   still purged by hand.
 
-## Language versions (hreflang, unreleased)
+## Language versions (hreflang, 1.10.0)
 
 For a site with the same page in two languages, such as a Spanish copy of a
 service page. Without links between them, Google treats the two as duplicates
