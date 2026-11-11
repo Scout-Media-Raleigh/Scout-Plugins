@@ -1,7 +1,7 @@
 <?php
 /**
- * The content types every Scout site needs, confirmed across the Maravela's and
- * North Crest builds: Testimonials/Reviews and FAQs. (Business identity lives in
+ * The content types every Scout site needs, confirmed across the banquet hall and
+ * RV park builds: Testimonials/Reviews and FAQs. (Business identity lives in
  * includes/business.php since it is site-level, not a post type.)
  *
  * Per-client types (Event, Menu, Amenity, Attorney, Practice Area...) belong in

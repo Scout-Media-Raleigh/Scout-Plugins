@@ -82,7 +82,7 @@ function scout_visitor_problems( $d, string $slug ): array {
 		}
 	}
 	$text = json_encode( $d );
-	if ( false !== strpos( (string) $text, '—' ) ) {
+	if ( false !== strpos( (string) $text, '—' ) ) { // slop-ok: this line checks for em dashes.
 		$p[] = 'uses an em dash';
 	}
 	return $p;

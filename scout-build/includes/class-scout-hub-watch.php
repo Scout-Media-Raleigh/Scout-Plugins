@@ -2,7 +2,7 @@
 /**
  * Tells Scout when a live site is hidden from search engines.
  *
- * Andy's site, Oct 2026: the live site carried "Discourage search engines"
+ * One client site, Oct 2026: the live site carried "Discourage search engines"
  * (blog_public 0) over from staging for days and nobody at Scout knew. Now a
  * live site with that box ticked emails Scout at once when the setting
  * changes, then once a day's check finds it still on, at most once a week,

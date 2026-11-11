@@ -149,7 +149,7 @@ final class Scout_Hub_Features {
 		}
 		if ( 'refill' === $do ) {
 			// The setup file runs once per theme version. A save from a page that was
-			// open before the theme update can blank what it filled (Hair by Patrick,
+			// open before the theme update can blank what it filled (one client site,
 			// Oct 15), so this lets it run again. It still fills blanks only.
 			delete_option( Scout_Hub_Setup::DONE );
 			Scout_Hub_Setup::run();

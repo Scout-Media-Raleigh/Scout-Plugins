@@ -385,7 +385,7 @@ final class Scout_Hub_Admin {
 			$lede = self::branded() ? __( 'What Scout has done on your website, and anything you have asked for.', 'scout-build' ) : __( 'What your web team has done on your website, and anything you have asked for.', 'scout-build' );
 		}
 		// Site name in the eyebrow, trimmed at a " | " tagline so it fits a phone.
-		$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+		$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 		// The canvas layout (Joy, 2026-11-04): Home leads with a sentence, Home and the
 		// Inbox have no section list, and the Inbox bar carries Request a change.
 		if ( in_array( $tab, array( 'overview', 'inbox' ), true ) && method_exists( 'Scout_Admin_UI', 'no_local' ) ) {
@@ -436,7 +436,7 @@ final class Scout_Hub_Admin {
 		$count = $words[ $n ] ?? sprintf( __( '%d things', 'scout-build' ), $n );
 		if ( Scout_Hub_Access::is_operator() ) {
 			$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
-			$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+			$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 			$head = $n
 				/* translators: %s: "Three things" */
 				? sprintf( 1 === $n ? __( '%s on this site is waiting.', 'scout-build' ) : __( '%s on this site are waiting.', 'scout-build' ), $count )
@@ -497,7 +497,7 @@ final class Scout_Hub_Admin {
 		$updates  = self::waiting();
 		$theme    = wp_get_theme();
 		$log      = class_exists( 'Scout_Hub_Log' ) ? Scout_Hub_Log::query( array( 'per_page' => 3, 'client' => ! $operator ) ) : array( 'items' => array() );
-		$site     = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+		$site     = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 		if ( $bad ) {
 			$state = 'bad';
 			/* translators: %d: failing checks */
@@ -1393,7 +1393,7 @@ final class Scout_Hub_Admin {
 	private static function update_changes(): array {
 		$out = array( 'state' => 'off', 'head' => '', 'detail' => '', 'count' => 0, 'url' => '', 'export' => '', 'line' => '' );
 		if ( ! class_exists( 'Scout_Changelog' ) || ! method_exists( 'Scout_Changelog', 'count_new' ) ) {
-			$out['head'] = __( 'The Change log comes with a later Scout Core release.', 'scout-build' );
+			$out['head'] = __( 'Update Scout Core to 1.13.0 to see the Change log.', 'scout-build' );
 			$out['line'] = 'The Change log is not on this site yet.';
 			return $out;
 		}
@@ -2518,7 +2518,7 @@ final class Scout_Hub_Admin {
 			<div class="sh-log-part">
 				<h3><?php esc_html_e( 'Import history', 'scout-build' ); ?></h3>
 				<?php if ( $show_import ) : ?>
-					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s file from docs/site-log-import. Lines already here are skipped.', 'scout-build' ); ?></p>
+					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s history file, which Scout keeps in its private ops folder. Lines already here are skipped.', 'scout-build' ); ?></p>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Log::ACTION ); ?>">
 						<input type="hidden" name="do" value="import">

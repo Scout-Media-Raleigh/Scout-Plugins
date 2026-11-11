@@ -8,8 +8,8 @@
  *
  * A theme opts in with two lines in its style.css header:
  *
- *   Update URI:    https://github.com/Scout-Media-Raleigh/BlissBoogie
- *   Scout Release: blissboogie
+ *   Update URI:    https://github.com/Scout-Media-Raleigh/ClientTheme
+ *   Scout Release: clienttheme
  *
  * Its repo publishes each version as a GitHub release tagged
  * <release>-v<version> with a <release>.zip asset (tools/theme-release.yml in
@@ -258,10 +258,10 @@ final class Scout_Hub_Themes {
 	 *
 	 * The repo in the theme's Update URI and the file address GitHub hands back
 	 * can name the repo differently. GitHub ignores capitals (the URI says
-	 * maravelas, the API says Maravelas), and after a repo moves to another owner
+	 * clienttheme, the API says ClientTheme), and after a repo moves to another owner
 	 * or is renamed, GitHub forwards the old name while the file address carries
-	 * the new one (joyrmac/Andres-Borda---Golf-Carts became
-	 * Scout-Media-Raleigh/AndysGolfCarts). So the exact address the release
+	 * the new one (joyrmac/old-repo-name became
+	 * Scout-Media-Raleigh/NewRepoName). So the exact address the release
 	 * lookup returned counts as well, whatever owner and name it carries.
 	 */
 	private static function is_release_file( array $src, string $package ): bool {

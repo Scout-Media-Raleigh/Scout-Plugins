@@ -43,7 +43,6 @@ $map = array(
 	'scout-ai-search'                         => array( 'AI search', 'search' ),
 	'scout-analytics'                         => array( 'Visits & cookies', 'search' ),
 	'site-build-robots'                       => array( 'Search engine rules', 'search' ),
-	'scout-recon'                             => array( 'Reports', 'reports' ),
 	'scout-contact'                           => array( 'Call buttons', 'website' ),
 	'scout-redirects'                         => array( 'Redirects', 'website' ),
 	'scout-cards'                             => array( 'Cards & links', 'website' ),
@@ -74,6 +73,10 @@ foreach ( $map as $slug => list( $label, $want ) ) {
 	$got = Scout_Admin_UI::group( $slug, $label );
 	ok( $got === $want, sprintf( '%-48s %-22s -> %s', $slug, $label, $got ) . ( $got === $want ? '' : " (wanted $want)" ) );
 }
+// Reports is reserved and empty (kit 1.11.1): Recon's numbers are never shown in WordPress
+// (Joy, 2026-11-05), so neither a Recon screen nor a screen called Reports is filed there.
+ok( 'reports' !== Scout_Admin_UI::group( 'scout-recon', 'Reports' ), 'a Recon screen is not filed under Reports' );
+ok( 'reports' !== Scout_Admin_UI::group( 'example-reports', 'Reports' ), 'a screen called Reports is not filed under Reports' );
 ok( array_keys( Scout_Admin_UI::GROUPS ) === array( 'overview', 'inbox', 'reports', 'business', 'people', 'website', 'search', 'policies', 'health', 'build' ), 'the groups, in menu order' );
 ok( 'Home' === Scout_Admin_UI::label( 'overview' ) && 'Search & analytics' === Scout_Admin_UI::label( 'search' ) && 'Scout tools' === Scout_Admin_UI::label( 'build' ), 'the new names' );
 ok( array() === Scout_Admin_UI::hidden(), 'with no hub loaded and full rights, nothing is hidden' );

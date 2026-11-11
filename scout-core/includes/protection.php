@@ -443,8 +443,8 @@ final class Scout_Core_Protection {
 	/* ---------- Hardening ---------- */
 
 	/**
-	 * Site hardening moved from themes (Site Standard gap 6; Bliss Boogie's companion and Maravela's
-	 * theme did it in their own code). Visitors who are not signed in cannot list login names, XML-RPC
+	 * Site hardening moved from themes (Site Standard gap 6; one client's companion plugin and another
+	 * client's theme did it in their own code). Visitors who are not signed in cannot list login names, XML-RPC
 	 * is off unless Jetpack needs it, and every page sends the basic browser protections. Signed-in
 	 * editors and the block editor are unaffected. Themes that still do this themselves are harmless:
 	 * the same filters run twice with the same result.

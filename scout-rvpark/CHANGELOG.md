@@ -1,5 +1,10 @@
 # Scout RV Park: changelog
 
+## 0.2.4 (2026-11-11)
+
+- **Plainer plugin name.** The Plugins screen lists it as Scout RV Park, with a description of what it adds (amenities, and site types with their rates and rig lengths). The folder, slug, text domain, post types and every saved field are unchanged, so nothing on the site moves.
+- **Shared admin kit 1.11.1.** Reports stays reserved and empty: no screen is filed there, a Recon screen included, because Recon's numbers are never shown in WordPress (Joy, 2026-11-05).
+
 ## 0.2.3 (2026-11-05)
 
 - **Home** opens with a status line, headings read "Site types (4)" and "Amenities (12)", and an empty rate or length leaves the cell blank (screen readers hear "None") instead of a dash. Shorter lede and note.
