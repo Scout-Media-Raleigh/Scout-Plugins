@@ -401,8 +401,21 @@ Every change to this plugin:
 |---|---|---|---|
 | Words typed into the site's own search box when the search finds nothing, with how many times each was searched and the first and last day it was seen. Nothing that points to a person is kept: no IP address, browser or time of the search. Words that look like an email address, a phone number or a web address are not kept. (only while the list of searches that found nothing is on in Search settings, which it is by default, and not for people logged in to edit the site) | This website's database, as one list | 90 days after the words were last searched, or until someone clears the list. At most 200 searches are kept. | Nobody |
 | A scrambled (hashed) copy of the search words and the visitor's IP address, so one visitor's repeat searches count once (only while the search words are kept) | A temporary record in this website's database | 30 minutes | Nobody |
+| Google loads its map of the business and may set its own cookies and record the visitor's IP address, as Google does on google.com (only after a visitor taps "Show the map" on a page that has the map) | Google (Google Maps) | Under Google's own privacy policy | Nobody |
 
-Scout Core sets no cookies. Its email guard only changes how email addresses are written into the page, and it stores nothing. The dashboard remembers which sections a staff member opened, in their own browser (scoutSections), which never touches visitors.
+Scout Core sets no cookies. Its email guard only changes how email addresses are written into the page, and it stores nothing. The dashboard remembers which sections a staff member opened, in their own browser (scoutSections), which never touches visitors. The map ([scout_map]) loads nothing from Google until a visitor taps it.
 
 Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
 <!-- visitor-data:end -->
+
+## Map (1.15.0)
+
+`[scout_map]` puts a "Show the map" button over whatever the theme wraps inside it; the Google map loads in place only when a visitor taps it. The place comes from Business info. Before the tap the button is a plain link to Google Maps, so it works without JavaScript. Taps send `map_open` to Scout Analytics. A theme that ships the shortcode in a pattern should register a fallback that returns the inner content when Scout Core is older than 1.15.0:
+
+```php
+add_action( 'init', function () {
+	if ( ! shortcode_exists( 'scout_map' ) ) {
+		add_shortcode( 'scout_map', function ( $a, $c = '' ) { return do_shortcode( (string) $c ); } );
+	}
+}, 20 );
+```
