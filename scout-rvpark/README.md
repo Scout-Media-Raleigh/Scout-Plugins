@@ -1,4 +1,4 @@
-# Scout — North Crest RV Park (companion)
+# Scout RV Park (companion)
 
 The worked example of the **Scout Core companion pattern**: a tiny plugin that
 registers one client's specific content types without ever forking `scout-core`.

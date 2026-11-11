@@ -109,7 +109,7 @@ $G = 'Scout_Core_Staging';
 ok( $G::is_staging( 'production', 'scoutmediastg.wpenginepowered.com' ) && $G::is_staging( 'staging', 'example.com' ), 'a WP Engine staging address, or WordPress set to staging, is staging' );
 ok( ! $G::is_staging( 'production', 'scoutraleigh.com' ), 'the live address is not staging' );
 ok( $G::allowed( 'Joy <joy@scoutraleigh.com>' ) && ! $G::allowed( 'client@gmail.com' ) && ! $G::allowed( 'x@notscoutraleigh.com' ), 'only Scout addresses may get mail from staging' );
-$a = $G::mail_args( array( 'to' => 'client@gmail.com, team@scoutraleigh.com', 'headers' => array( 'Bcc: member@yahoo.com', 'Cc: sean@scoutraleigh.com, kai@example.com', 'Reply-To: client@gmail.com' ) ) );
+$a = $G::mail_args( array( 'to' => 'client@gmail.com, team@scoutraleigh.com', 'headers' => array( 'Bcc: member@yahoo.com', 'Cc: sean@scoutraleigh.com, guest@example.com', 'Reply-To: client@gmail.com' ) ) );
 ok( array( 'team@scoutraleigh.com' ) === $a['to'] && array( 'Cc: sean@scoutraleigh.com', 'Reply-To: client@gmail.com' ) === $a['headers'], 'customers are dropped from To, Cc and Bcc; Scout stays' );
 $a = $G::mail_args( array( 'to' => array( 'member@yahoo.com' ), 'headers' => '' ) );
 ok( false === $G::stop_empty_mail( null, $a ), 'a booking reminder to a customer is not sent at all' );

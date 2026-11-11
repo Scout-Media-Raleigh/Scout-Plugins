@@ -6,7 +6,7 @@ prompt has a place to answer it that saves as they type, and a welcome at the
 top of the dashboard hands them their next prompt. When a piece feels ready,
 **Send to Scout** emails it to us.
 
-Built for Kai Baylis (Bliss Boogie) inside Scout — Bliss Boogie 0.2.0 to 0.2.3,
+Built for one client inside that client's own plugin (0.2.0 to 0.2.3),
 then moved here so it updates through Scout's release channel and any client
 can have one (Joy, 2026-11-03).
 
@@ -22,7 +22,7 @@ can have one (Joy, 2026-11-03).
   Scout and emails Scout. **Start a draft from this** (website and newsletter
   prompts) makes a normal WordPress draft post, never published.
 - **My writing**: everything written, newest first, with Keep writing.
-- **The dashboard welcome**: "Welcome back, Kai. Here's your next prompt.", the
+- **The dashboard welcome**: "Welcome back, Sam. Here's your next prompt.", the
   prompt (a starred one first, else the next one in the first step), Write this
   one, Pick a different prompt, Keep writing, and their progress.
 - Without JavaScript every button still works: Write opens the prompt on its
@@ -36,7 +36,7 @@ can have one (Joy, 2026-11-03).
   entry shows its prompt, voice memos and draft post.
 - **Settings** (under Your Writing): where the prompts come from, an upload when the theme
   has none, the Send to Scout address, and the log of what moved over from the
-  Bliss Boogie room.
+  client plugin's room.
 - With no prompts yet, writers see nothing at all (no menu, no toolbar button,
   no welcome). Administrators see a short **No prompts yet** screen.
 
@@ -55,8 +55,8 @@ updates with every theme release. Every key is optional except `prompts`.
     "send_to": "team@scoutraleigh.com",
     "text": {
       "kicker": "Your 2027 writing",
-      "dashboard_kicker": "Your writing · Bliss Boogie 2027",
-      "search_hint": "Search, for example: consent, book, Level 2",
+      "dashboard_kicker": "Your writing · 2027",
+      "search_hint": "Search, for example: story, launch, Step 2",
       "week": [
         { "label": "Early in the week", "title": "One important piece", "text": "One prompt from Step 1. About 20 minutes." },
         { "label": "Later in the week", "title": "One social batch", "text": "Three five-minute prompts from Step 3." },
@@ -127,7 +127,7 @@ only on the writing screens. No fonts load from outside the site.
   changed once people write to it), a `step` and `q`. Everything else is optional.
 - `accent` is the word in a step or block title set in italic color.
 - `blocks` fold groups into titled sections inside a step (the first starts
-  open). `step1_blocks` (the Bliss Boogie file's name) is read as Step 1's blocks.
+  open). `step1_blocks` (the first client file's name) is read as Step 1's blocks.
 - A group whose `groups` entry has an `issue` object (`month`, `theme`, `send`,
   `job`) shows as a newsletter-issue card; a block of them is a two-column grid.
 - `social_rules`, `guests` and `inventory` are reference lists. Without a
@@ -157,7 +157,7 @@ as typed.
   changes who gets Send to Scout.
 - Deleting the plugin keeps every entry.
 
-## Moving from Scout — Bliss Boogie 0.2.x
+## Moving from the client plugin's room (0.2.x)
 
 On activation, and on the first admin screen after an update, any
 `bb_writing` entries, `_bb_*` meta and `scout_bb_writing_marks` are renamed in
@@ -166,7 +166,7 @@ links. It is safe to run again, and each move is logged in Settings.
 The room's old address, `admin.php?page=scout-bb-writing&write=<id>`, redirects
 to the same prompt here, so links already sent keep working.
 
-Scout — Bliss Boogie 0.3.0 stops loading its own copy of the room while this
+The client plugin, from 0.3.0, stops loading its own copy of the room while this
 plugin is active. If this plugin is switched off, that copy runs again and
 moves the writing back under its names first; switching this back on moves it
 forward again.

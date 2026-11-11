@@ -1,8 +1,8 @@
 # Scout Newsletter
 
 Sends people who tick the newsletter box on a Scout site to the client's email
-list in Beehiiv, tagged by where they joined. Built for Bliss Boogie (Kai's
-newsletter, Elevate, lives in Beehiiv; her customer list lives in FluentCRM
+list in Beehiiv, tagged by where they joined. Built for an events client (the
+newsletter lives in Beehiiv; the customer list lives in FluentCRM
 through Scout CRM Sync) and kept general for any Scout site with a Beehiiv
 publication. The catalog's Newsletter feature ("theme-only today, needs a
 plugin before clients get it") ships here.
@@ -12,7 +12,7 @@ plugin before clients get it") ships here.
 - **Nobody is added without a ticked box.** The box always starts unticked and
   is never required. A purchase, a booking or a membership alone never adds
   anyone. There is no import: existing customers are invited, not added
-  (Bliss Boogie FOR-KAI #116).
+  (the client's own decision).
 - **Someone who unsubscribed stays unsubscribed.** Every send first asks
   Beehiiv whether the email is on the list. Unsubscribed (`inactive`) or
   invalid: nothing is sent, the site remembers it, and later ticks are saved

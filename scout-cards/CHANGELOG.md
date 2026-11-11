@@ -85,7 +85,7 @@
 ## 1.0.16 (2026-10-15)
 
 - **A logo for the links and share pages.** New "Logo for the links and share pages" picker. When the main card shows a person, the links page shows the logo instead, and the share page shows it above the QR code. Blank keeps the card photo as before.
-- **Fix: links page rows shrank and centered on themes that style every `<nav>`** (North Crest's header rule). The list now stays full width on any theme.
+- **Fix: links page rows shrank and centered on themes that style every `<nav>`** (one client theme's header rule). The list now stays full width on any theme.
 
 ## 1.0.15 (2026-10-15)
 

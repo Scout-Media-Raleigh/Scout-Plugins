@@ -11,8 +11,8 @@ on the site. Scout Build 0.7.0 or later does the checking and installing.
 
    ```
    Version:       2.7.6
-   Update URI:    https://github.com/Scout-Media-Raleigh/BlissBoogie
-   Scout Release: blissboogie
+   Update URI:    https://github.com/Scout-Media-Raleigh/ClientTheme
+   Scout Release: client-theme
    ```
 
    `Scout Release` is the theme's folder name. Keep the existing Version
@@ -20,8 +20,8 @@ on the site. Scout Build 0.7.0 or later does the checking and installing.
 2. Copy `theme-release.yml` from this folder to `.github/workflows/` in the
    client repo and set the three EDIT values: the path that changes when the
    theme does, the slug, and the theme folder (or a built zip in the repo).
-3. Merge to main. The workflow publishes `blissboogie-v2.7.6` with
-   `blissboogie.zip`. Each later Version bump on main publishes again.
+3. Merge to main. The workflow publishes `client-theme-v2.7.6` with
+   `client-theme.zip`. Each later Version bump on main publishes again.
 
 ## Once per site (in WordPress)
 

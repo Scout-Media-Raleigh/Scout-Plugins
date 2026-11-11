@@ -15,14 +15,14 @@ $plugins = array(
 	array( 'slug' => 'scout-analytics', 'name' => 'Scout Analytics', 'installed' => '0.9.1', 'available' => '0.9.2', 'on' => true, 'status' => 'held by Scout. Fix coming, ask joy@scoutraleigh.com' ),
 	array( 'slug' => 'scout-core', 'name' => 'Scout Core', 'installed' => '1.8.0', 'available' => '1.9.0', 'on' => true, 'status' => 'installs by itself Nov 7' ),
 );
-$health = "Scout Build site health: Hair by Patrick McGuire (https://example.test/)\nChecked 2026-11-05 14:10, plan: build\n\nBASICS\n[ok]   WordPress: 6.8. Up to date.\n[fix]  Secure connection (HTTPS): Off. The site address is not HTTPS.";
+$health = "Scout Build site health: Example Salon (https://example.test/)\nChecked 2026-11-05 14:10, plan: build\n\nBASICS\n[ok]   WordPress: 6.8. Up to date.\n[fix]  Secure connection (HTTPS): Off. The site address is not HTTPS.";
 $data = array(
-	'site'    => 'Hair by Patrick McGuire',
+	'site'    => 'Example Salon',
 	'url'     => 'https://example.test/',
 	'time'    => '2026-11-05 14:10',
 	'wp'      => '6.8',
 	'php'     => '8.2.10',
-	'theme'   => array( 'name' => 'Patrick', 'version' => '1.4.0', 'state' => '1.4.1 ready', 'key' => 'saved', 'token' => 'github_pat_11ABCDEFG0123456789_abcdefghijklmnopqrstuvwxyz' ),
+	'theme'   => array( 'name' => 'Salon', 'version' => '1.4.0', 'state' => '1.4.1 ready', 'key' => 'saved', 'token' => 'github_pat_11ABCDEFG0123456789_abcdefghijklmnopqrstuvwxyz' ),
 	'checked' => '5 minutes ago',
 	'offline' => false,
 	'plugins' => $plugins,
@@ -40,14 +40,14 @@ $text = $R::text( $data );
 
 // Each part, in the order the screen shows them.
 $parts = array(
-	'Update report: Hair by Patrick McGuire (https://example.test/)',
+	'Update report: Example Salon (https://example.test/)',
 	'Made 2026-11-05 14:10',
-	'WordPress 6.8, PHP 8.2.10, theme Patrick 1.4.0',
+	'WordPress 6.8, PHP 8.2.10, theme Salon 1.4.0',
 	'1. CHECK FOR NEW VERSIONS',
 	'Last checked 5 minutes ago.',
 	'2. PLUGINS (3 waiting)',
 	'3. THEME',
-	'Patrick 1.4.0: 1.4.1 ready',
+	'Salon 1.4.0: 1.4.1 ready',
 	'Theme key: saved',
 	'4. PAGE COPY',
 	'2 items to review.',
@@ -56,7 +56,7 @@ $parts = array(
 	'6. CHECK THE SITE',
 	'2 ok, 1 look, 1 fix. Fix: Secure connection (HTTPS).',
 	'SITE STATUS',
-	'Scout Build site health: Hair by Patrick McGuire',
+	'Scout Build site health: Example Salon',
 );
 $at    = -1;
 $order = true;
@@ -93,8 +93,8 @@ ok( false !== strpos( $text, 'Fix coming, ask [email hidden]' ), 'an address in 
 // The theme key in words, including a key the site can no longer read (its security keys changed).
 ok( 'saved' === $R::key_word( 'saved' ) && 'not set' === $R::key_word( 'none' ) && 'set in wp-config.php' === $R::key_word( 'config' ), 'the key states read as before: saved, not set, set in wp-config.php' );
 ok( "can't be read (paste it again)" === $R::key_word( 'unreadable' ), 'a key that can\'t be read says so, with what to do' );
-$lost = $R::text( array( 'theme' => array( 'name' => 'Patrick', 'version' => '1.4.0', 'state' => "updates stopped, the saved key can't be read", 'key' => $R::key_word( 'unreadable' ) ) ) + $data );
-ok( false !== strpos( $lost, "3. THEME\nPatrick 1.4.0: updates stopped, the saved key can't be read\nTheme key: can't be read (paste it again)" ), 'the theme part says the key can\'t be read and to paste it again' );
+$lost = $R::text( array( 'theme' => array( 'name' => 'Salon', 'version' => '1.4.0', 'state' => "updates stopped, the saved key can't be read", 'key' => $R::key_word( 'unreadable' ) ) ) + $data );
+ok( false !== strpos( $lost, "3. THEME\nSalon 1.4.0: updates stopped, the saved key can't be read\nTheme key: can't be read (paste it again)" ), 'the theme part says the key can\'t be read and to paste it again' );
 ok( '' === $R::key_word( 'something else' ), 'an unknown state prints nothing' );
 
 // Counts the way Site status marks them.

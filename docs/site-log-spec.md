@@ -17,7 +17,7 @@ get their own specs once this ships.
 
 1. The client's WordPress site is the record of its own changes. Google is the view.
 2. Clients see a "Your site" screen in their dashboard and get a monthly message.
-3. Clients who text (Patrick) get a drafted text that Joy sends by hand. No Google Voice yet.
+3. Clients who prefer texts get a drafted text that Joy sends by hand. No Google Voice yet.
 4. Contacts, ownership and the logins list move to the Sheet's Clients tab, shared with joy@ and
    sean@ only. Secrets stay in the password manager. Nothing of that lives on a site or in a repo.
 
@@ -59,7 +59,7 @@ the activity log is this log, and the monthly email is step 4 of the hub plan.
 Rules:
 
 - **A done line never changes.** Corrections are a new line that says what was wrong. The log is the
-  record; editing it in place is how the North Crest regression hid for three months.
+  record; editing it in place is how a client site's regression hid for three months.
 - **No money, no visitor data, no secrets.** Lines describe the site. Spam counts and review totals
   are fine; names from form entries, prices and keys are not. The read endpoint never returns
   post_content for `alert` lines, which can mention addresses.
@@ -82,7 +82,7 @@ work succeeds, so a failed update never logs as done.
 | Scout Chat change request | Scout Chat saves it as a `scout_hub_request` when Scout Build is active (Scout Chat 0.3.0; keeps its own inbox copy, and changes nothing when Scout Build is absent) | `request` | as above, source "Scout Chat" | Yes |
 | Hidden from Google alert sent | `Scout_Hub_Watch::check()` when it mails | `alert` | "Site hidden from Google; Scout alerted" | No |
 | Site back in Google | `Scout_Hub_Watch::check()` when `hidden()` turns false after an alert | `alert` | "Site visible to Google again" | No |
-| Approval recorded | the Approve action on Your site (step 3; the entry shape is fixed here) | `approval` | "Approved by Patrick McGuire: home page title wording" | Yes |
+| Approval recorded | the Approve action on Your site (step 3; the entry shape is fixed here) | `approval` | "Approved by Sam Lee: home page title wording" | Yes |
 | A note | the Add a note form on Scout → Site log, or `POST` on the endpoint | `note` | whatever the person wrote, with Topic, Version, Measure and Show the client set on the form | As set |
 
 Lines that need a person: hand edits in WordPress (a FAQ sentence Joy changed by hand), launch
@@ -142,15 +142,15 @@ partner-side sites unless `SCOUT_HUB_LOG_API` is true.
 `Scout-Internal/ops/site-updates.md` as it stood on 2026-11-02 (43 rows, 75 lines after the eight
 "Every site" rows are copied to all five sites):
 
-| File | Site | Lines | Client-visible |
-|---|---|---|---|
-| `andysgolfcarts.json` | andysgolfcarts.com | 20 | 13 |
-| `maravelas.json` | maravelas.com | 16 | 9 |
-| `northcrestrv.json` | northcrestrvpark.com | 13 | 8 |
-| `hairbypatrick.json` | hairbypatrickmcguire.net | 13 | 8 |
-| `scoutraleigh.json` | scoutraleigh.com | 13 | 8 |
+| Site (each file is named for its site) | Lines | Client-visible |
+|---|---|---|
+| A golf cart repair site | 20 | 13 |
+| A banquet hall site | 16 | 9 |
+| An RV park site | 13 | 8 |
+| A salon site | 13 | 8 |
+| scoutraleigh.com (`scoutraleigh.json`) | 13 | 8 |
 
-Bliss Boogie (Squarespace) and Walter Lutz (not built) have no WordPress site and no file.
+Two clients without a Scout WordPress site (one on Squarespace, one not built yet) have no file.
 
 How the columns map:
 
@@ -183,12 +183,12 @@ After the import: `ops/site-updates.md` gets a closing line pointing here and st
    firing it with the same two arguments).
 4. Changelog entry in `scout-build/CHANGELOG.md` and `scout-chat/CHANGELOG.md`; the catalog summary
    for Scout Build gains "keeps the site's change log".
-5. Release and test on scoutraleigh.com first, then North Crest, then the rest (the hub spec's rule).
+5. Release and test on scoutraleigh.com first, then the first client site on the update channel, then the rest (the hub spec's rule).
    On each site: run Import history once with that site's file, add the two tokens to `wp-config.php`,
    open Scout → Site log and check the imported lines, then make one plugin update and confirm it
    logged itself.
 6. Sites with auto-updates off get 0.9.0 by hand. Check which ones on the Sites tab once it exists;
-   until then, Maravela's and Patrick were off on 2026-10-16.
+   until then, two client sites were off on 2026-10-16.
 
 ## Verify before building
 

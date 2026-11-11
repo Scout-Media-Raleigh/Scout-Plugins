@@ -199,7 +199,8 @@ $words = '';
 foreach ( array( $M::build_row( array( 'since' => $now - 40 * $day ) + $M::data(), $now, 3, $title ), $M::build_row( $M::data(), $now, 0, $title ) ) as $row ) {
 	$words .= $row['label'] . ' ' . $row['value'] . ' ' . $row['note'] . ' ';
 }
-ok( false === strpos( $words, "\u{2014}" ) && ! preg_match( '/\bclaude\b|optima/i', $words ), 'no em dashes, and no names that do not belong' );
+// The partner name is stored encoded so it never appears in this public repo.
+ok( false === strpos( $words, "\u{2014}" ) && ! preg_match( '/\bclaude\b|' . str_rot13( 'bcgvzn' ) . '/i', $words ), 'no em dashes, and no names that do not belong' );
 
 echo $fail ? "\n$fail FAILED\n" : "\nAll form email checks passed\n";
 exit( $fail ? 1 : 0 );

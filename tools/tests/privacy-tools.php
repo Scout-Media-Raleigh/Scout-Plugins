@@ -302,14 +302,14 @@ $signup = static fn( $id, $email, $name, $order = 0, $item = 0 ) => array( 'id' 
 $db->t[ $et ] = array(
 	$signup( 1, 'jo@example.com', 'Jo Kim' ),                 // Free sign-up.
 	$signup( 2, 'jo@example.com', 'Jo Kim', 77, 501 ),         // Jo's own paid ticket.
-	$signup( 3, 'jo@example.com', 'Kai Friend', 77, 501 ),     // Bought by Jo for a friend who gave no email.
+	$signup( 3, 'jo@example.com', 'Ray Friend', 77, 501 ),     // Bought by Jo for a friend who gave no email.
 	$signup( 4, 'lu@example.com', 'Lu Park', 77, 501 ),        // A friend with her own email.
 );
 $item = new Fake_Item(
 	array(
 		'_scout_attendees' => array(
 			array( 'name' => 'Jo Kim', 'email' => 'jo@example.com', 'signature' => 'Jo Kim', 'waiver_version' => 'v2' ),
-			array( 'name' => 'Kai Friend', 'email' => '', 'signature' => 'Kai Friend', 'waiver_version' => 'v2' ),
+			array( 'name' => 'Ray Friend', 'email' => '', 'signature' => 'Ray Friend', 'waiver_version' => 'v2' ),
 			array( 'name' => 'Lu Park', 'email' => 'lu@example.com', 'signature' => 'Lu Park', 'waiver_version' => 'v2' ),
 		),
 	)

@@ -59,9 +59,9 @@ $w = Scout_Hub_Report::checks( $lines, false, 'A note from Scout.' );
 ok( 2 === $w['names_scout'], 'white-label: a line and an opening that name Scout are both flagged' );
 
 // The email body.
-$html = Scout_Hub_Report::body_html( $lines, 'October 2026', 'Hair by Patrick McGuire', 'Patrick', '' );
-ok( false !== strpos( $html, 'Hi Patrick,' ), 'greets by first name' );
-ok( false !== strpos( $html, 'changed on Hair by Patrick McGuire in October 2026.' ), 'standard opening names the site and the month' );
+$html = Scout_Hub_Report::body_html( $lines, 'October 2026', 'Example Salon', 'Sam', '' );
+ok( false !== strpos( $html, 'Hi Sam,' ), 'greets by first name' );
+ok( false !== strpos( $html, 'changed on Example Salon in October 2026.' ), 'standard opening names the site and the month' );
 ok( false !== strpos( $html, 'Waiting on your OK' ) && false !== strpos( $html, 'Site history' ), 'waiting section shows and says where to approve' );
 ok( false === strpos( $html, 'Coming up' ), 'an empty Coming up section is left out' );
 $quarter = Scout_Hub_Report::body_html( $lines, 'July to September 2026', 'X', '', '' );
@@ -72,8 +72,8 @@ $none = Scout_Hub_Report::body_html( array( 'done' => array(), 'waiting' => arra
 ok( false !== strpos( $none, 'There were no changes to the site this time.' ) && false !== strpos( $none, 'Coming up' ), 'an empty month says so and still shows what is coming' );
 
 // The text version.
-$t = Scout_Hub_Report::text( $lines, 'October 2026', 'Patrick' );
-ok( 0 === strpos( $t, 'Hi Patrick, your website update for October 2026: ' ), 'text opens with the name and month' );
+$t = Scout_Hub_Report::text( $lines, 'October 2026', 'Sam' );
+ok( 0 === strpos( $t, 'Hi Sam, your website update for October 2026: ' ), 'text opens with the name and month' );
 ok( false !== strpos( $t, '1 thing needs your OK' ), 'text counts what waits on him' );
 ok( strlen( $t ) < 480, 'text stays short (' . strlen( $t ) . ' characters)' );
 ok( 0 === strpos( Scout_Hub_Report::text( array( 'done' => array(), 'waiting' => array(), 'coming' => array() ), 'October 2026', '' ), 'Your website update for October 2026: no changes this time.' ), 'text with no name and no changes' );

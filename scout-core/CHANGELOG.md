@@ -56,7 +56,7 @@ Design tokens the Client Design Playbook settled, and Site Sync can hide a page 
 
 ## 1.10.3 (2026-11-09)
 
-- **Fix: drop-down (select) fields saved as blank.** Every select field registered through Scout Core (a type's fields or a page fieldset) lost its value on save: the testimonial Source, North Crest's "Feature on the homepage?" on amenities, and any fieldset select. The check WordPress runs on every `update_post_meta`, `add_post_meta` and REST write had no list of allowed choices, so it rejected all of them. That check runs on the edit screen's save too, so editing and saving a testimonial blanked its Source. It now gets the field's choices. Values already saved as blank stay blank: set them again or re-run the import.
+- **Fix: drop-down (select) fields saved as blank.** Every select field registered through Scout Core (a type's fields or a page fieldset) lost its value on save: the testimonial Source, the RV park companion's "Feature on the homepage?" on amenities, and any fieldset select. The check WordPress runs on every `update_post_meta`, `add_post_meta` and REST write had no list of allowed choices, so it rejected all of them. That check runs on the edit screen's save too, so editing and saving a testimonial blanked its Source. It now gets the field's choices. Values already saved as blank stay blank: set them again or re-run the import.
 - Select values now match ignoring case and surrounding space, and are stored as the declared key ("Google" is saved as `google`). A value that is not a choice is still rejected. A list sent to a select field (possible over REST) is rejected instead of stopping the page with a PHP error.
 - Tests: `tools/tests/core-select-meta.php` (no WordPress needed) and `tools/tests/select-meta.php`, run by the new "WordPress tests (fresh install)" CI job on a clean WordPress with Scout Core activated.
 
@@ -121,8 +121,8 @@ Five Site Standard gaps close in Core, so themes can drop their own copies.
   - Visitors who are not signed in cannot list login names through `/wp/v2/users`.
   - XML-RPC is off, unless Jetpack is installed.
   - Every page sends `nosniff`, `SAMEORIGIN` framing and a referrer policy, plus HSTS on SSL, and the WordPress version is hidden. A header the host already sets is kept.
-  - This is the same code Bliss Boogie's companion and Maravela's theme run, so both can drop theirs. Until they do, the filters run twice with the same result.
-- **Caches purge themselves after an update (gap 5).** When the active theme or any Scout plugin is updated or replaced, Core purges WP Engine's caches (and WP Rocket's, where a site runs it), so pages stop pointing at old styles. Cloudflare still needs a hand purge, because that takes the site's Cloudflare key. Filter `scout_core_purge_after_update`; action `scout_core_caches_purged`. Bliss Boogie's theme can drop its own purge.
+  - This is the same code two client sites already ran, one in a companion plugin and one in a theme, so both can drop theirs. Until they do, the filters run twice with the same result.
+- **Caches purge themselves after an update (gap 5).** When the active theme or any Scout plugin is updated or replaced, Core purges WP Engine's caches (and WP Rocket's, where a site runs it), so pages stop pointing at old styles. Cloudflare still needs a hand purge, because that takes the site's Cloudflare key. Filter `scout_core_purge_after_update`; action `scout_core_caches_purged`. A client theme that purged on its own can drop that code.
 - **Staging copies never reach real people.** A staging copy carries the live site's customers and keys, and its scheduled jobs keep running. On a staging copy, email now goes only to scoutraleigh.com addresses, and customers are dropped from To, Cc and Bcc. That covers booking reminders, member renewals and form notifications. Calls to newsletter, email-marketing, texting, payment and Zapier services are refused, so a test sign-up never joins the real list and a test checkout never charges a card. A notice on every dashboard screen says so. A copy is staging when WordPress is set to staging or its address is a host's staging address. `SCOUT_STAGING` in wp-config.php overrides that either way. Filters: `scout_core_staging_mail_to` and `scout_core_staging_blocked_hosts`.
 - Fix: saving the SEO screen kept only the fields it shows, which wiped `purge_on_uninstall`. Keys the screen doesn't show are now kept.
 - Tests: `tools/tests/core-seo-gaps.php` (23 checks).
@@ -134,7 +134,7 @@ Five Site Standard gaps close in Core, so themes can drop their own copies.
 ## 1.6.5 (2026-11-04)
 
 - **Site Sync creates the pages the bundle names and brings posts in as drafts** (Site Standard §6 and §12). A page entry with `"create": true` (or `"create_missing": true` at the top of the manifest) that the site lacks is created on the next run: pages publish, with their title, content, template, parent, menu order and front-page or posts-page setting; a new `posts` list works like `pages` with post_type `post` and arrives as drafts. The state reads "Will be created" and counts as a safe update, never as something to review. Undo trashes what the run created and puts the front-page settings back. A page without `create` is still reported as "Page not found", as before.
-- **One manifest shape.** The entry keys the client themes grew on their own are read as aliases: `file` is `source`; `seo_title` and `description` on a page are its SEO fields; `identity` (`title`, `tagline`, `business.*`) sets the site title, tagline and Business info the way `options` does. Andy's and Bliss Boogie's manifests now read without a companion importer for pages, SEO and identity.
+- **One manifest shape.** The entry keys the client themes grew on their own are read as aliases: `file` is `source`; `seo_title` and `description` on a page are its SEO fields; `identity` (`title`, `tagline`, `business.*`) sets the site title, tagline and Business info the way `options` does. Two client themes' manifests now read without a companion importer for pages, SEO and identity.
 - Tests: `tools/tests/site-sync.php` gains the create, draft, alias and undo checks.
 
 ## 1.6.4 (2026-11-04)
@@ -186,7 +186,7 @@ Site Sync reaches four more places, so a theme update can carry them instead of 
 
 ## 1.4.1 (2026-10-22)
 
-Two Site Sync fixes found testing the Hair by Patrick pilot, before any theme ships a manifest.
+Two Site Sync fixes found testing the salon site pilot, before any theme ships a manifest.
 
 - **Fix: automatic updates after adopting Site Sync.** A page that already matched the theme when a site adopted Site Sync got no starting record, so every later copy change read "Needs a decision" instead of updating on its own. Matching rows now get their record on the next sync pass (automatic or "Sync these now"), and a kept copy the repo has caught up with stops being kept.
 - **Fix: a missing theme file can no longer blank a page.** When a manifest names a file the theme does not ship, that row is reported and left out, so neither the automatic run nor "Use the theme copy" writes an empty page.
@@ -210,7 +210,7 @@ Two Site Sync fixes found testing the Hair by Patrick pilot, before any theme sh
 
 ## 1.3.3 (2026-10-15)
 
-- **Fix: review markup without stars.** Testimonials with no star rating were still marked up as `Review` items, and Google requires a rating on each one, so the Rich Results test showed them as invalid (Maravela's: 10 invalid review snippets). Only rated testimonials are marked up now; unrated ones still show on the page. The aggregate rating is unchanged (it only ever counted rated ones).
+- **Fix: review markup without stars.** Testimonials with no star rating were still marked up as `Review` items, and Google requires a rating on each one, so the Rich Results test showed them as invalid (one client site: 10 invalid review snippets). Only rated testimonials are marked up now; unrated ones still show on the page. The aggregate rating is unchanged (it only ever counted rated ones).
 
 ## 1.3.2 (2026-10-14)
 
@@ -334,7 +334,7 @@ Fixes the fatal that took a site down on activation.
 - `scout-core.php` still called `Scout_Core_Updater::init()`, the retired
   manifest updater whose file 1.0.1 deleted. Every 1.0.1+ install fataled on
   every page load ("Class Scout_Core_Updater not found"); no site had run
-  1.0.1+ until 2026-09-03, when it took North Crest down on install. The stale
+  1.0.1+ until 2026-09-03, when it took a client site down on install. The stale
   call is removed. Lesson recorded: `php -l` cannot catch a call to a missing
   class, so a release needs an activation smoke test, not just a lint.
 

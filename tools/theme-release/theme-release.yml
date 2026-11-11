@@ -19,7 +19,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'wp-theme/blissboogie/style.css'   # EDIT: the theme's style.css, or the built zip below
+      - 'wp-theme/client-theme/style.css'  # EDIT: the theme's style.css, or the built zip below
   workflow_dispatch:
 
 permissions:
@@ -29,8 +29,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      SLUG: blissboogie                    # EDIT: the theme folder name, same as "Scout Release:"
-      THEME_DIR: wp-theme/blissboogie      # EDIT: the folder holding style.css (or leave and set THEME_ZIP)
+      SLUG: client-theme                   # EDIT: the theme folder name, same as "Scout Release:"
+      THEME_DIR: wp-theme/client-theme     # EDIT: the folder holding style.css (or leave and set THEME_ZIP)
       THEME_ZIP: ''                        # Optional: a built zip committed to the repo, used instead of THEME_DIR
       SCOUT_STANDARD: warn                 # EDIT: 'strict' once the site is on the Scout Site Standard; 'warn' reports only
     steps:

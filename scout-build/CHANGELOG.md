@@ -198,7 +198,7 @@
 ## 0.11.0 (2026-11-04)
 
 - **Your site: the client's view of the Site log.** Anyone who is not a Scout operator opens the same screen as **Scout → Your site**: only lines marked "Client sees", in their client wording, with no versions, kinds or internal detail. Four parts: **Waiting on you** (anything Scout needs their OK on, with an Approve button), **This month**, **Your requests** (open ones, with the Request a change button) and **Coming up** (planned lines), then **Earlier this year**. It files under Overview for them (Build stays hidden), and the Overview's "With Scout" box links to it. Operators get a "See it as the client" link on the Site log. Step 3 of the Scout Client Hub.
-- **Approve.** A line an operator marks "Waiting on you" and shows to the client carries an Approve button there. Approving marks it done with the approver's name and date, writes an approval line ("Approved by Patrick McGuire: …") the client also sees, and emails Scout. The Inbox counts "Waiting on your OK" with the other queues. "Ask for a change first" opens the request form with the line filled in. This replaces screenshotting a text into a decisions log.
+- **Approve.** A line an operator marks "Waiting on you" and shows to the client carries an Approve button there. Approving marks it done with the approver's name and date, writes an approval line ("Approved by Sam Lee: …") the client also sees, and emails Scout. The Inbox counts "Waiting on your OK" with the other queues. "Ask for a change first" opens the request form with the line filled in. This replaces screenshotting a text into a decisions log.
 - **The Scout box on the Dashboard** says how many updates the site had this month and how many things wait on the client's OK, with a link to Your site.
 
 - **Hub keys made on the site, no wp-config edit.** Joy: "can't I edit wp-config in WordPress?" No, and WP Engine turns the file editors off, so the keys the Scout Client Hub needs no longer require SFTP. On Scout → Site log, operators press **Make keys**: the site makes a read key (for the Sheet) and a write key (for Claude), shows them once, and stores them encrypted the way the theme key is stored. A client administrator never sees them again. **Make new keys** replaces the pair; **Forget the keys** turns the endpoint off. `SCOUT_HUB_READ_TOKEN` and `SCOUT_HUB_WRITE_TOKEN` in wp-config.php still work and win over keys made on the screen. Making keys writes a setup line in the log.
@@ -233,28 +233,28 @@
 
 ## 0.7.11 (2026-11-04)
 
-- **Theme updates keep downloading after a repo moves or is renamed.** A theme whose Update URI still names the old owner or repo (`joyrmac/Andres-Borda---Golf-Carts`) gets its file address from GitHub under the new name (`Scout-Media-Raleigh/AndysGolfCarts`). The download check compared the two, skipped the key, and WordPress fetched the private file without it: "Download failed. Not Found." The check now also trusts the exact file address the release lookup returned, whatever owner and name it carries. Each theme picks up its new Update URI at its next release.
+- **Theme updates keep downloading after a repo moves or is renamed.** A theme whose Update URI still names the old owner or repo (`joyrmac/old-repo-name`) gets its file address from GitHub under the new name (`Scout-Media-Raleigh/NewRepoName`). The download check compared the two, skipped the key, and WordPress fetched the private file without it: "Download failed. Not Found." The check now also trusts the exact file address the release lookup returned, whatever owner and name it carries. Each theme picks up its new Update URI at its next release.
 - **The feature catalog and Site health read from the new organization** (`Scout-Media-Raleigh/Scout-Plugins`).
 - **Updates come from the new Scout GitHub organization.** The Scout repos moved from joyrmac to Scout-Media-Raleigh on 2026-11-04. The update check, the release feed and the plugin details now use `Scout-Media-Raleigh/Scout-Plugins`. GitHub still forwards the old address, which is how this release reached the site.
 
 ## 0.7.10 (2026-11-02)
 
-- **Theme updates download when the repo name's capitals differ.** Maravela's theme says `Update URI: https://github.com/joyrmac/maravelas`, but GitHub hands back the file address as `joyrmac/Maravelas`. The download check compared the two letter for letter, so it skipped the key and WordPress fetched the private file without it: "Download failed. Not Found." The check now ignores capitals, the way GitHub does.
+- **Theme updates download when the repo name's capitals differ.** One client theme says `Update URI: https://github.com/joyrmac/clienttheme`, but GitHub hands back the file address as `joyrmac/ClientTheme`. The download check compared the two letter for letter, so it skipped the key and WordPress fetched the private file without it: "Download failed. Not Found." The check now ignores capitals, the way GitHub does.
 
 ## 0.7.9 (2026-10-30)
 
-- **"Test builds" no longer flags a client's own plugin.** On Andy's live site the row named his companion plugin (Scout — Andy's Golf Car Garage), which lives in his repo and never gets a Scout Plugins release. The row now looks only at plugins that update from this repo.
+- **"Test builds" no longer flags a client's own plugin.** On one client's live site the row named the client's companion plugin, which lives in the client's repo and never gets a Scout Plugins release. The row now looks only at plugins that update from this repo.
 
 ## 0.7.8 (2026-10-30)
 
-- **Form emails in the site's own colors.** Gravity Forms notifications now arrive in the same card as the Email test: the site's color bar, its Site Icon, the site name, and the subject as the headline, with the form answers below. When the message has a phone number, it gets Call and Text buttons; when it has an email address, an Email back button that reads plain-text addresses too (the first one that is not the site's own). The headline leaves out the phone number, since it already has its Call button. Confirmations sent to the person who filled in the form get the card without those buttons. Light colors like Carolina blue get dark button text so it stays readable. Only HTML notifications, only while Scout Email is set up. Joy, on Andy's request email: "can these be branded?" Off switch: the `scout_mail_brand_forms` filter.
+- **Form emails in the site's own colors.** Gravity Forms notifications now arrive in the same card as the Email test: the site's color bar, its Site Icon, the site name, and the subject as the headline, with the form answers below. When the message has a phone number, it gets Call and Text buttons; when it has an email address, an Email back button that reads plain-text addresses too (the first one that is not the site's own). The headline leaves out the phone number, since it already has its Call button. Confirmations sent to the person who filled in the form get the card without those buttons. Light colors like Carolina blue get dark button text so it stays readable. Only HTML notifications, only while Scout Email is set up. Joy, on a client's request email: "can these be branded?" Off switch: the `scout_mail_brand_forms` filter.
 - **Other Scout plugins can use the site's brand color.** `Scout_Hub_Mail::brand_color()` returns the Email screen's pick or the detected color; Scout Analytics 0.1.15 colors the cookie notice's OK button with it.
 - **Site health: "Hidden upload fields".** With Scout Forms Guard 0.3.0 or later, Site health lists any Gravity Forms File Upload field set to Hidden, with a link to fix it.
 - **The Plugins screen shows auto-updates as on.** The updater now reports the newest release even when the plugin is already on it, so WordPress lists Scout plugins as up to date and shows "Auto-updates enabled" instead of a blank column and an "Auto-updates Disabled" count. Scout plugins were already updating themselves; only the label was wrong.
-- **Site health: "Test builds".** Lists any active Scout plugin running a test build: a version with a label like `0.7.8-test.1`, or one newer than its newest release. Neither updates the normal way, and the row says which plugin and what release it waits for. It reads the release list the updater already keeps, so it adds no call to GitHub. On Andy's site a Scout Build test zip was replaced by the next release, and a Forms Guard test build had no release to update to. `tools/test-build.sh` builds labeled test zips (see RELEASING.md).
-- **Scout hears when a live site is hidden from Google.** When the live site has "Discourage search engines" ticked in Settings, Reading, Scout Build emails team@scoutraleigh.com ("<Site name> is hidden from Google") as soon as the setting changes and from a daily check, at most once a week while it stays on, and shows administrators a notice. Staging addresses, non-production environments and local copies are left alone. `SCOUT_HUB_REQUEST_EMAIL` or the `scout_build_alert_email` filter changes the address. Andy's live site carried the setting over from staging for days and nobody at Scout knew.
+- **Site health: "Test builds".** Lists any active Scout plugin running a test build: a version with a label like `0.7.8-test.1`, or one newer than its newest release. Neither updates the normal way, and the row says which plugin and what release it waits for. It reads the release list the updater already keeps, so it adds no call to GitHub. On one client site a Scout Build test zip was replaced by the next release, and a Forms Guard test build had no release to update to. `tools/test-build.sh` builds labeled test zips (see RELEASING.md).
+- **Scout hears when a live site is hidden from Google.** When the live site has "Discourage search engines" ticked in Settings, Reading, Scout Build emails team@scoutraleigh.com ("<Site name> is hidden from Google") as soon as the setting changes and from a daily check, at most once a week while it stays on, and shows administrators a notice. Staging addresses, non-production environments and local copies are left alone. `SCOUT_HUB_REQUEST_EMAIL` or the `scout_build_alert_email` filter changes the address. One client's live site carried the setting over from staging for days and nobody at Scout knew.
 - **Site health: "Form emails go to".** Lists where each active Gravity Forms form sends its emails: the addresses (with {admin_email} filled in), "the address in field 3", or "routing rules". On a live site it asks for a look when a form sends no email or emails only Scout. The `scout_build_agency_domains` filter sets which domains count as Scout's.
-- **Site health: "Review totals".** With Scout Reviews 0.5.5 or later, shows how long ago the review counts were last updated, and asks for a look after 30 days. Andy's site said 17 Google reviews when Google showed 20. Sites that have not saved the totals since updating read "Update the totals once to start tracking."
+- **Site health: "Review totals".** With Scout Reviews 0.5.5 or later, shows how long ago the review counts were last updated, and asks for a look after 30 days. One client site said 17 Google reviews when Google showed 20. Sites that have not saved the totals since updating read "Update the totals once to start tracking."
 
 ## 0.7.7 (2026-10-28)
 
@@ -295,11 +295,11 @@
 
 ## 0.6.4 (2026-10-16)
 
-- **Email color picks from the site's own colors.** Joy, on the Mac color grid: "not a good one". The field is now a hex box with a color chip, plus round swatches of the site's real colors: the block theme's palette (grays left out), the Cards and Reviews colors, and Scout's cerulean. Click one or type a code. On Maravela's the swatches include its rust, #A04E10.
+- **Email color picks from the site's own colors.** Joy, on the Mac color grid: "not a good one". The field is now a hex box with a color chip, plus round swatches of the site's real colors: the block theme's palette (grays left out), the Cards and Reviews colors, and Scout's cerulean. Click one or type a code. On one client site the swatches include its rust, #A04E10.
 
 ## 0.6.3 (2026-10-16)
 
-- **Email color.** The Email screen has a color picker for the test email's top bar and button. It starts on the color Scout found (Scout Cards, Scout Reviews, then a block theme's accent, primary or brand color) and keeps whatever you pick. Joy: Maravela's test came out in Scout blue, "the wrong theme". Themes can also set it with the `scout_brand_accent` filter.
+- **Email color.** The Email screen has a color picker for the test email's top bar and button. It starts on the color Scout found (Scout Cards, Scout Reviews, then a block theme's accent, primary or brand color) and keeps whatever you pick. Joy: one client's test came out in Scout blue, "the wrong theme". Themes can also set it with the `scout_brand_accent` filter.
 
 ## 0.6.2 (2026-10-16)
 
@@ -308,11 +308,11 @@
 ## 0.6.1 (2026-10-16)
 
 - **The Email test is a proper email.** Joy: "this email should be cuter though, no?" The plain-text test is now a small card in the site's own color (from Cards or Reviews, else Scout's cerulean) with the site icon, the headline "Your website can send email.", one plain line on what that means, and a Visit the site button. Inline styles only, so it looks the same in Gmail, Apple Mail and Outlook.
-- **Fix: Copy for Claude printed "Andy&#039;s".** The site name in the report header is decoded.
+- **Fix: Copy for Claude printed "Sam&#039;s".** The site name in the report header is decoded.
 
 ## 0.6.0 (2026-10-16)
 
-- **Email: the site's mail goes out through Google.** A new Scout, Website, Email screen. Enter a Gmail or Google Workspace address and a Google app password, Save, Send test. Every email the site sends (form notices, password resets, Scout checks) then goes through Google's mail server as that address instead of the host's, which on WP Engine landed in junk or vanished (Andy's form saved its entries but no email arrived). When a form asks to send as someone else, that address becomes the reply-to. The password is stored encrypted and never shown again, or can be set in wp-config.php as `SCOUT_MAIL_PASSWORD`. Replaces WP Mail SMTP on Scout sites.
+- **Email: the site's mail goes out through Google.** A new Scout, Website, Email screen. Enter a Gmail or Google Workspace address and a Google app password, Save, Send test. Every email the site sends (form notices, password resets, Scout checks) then goes through Google's mail server as that address instead of the host's, which on WP Engine landed in junk or vanished (one client's form saved its entries but no email arrived). When a form asks to send as someone else, that address becomes the reply-to. The password is stored encrypted and never shown again, or can be set in wp-config.php as `SCOUT_MAIL_PASSWORD`. Replaces WP Mail SMTP on Scout sites.
 - **A Scout box on the WordPress Dashboard,** first on the page: features on, AI search score, Google email on or off, your review rating and any new reviews, open requests, the site checks that need a look, and a box to send a change request without leaving the Dashboard.
 - **Site health shows Site email:** host mail, through Google, or last test failed, with a link to the Email screen. Copy for Claude includes it.
 
@@ -323,7 +323,7 @@
 
 ## 0.4.9 (2026-10-15)
 
-- **Direct answers checks the pages that matter.** The check now looks at the home page, then the pages its menus link to (read from the home page itself, so classic menus, Navigation blocks and hand-written headers all count), then top-level pages and their children, and skips utility pages (site map, search, the blog index, legal pages). Before, it took top-level pages alphabetically, so on Maravela's it checked the site map, gallery and booking forms and missed every service page. Visitor page notes count only for these same pages, and old counts are dropped.
+- **Direct answers checks the pages that matter.** The check now looks at the home page, then the pages its menus link to (read from the home page itself, so classic menus, Navigation blocks and hand-written headers all count), then top-level pages and their children, and skips utility pages (site map, search, the blog index, legal pages). Before, it took top-level pages alphabetically, so on one client site it checked the site map, gallery and booking forms and missed every service page. Visitor page notes count only for these same pages, and old counts are dropped.
 - **Fill from theme again.** A button beside Check for new versions (only when the theme has a setup file) runs the setup file again. It still fills blanks only. For when a save from a page opened before a theme update blanked what the setup filled.
 
 ## 0.4.8 (2026-10-15)
@@ -345,7 +345,7 @@
 
 ## 0.4.4 (2026-10-15)
 
-- **Fix: the setup file now wins over untouched defaults.** On North Crest the review page kept Scout's headline and blue button after the theme carried its own, because those settings had been saved earlier with the plugin's defaults and the setup file only filled blanks. A setting that still holds the plugin's own default now counts as blank. Anything someone actually changed stays as it is. The review page section runs again on the next admin page load.
+- **Fix: the setup file now wins over untouched defaults.** On one client site the review page kept Scout's headline and blue button after the theme carried its own, because those settings had been saved earlier with the plugin's defaults and the setup file only filled blanks. A setting that still holds the plugin's own default now counts as blank. Anything someone actually changed stays as it is. The review page section runs again on the next admin page load.
 
 ## 0.4.3 (2026-10-14)
 
@@ -373,7 +373,7 @@
 
 ## 0.3.8 (2026-10-13)
 
-- **Fix: sites showed "Up to date" when they were not.** Version checks used GitHub's API, which allows 60 calls an hour per server address; shared hosts like WP Engine run out, the check failed quietly, and the Features screen still said everything was up to date (North Crest stayed on Reviews 0.4.13 after 0.5.0 shipped). Sites now read one version list the Release workflow publishes as a plain download, with the API only as a fallback. If both fail, the Features screen says it could not reach GitHub instead of "Everything is up to date".
+- **Fix: sites showed "Up to date" when they were not.** Version checks used GitHub's API, which allows 60 calls an hour per server address; shared hosts like WP Engine run out, the check failed quietly, and the Features screen still said everything was up to date (one client site stayed on Reviews 0.4.13 after 0.5.0 shipped). Sites now read one version list the Release workflow publishes as a plain download, with the API only as a fallback. If both fail, the Features screen says it could not reach GitHub instead of "Everything is up to date".
 
 ## 0.3.7 (2026-10-13)
 

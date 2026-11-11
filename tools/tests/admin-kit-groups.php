@@ -25,7 +25,7 @@ $map = array(
 	'scout-mail'                              => array( 'Email', 'build' ),
 	'scout-events-crm'                        => array( 'Contacts', 'business' ), // Lives in the Events (Plus) section, for the owner too.
 	'scout-chat'                              => array( 'Chat', 'website' ),
-	'northcrest-theme'                        => array( 'Theme', 'build' ),
+	'example-theme'                           => array( 'Theme', 'build' ),
 	'site-build-features&tab=inbox'           => array( 'To do', 'inbox' ),
 	'site-build-features&tab=requests'        => array( 'Request a change', 'inbox' ),
 	'edit.php?post_type=scout_chat_q'         => array( 'Chat messages', 'inbox' ),
