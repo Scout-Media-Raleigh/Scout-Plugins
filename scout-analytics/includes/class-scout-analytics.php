@@ -82,12 +82,32 @@ final class Scout_Analytics {
 		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		$live = '1' === (string) get_option( 'blog_public' )
 			&& 'production' === wp_get_environment_type()
-			&& ! preg_match( '/(wpengine\.com|wpenginepowered\.com|staging|\.local$|\.test$|localhost|^127\.|^10\.|^192\.168\.)/i', $host );
+			&& ! self::staging_host( $host );
 		$live = (bool) apply_filters( 'scout_analytics_is_live', $live );
 		if ( ! $live || '' === self::tag() || is_admin() ) {
 			return false;
 		}
 		return ! ( self::settings()['skip_editors'] && current_user_can( 'edit_posts' ) );
+	}
+
+	/**
+	 * A staging, local or private address. The hosting providers' staging
+	 * suffixes come from Scout Core's list (Scout_Core_Staging::HOSTS) when
+	 * Scout Core is active, so every Scout plugin agrees on what staging is;
+	 * without it, the two WP Engine suffixes this plugin always knew.
+	 */
+	public static function staging_host( string $host ): bool {
+		$host     = strtolower( $host );
+		$suffixes = ( class_exists( 'Scout_Core_Staging' ) && defined( 'Scout_Core_Staging::HOSTS' ) )
+			? (array) Scout_Core_Staging::HOSTS
+			: array( '.wpengine.com', '.wpenginepowered.com' );
+		foreach ( $suffixes as $suffix ) {
+			$suffix = strtolower( (string) $suffix );
+			if ( '' !== $suffix && ( str_ends_with( $host, $suffix ) || ltrim( $suffix, '.' ) === $host ) ) {
+				return true;
+			}
+		}
+		return (bool) preg_match( '/(staging|\.local$|\.test$|localhost|^127\.|^10\.|^192\.168\.)/i', $host );
 	}
 
 	public static function default_notice( string $mode ): string {
@@ -200,7 +220,7 @@ if(d.readyState==='complete'){idle();}else{w.addEventListener('load',idle);}
 
 	/**
 	 * The notice keeps its own colors instead of borrowing the theme's: a site
-	 * that defines --surface but not --text (Andy's) got a white panel with
+	 * that defines --surface but not --text (one client site) got a white panel with
 	 * light gray text and an invisible "No thanks". Light by default, dark when
 	 * the page sets data-theme="dark", and the button in the site's color.
 	 */
