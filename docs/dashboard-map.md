@@ -25,7 +25,7 @@ person came to do, and the menu stays the same on every site.
 |---|---|---|---|---|
 | `overview` | Home | everyone | The first screen: what needs you today, site health at a glance, this month's numbers, shortcuts | Is this the first thing a person should see? |
 | `inbox` | To do (was Inbox) | everyone | Anything a person sent, or anything waiting on a person: chat questions, new reviews, change requests and their status, site check requests, booking requests | Did someone send this, or is it waiting on someone? |
-| `reports` | Reports | owner, operator | Recon's numbers and reports (shows only when Recon is on) | Is this Recon data? |
+| `reports` | Reports | owner, operator | Reserved and empty. Recon numbers are never shown in WordPress (Joy, 2026-11-05) | Is this a report a person reads inside WordPress? |
 | `business` | Business | everyone | Facts typed once that show up everywhere: Business info, Hours, Case results, a companion plugin's own content types | Is this a fact about the business? |
 | `people` | People | everyone | One profile per person the public sees: the team, speakers, writers and members who chose to be listed. Bio pages, the team page, bylines, speaker pages and business cards read from it (kit 1.11.0, Joy 2026-11-05) | Is this about a person? |
 | `website` | Site features | owner, operator | What visitors see and use: Call buttons, Chat and its settings, Reviews on the site, Ask for reviews, Cards and links, Newsletter, Redirects | Is this something visitors see or use? |
@@ -81,7 +81,7 @@ Ask these in order. The first yes wins.
 1. **Is it a paid module that runs its own program** (bookings, events, members,
    sponsors, a writing room, custom content like RV sites)? Make it a **Plus
    section**: its own sidebar menu.
-2. **Is it Recon data?** File it under **Reports**.
+2. **Is it Recon data?** It does not go in WordPress. Clients review it in Recon (Joy, 2026-11-05).
 3. **Is it only for Sean and Joy** (switches, updates, logs, email setup, keys,
    integrations)? File it under **Scout tools**.
 4. **Did someone send it, or is it waiting on a person?** File it under **Inbox**,
@@ -129,7 +129,7 @@ people, like a staff list and an operator setting.
 | **Core** | Bolt (only on the Core heading, never on each row) | On every site, every plan, including Friends and family | No label. It's simply how the site works | `build` |
 | **Bonus** | Green diamond | Free extras we love, added when they fit the client | A small "Bonus from Scout" tag on its screen | `bonus` (`addon` still reads as Bonus) |
 | **Plus** | Purple plus sign | Paid modules we build, added one at a time | Its own sidebar section with a Plus tag | `plus` |
-| **Recon** | Amber bar chart | Its own product, for reporting and proof | A Reports item, plus the monthly numbers on Home | `whole` / `recon` (planned) |
+| **Recon** | Amber bar chart | Its own product, for reporting and proof | Nothing. Recon is reviewed in Recon, never in WordPress (Joy, 2026-11-05) | `whole` (a plan feature, not a plugin) |
 
 In code (`Scout_Hub_Access`, Scout Build 0.12.0): `included( $tier, $slug )`
 answers whether a feature is part of the site's plan, `picks()` holds features
@@ -143,17 +143,26 @@ Decided by Joy, 2026-11-04:
 
 - **Basic chat is a Bonus.** AI answers come with The Partnership, or as a Plus add-on.
 - **The Whole System does not include Plus modules.** Plus is always added on its own.
-- **Monthly numbers on Home:** a small Recon snapshot on The Partnership, full
-  Recon dashboards and monthly reporting on The Whole System. The Build shows no numbers.
+- **Monthly numbers on Home:** superseded 2026-11-05 (below). No plan shows
+  Recon numbers in WordPress. The Whole System still includes full Recon and
+  monthly reporting, delivered in Recon.
 - **Policy pages:** Scout provides privacy policy and terms templates filled from
   business info, and the client or firm approves each one. They are never legal advice.
 - **Form entries delete themselves after 90 days** by default on law-firm sites.
 - **Focus mode stays on Home.** It hides the numbers on busy days.
-- **Recon on client sites is a viewer.** Accounts, settings and profiles stay on
-  scoutrecon.app; the plugin only pulls that client's reports.
+- **Recon on client sites is a viewer.** Superseded 2026-11-05 (below): no viewer.
 - **Law-firm pieces are Core for law sites**, built in this order: disclaimers
   (Scout Law Firm Tools 0.1.0), approval before publishing, "Reviewed by"
   stamps with a six-month review list, then form entries that delete themselves.
+
+Decided by Joy, 2026-11-05:
+
+- **No client-facing Recon in WordPress.** Clients do not log into their site, so
+  nothing Recon shows there: no viewer plugin, no Reports screen, no snapshot on
+  Home. Clients review their numbers in Recon, which stays completely separate.
+  The plugins' only Recon job is capture: the analytics tag, form attribution and
+  site health signals that feed it.
+
 Shape and color always travel together, so the kinds can be told apart without
 color.
 
@@ -274,21 +283,21 @@ there.
 
 ---
 
-## Recon on client sites (side project, with Sean)
+## Recon and client sites (with Sean)
 
-Recon runs on its own site, `scoutrecon.app`. On a client site it should be a
-**viewer**: a small plugin that pulls that client's reports from Recon and
-shows them under Reports, with the monthly snapshot on Home. Accounts,
-settings, profile updates and connections stay on the Recon site. Open
-questions for Sean: how a site proves which Recon account it belongs to (a
-per-site key), what Recon sends (a summary or full report pages), and how
-often it refreshes.
+Recon runs on its own site, `scoutrecon.app`, and clients review their numbers in
+the Recon app. Nothing Recon shows inside a client's WordPress (Joy, 2026-11-05).
+What a client site does for Recon is **capture only**: load the tag container
+(Scout Analytics), send form submissions with their attribution, and report site
+health. Open questions for Sean: the complete list of pieces Recon needs from a
+site, how a site identifies its Recon client, and whether the capture pieces
+install through Scout Build or by hand.
 
 ---
 
 ## Adding a feature: the checklist
 
-- [ ] Pick its kind (Core, Bonus, Plus or Recon) and its catalog tier.
+- [ ] Pick its kind (Core, Bonus or Plus) and its catalog tier.
 - [ ] Pick its group with the questions above, or make it a Plus section.
 - [ ] Add its slug to `tools/tests/admin-kit-groups.php`, and a kit pattern if needed.
 - [ ] Use the one layout and the UX rules.
@@ -384,10 +393,10 @@ Each works on its own branch; merge one, then rebase the other.
 4. Nightly form test in Site health.
 5. Policies pages: privacy policy and terms templates filled from business info. The client or firm approves each one.
 6. One screen for every client site, built on the Client Hub sheet.
-7. Recon as a viewer plugin (the viewer approach is decided; the connection details wait on Sean).
+7. Recon capture: one install path for the pieces Recon needs from a site (waits on Sean). No viewer (Joy, 2026-11-05).
 
 ## Open items for Sean
 
-- How Recon installs as a viewer: how a site proves which Recon account it
-  belongs to, what Recon sends (a summary or full report pages), and how often
-  it refreshes. Joy decided the viewer approach on 2026-11-04.
+- What Recon needs from a client site (the capture list), how a site identifies
+  its Recon client, and whether the capture pieces install through Scout Build or
+  by hand. The viewer idea from 2026-11-04 is withdrawn (Joy, 2026-11-05).
