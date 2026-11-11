@@ -157,6 +157,23 @@ Manifest format, states and write safety: `docs/site-sync-spec.md`
 ("As built"). Command line: `wp scout sync status`, `wp scout sync run
 --dry-run`. Test: `tools/tests/site-sync.php` against a disposable WordPress.
 
+## Change log: edits made by anyone who isn't Scout (1.13.0+)
+
+When someone who isn't Scout edits the site, Scout Core records who, when and
+what changed, so the change can be folded into the repo before the next theme
+update. It covers pages, posts and templates, the Scout SEO fields, menus,
+photos, key settings, plugins and themes, users and roles (never passwords),
+the Customizer and Gravity Forms. Scout's own edits (Scout Build operators),
+cron, WP-CLI, plugin auto-updates and Site Sync's writes are skipped; theme
+setup code can call `Scout_Changelog::pause()` and `resume()`.
+
+**Scout → Scout tools → Change log** is for Scout only. New entries wait until
+someone marks them as in the repo, then move to a kept archive. **Copy the
+report** copies every new entry as plain text, and a weekly email goes out on
+Mondays only when there is something new. Scout Build's Updates screen reads
+the same count and report. Stored in its own table, `{prefix}scout_change_log`.
+Test: `php tools/tests/change-log.php /path/to/wordpress` (disposable site).
+
 ## Adding a client's own types (the companion pattern)
 
 Never fork `scout-core`. Each client gets a small companion plugin that
@@ -358,6 +375,7 @@ every client site at the next automatic update. CI checks them
 | `Scout_SEO_Head::output` on `wp_head` priority 1 | scout-cards | Removed on card pages, which print their own tags |
 | `scout_design()`, `scout_design_feature()`, `scout_design_css()`, `scout_design_issues()` | scout-build and every plugin with a front-end look | The site's colors, fonts, corners, logo and mark from the theme's DESIGN.md |
 | `scout_core_owns( $job )` | every Scout theme (via the theme kit) | Whether a plugin does a job here, so a theme fallback stands down |
+| `Scout_Changelog::count_new()`, `entries()`, `export()`, `enabled()`; `Scout_Changelog_Admin::allowed()`, `url()` | scout-build | Updates screen: client edits waiting for the repo, and Copy the changes |
 
 ## Versioning ritual
 

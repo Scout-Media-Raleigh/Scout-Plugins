@@ -1,5 +1,15 @@
 # Scout Core — Changelog
 
+## 1.13.0 (2026-11-11)
+
+- **Change log.** When someone who isn't Scout edits the site, Scout Core records who, when and what changed, so the change can be folded into the repo and the next theme update keeps it (Joy, 2026-10-27). It covers pages, posts and Site Editor templates (title, text, excerpt, status, with a link to the WordPress revision), the Scout SEO fields, menus, photos (uploads, details, alt text, deletions), key settings (site title, tagline, home page, permalinks, Business info, SEO and spam settings), plugins and themes (turned on or off, installed, updated, deleted, switched), users and roles (never passwords), the Customizer and Gravity Forms. Several saves of the same thing by one person within five minutes become one entry. Scout's own edits (Scout Build operators), cron, WP-CLI, plugin auto-updates and Site Sync's writes are not logged; theme setup code can call `Scout_Changelog::pause()` and `resume()`.
+- **Scout → Scout tools → Change log**, for Scout only (clients don't see the screen, the health row or the actions). New entries wait until someone marks them as in the repo, then move to the Archive, which is kept. Each entry shows before and after, trimmed to the part that changed. **Copy the report** copies every new entry as plain text.
+- **Scout Build's Updates screen fills in.** Its "client edits that go back to the repo" step has been waiting for this release ("The Change log comes with a later Scout Core release."); it now shows the count, Copy the changes and Open Change log.
+- **Weekly email** on Mondays at 8:00 site time to `SCOUT_HUB_REQUEST_EMAIL` (team@scoutraleigh.com by default), only when there are new entries. Filters: `scout_change_log_enabled`, `scout_change_log_is_scout`, `scout_change_log_options`, `scout_change_log_skip`, `scout_change_log_email`. Off switch on the screen.
+- Stored in its own table, `{prefix}scout_change_log`. Deleting Scout Core keeps it unless the full wipe setting is on.
+- The Scout Build calls are now in `tools/core-contract.sh`.
+- Test: `php tools/tests/change-log.php /path/to/wordpress` (a disposable local WordPress).
+
 ## 1.12.1 (2026-11-11)
 
 - **The blog list uses the posts page's SEO title and description.** With a page set as the posts page (Settings, Reading), the blog list printed the site tagline as its description and WordPress's default title, even when that page had its own. It now reads that page's SEO title, description, excerpt or text, the same way a page does. Found on a client's staging, where /blog/ carried the tagline.

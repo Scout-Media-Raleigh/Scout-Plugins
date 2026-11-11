@@ -114,9 +114,17 @@ final class Scout_Core_Admin {
 		add_submenu_page( $parent, 'Search settings', 'Search settings', 'manage_options', 'scout&tab=seo', array( __CLASS__, 'render' ) );
 		add_submenu_page( $parent, 'Page copy', 'Page copy', 'manage_options', 'scout&tab=sync', array( __CLASS__, 'render' ) );
 		add_submenu_page( $parent, 'Spam protection', 'Spam protection', 'manage_options', 'scout&tab=protect', array( __CLASS__, 'render' ) );
+		if ( self::changelog() ) {
+			add_submenu_page( $parent, 'Change log', 'Change log', 'manage_options', 'scout&tab=changes', array( __CLASS__, 'render' ) );
+		}
 		foreach ( self::groups() as $slug => $group ) {
 			add_submenu_page( $parent, $group['label'], $group['label'], 'manage_options', 'scout&tab=' . $slug, array( __CLASS__, 'render' ) );
 		}
+	}
+
+	/** The Change log is Scout's alone (Joy, 2026-10-27: clients don't see it). It files under Scout tools. */
+	private static function changelog() {
+		return class_exists( 'Scout_Changelog_Admin' ) && Scout_Changelog_Admin::allowed();
 	}
 
 	/** Companion-registered settings groups, if the class is loaded. */
@@ -131,6 +139,9 @@ final class Scout_Core_Admin {
 			: array( 'dashboard' => 'Google checks', 'business' => 'Business info', 'seo' => 'Search settings' );
 		$tabs['sync']    = 'Page copy';
 		$tabs['protect'] = 'Spam protection';
+		if ( self::changelog() ) {
+			$tabs['changes'] = 'Change log';
+		}
 		foreach ( self::groups() as $slug => $group ) {
 			$tabs[ $slug ] = $group['label'];
 		}
@@ -153,6 +164,7 @@ final class Scout_Core_Admin {
 			'dashboard' => 'Can Google and AI tools find the business and read it right? Green means yes.',
 			'business'  => 'Your name, address, phone and profiles. Keep them the same as your Google Business Profile.',
 			'sync'      => 'Pages get the theme\'s latest copy on their own. Anything edited in WordPress waits for you.',
+			'changes'   => 'Every change made on the site by someone who isn\'t Scout: who, when and what. Fold each one into the repo, then mark it so the next theme update keeps it.',
 			'protect'   => 'Switches that keep spam and break-in attempts away. All are on unless you turn them off.',
 			'seo'       => 'Settings for the whole site. Each page sets its own title and description in its SEO box.',
 		);
@@ -168,6 +180,8 @@ final class Scout_Core_Admin {
 			Scout_Sync_Admin::render();
 		} elseif ( 'protect' === $tab ) {
 			Scout_Core_Protection::render_tab();
+		} elseif ( 'changes' === $tab ) {
+			Scout_Changelog_Admin::render();
 		} elseif ( array_key_exists( $tab, self::groups() ) ) {
 			Scout_Core_Settings_Groups::render_tab( $tab );
 		} else {
