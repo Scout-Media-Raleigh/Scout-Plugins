@@ -113,13 +113,29 @@ final class Scout_SEO_Head {
 	 * Use the per-page SEO title when set; otherwise leave WordPress's default.
 	 */
 	public static function document_title( $title ) {
-		if ( is_singular() ) {
-			$custom = get_post_meta( get_queried_object_id(), SCOUT_SEO_META_TITLE, true );
+		$id = self::seo_post_id();
+		if ( $id ) {
+			$custom = get_post_meta( $id, SCOUT_SEO_META_TITLE, true );
 			if ( '' !== $custom ) {
-				return $custom;
+				$n = (int) get_query_var( 'paged' );
+				return ( $n > 1 && ! is_singular() ) ? sprintf( '%s, page %d', $custom, $n ) : $custom;
 			}
 		}
 		return $title;
+	}
+
+	/**
+	 * The post whose SEO fields describe this view: the post or page shown, or the page set as the
+	 * posts page (Settings, Reading) when the blog list is shown. 0 elsewhere.
+	 */
+	private static function seo_post_id(): int {
+		if ( is_singular() ) {
+			return (int) get_queried_object_id();
+		}
+		if ( is_home() && ! is_front_page() ) {
+			return (int) get_option( 'page_for_posts' );
+		}
+		return 0;
 	}
 
 	/**
@@ -209,8 +225,8 @@ final class Scout_SEO_Head {
 	}
 
 	private static function description() {
-		if ( is_singular() ) {
-			$id   = get_queried_object_id();
+		if ( self::seo_post_id() ) {
+			$id   = self::seo_post_id();
 			$desc = get_post_meta( $id, SCOUT_SEO_META_DESC, true );
 			if ( '' !== $desc ) {
 				return $desc;
@@ -243,6 +259,19 @@ final class Scout_SEO_Head {
 	}
 
 	private static function canonical() {
+		if ( is_404() || is_search() ) {
+			return ''; // Not a page of its own: no canonical (and no og:url) rather than pointing at home.
+		}
+		$url = self::canonical_base();
+		$n   = (int) get_query_var( 'paged' );
+		if ( $url && $n > 1 && ! is_singular() ) {
+			// Page 2 and on of a list is its own page: it points at itself, not at page 1.
+			$url = get_option( 'permalink_structure' ) ? user_trailingslashit( trailingslashit( $url ) . 'page/' . $n ) : add_query_arg( 'paged', $n, $url );
+		}
+		return $url;
+	}
+
+	private static function canonical_base() {
 		if ( is_singular() ) {
 			$id       = get_queried_object_id();
 			$override = get_post_meta( $id, SCOUT_SEO_META_CANONICAL, true );
