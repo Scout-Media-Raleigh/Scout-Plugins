@@ -48,6 +48,12 @@ scout-core/includes/design.php | public static function font_stack( array $font 
 scout-core/includes/design.php | public static function defaults(): array | scout-cards (corners equal to the Scout defaults stay with the stylesheet)
 scout-core/includes/design.php | function scout_core_owns( string $job ): bool | every Scout theme through the theme kit (fallbacks stand down when a plugin owns the job)
 scout-core/includes/schema/class-scout-schema.php | public static function add_webpage( array $graph ) | scout-law (Reviewed by: builds the WebPage node before adding reviewedBy)
+scout-core/includes/changelog/class-scout-changelog.php | public static function count_new(): int | scout-build (Updates step 5: client edits waiting for the repo)
+scout-core/includes/changelog/class-scout-changelog.php | public static function entries( string $status = 'new', int $limit = 200 ): array | scout-build (Updates step 5: Copy the changes)
+scout-core/includes/changelog/class-scout-changelog.php | public static function export( array $rows, bool $full = true ): string | scout-build (Updates step 5: Copy the changes)
+scout-core/includes/changelog/class-scout-changelog.php | public static function enabled(): bool | scout-build (Updates step 5: says when the Change log is off)
+scout-core/includes/changelog/class-scout-changelog-admin.php | public static function allowed(): bool | scout-build (Updates step 5: only Scout sees the Change log)
+scout-core/includes/changelog/class-scout-changelog-admin.php | public static function url( array $args = array() ): string | scout-build (Updates step 5: Open Change log)
 CONTRACT
 
 exit "$fail"
