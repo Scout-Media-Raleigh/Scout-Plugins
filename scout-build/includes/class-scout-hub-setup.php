@@ -379,7 +379,7 @@ final class Scout_Hub_Setup {
 			$fill[ $key ] = $value;
 		}
 		// The card's untouched defaults count as blank. So does the site admin's email: on client
-		// sites that is often whoever set WordPress up, not the business (Hair by Patrick, Oct 15).
+		// sites that is often whoever set WordPress up, not the business (one client site, Oct 15).
 		$defaults          = Scout_Cards_Settings::defaults();
 		$defaults['email'] = (string) get_option( 'admin_email' );
 		self::fill_option( Scout_Cards_Settings::OPTION, $fill, $defaults );
