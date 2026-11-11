@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name:       Scout — North Crest RV Park
- * Description:       Per-client content types for the North Crest RV Park build. The worked example of the Scout Core companion pattern: register a client's specific types without ever forking Scout Core.
- * Version:           0.2.3
+ * Plugin Name:       Scout RV Park
+ * Description:       Content types for an RV park site: amenities, and site types with their rates and rig lengths. The worked example of the Scout Core companion pattern: register a client's own types without ever forking Scout Core.
+ * Version:           0.2.4
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Requires Plugins:  scout-core
