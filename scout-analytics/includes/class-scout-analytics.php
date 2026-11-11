@@ -200,7 +200,7 @@ if(d.readyState==='complete'){idle();}else{w.addEventListener('load',idle);}
 
 	/**
 	 * The notice keeps its own colors instead of borrowing the theme's: a site
-	 * that defines --surface but not --text (Andy's) got a white panel with
+	 * that defines --surface but not --text (a local-service client) got a white panel with
 	 * light gray text and an invisible "No thanks". Light by default, dark when
 	 * the page sets data-theme="dark", and the button in the site's color.
 	 */
