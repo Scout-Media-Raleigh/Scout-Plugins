@@ -1393,7 +1393,7 @@ final class Scout_Hub_Admin {
 	private static function update_changes(): array {
 		$out = array( 'state' => 'off', 'head' => '', 'detail' => '', 'count' => 0, 'url' => '', 'export' => '', 'line' => '' );
 		if ( ! class_exists( 'Scout_Changelog' ) || ! method_exists( 'Scout_Changelog', 'count_new' ) ) {
-			$out['head'] = __( 'The Change log comes with a later Scout Core release.', 'scout-build' );
+			$out['head'] = __( 'Update Scout Core to 1.13.0 to see the Change log.', 'scout-build' );
 			$out['line'] = 'The Change log is not on this site yet.';
 			return $out;
 		}

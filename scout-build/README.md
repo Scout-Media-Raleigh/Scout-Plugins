@@ -27,7 +27,7 @@ screen or feature, is in `../docs/dashboard-map.md`.
 | **Reports** | owner, operator | Reserved and empty. Recon's numbers are never shown in WordPress (Joy, 2026-11-05). Empty groups never show to clients. |
 | **Business** | everyone | Facts typed once: Business info, Hours, Team, Case results, a companion plugin's own types. |
 | **Site features** | owner, operator | What visitors see and use: Call buttons, Chat, Reviews and Review settings, Cards & links, Newsletter, Redirects, Free site check. |
-| **Search** | owner, operator | SEO, AI search, Analytics and the cookie notice, Search engine rules (robots.txt), and later site search and the sitemap. |
+| **Search & analytics** (key `search`) | owner, operator | SEO, AI search, Analytics and the cookie notice, Search engine rules (robots.txt). |
 | **Legal pages** | owner, operator | Accessibility statement now; privacy policy, terms and law-firm disclaimers as they arrive. |
 | **Site status** | owner, operator | The whole report (the Site status screen), Search health, Spam protection, the image optimizer. |
 | **Scout tools** | operators only | Features, Updates, Site history, Email, Chat, Customer list, Site Sync (Page copy on Updates), the Change log, a theme's own screen. Reads **Build tools** when `SCOUT_HUB_BRAND` is false. Every action on it still checks for an operator. |
