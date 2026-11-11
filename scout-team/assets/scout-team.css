@@ -1,6 +1,6 @@
 /* Scout Team on the client site. Inherits the theme's fonts and colors.
    Restyle from the theme with these custom properties:
-     --scout-team-accent   links and the role line (default: the theme's link color)
+     --scout-team-accent   links and the role line (default: the theme's link color, then DESIGN.md's accent)
      --scout-team-muted    secondary text
      --scout-team-line     hairlines and card borders
      --scout-team-surface  card background
@@ -9,7 +9,7 @@
 
 .scout-team-profile,
 .scout-team-grid {
-	--scout-team-accent: var(--wp--preset--color--primary, currentColor);
+	--scout-team-accent: var(--wp--preset--color--primary, var(--scout-accent-text, var(--scout-accent, currentColor)));
 	--scout-team-muted: color-mix(in srgb, currentColor 72%, transparent);
 	--scout-team-line: color-mix(in srgb, currentColor 16%, transparent);
 	--scout-team-surface: transparent;
