@@ -132,7 +132,7 @@ Events, the sign-up box, the log's privacy, and the create body checked
 against the documented schema. With WooCommerce and Scout Members active it
 also covers Action Scheduler, the checkout box and the application question.
 
-## Not in 0.1.0
+## Not built yet
 
 - Beehiiv webhooks (Lite includes 3). An unsubscribe in Beehiiv is learned the
   next time the person ticks a box, not the moment it happens.

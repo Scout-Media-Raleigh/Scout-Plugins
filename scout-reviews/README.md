@@ -284,10 +284,6 @@ the place ID.
 - `scout_reviews_slots`: declare the theme's review slots
   (`slug => [ label, keywords ]`).
 
-## Roadmap
-
-- **0.3.0:** Facebook Page recommendations sync.
-
 <!-- visitor-data:start -->
 ## Visitor data
 
