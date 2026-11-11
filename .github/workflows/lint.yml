@@ -70,6 +70,38 @@ jobs:
           for f in */includes/class-scout-admin-ui.php; do cmp -s "$f" tools/admin-kit/class-scout-admin-ui.php || { echo "::error file=$f::differs from tools/admin-kit/class-scout-admin-ui.php. Copy the kit file over."; status=1; }; done
           exit $status
 
+  readme-versions:
+    name: README version table matches the plugins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Each plugin's row in the root README shows its Version header
+        run: |
+          python3 -I - <<'PY'
+          import glob, os, re, sys
+          rows = dict(re.findall(r'^\| \[`([a-z0-9-]+)`\]\(\1/\) \| ([0-9][0-9.]*) \|', open('README.md').read(), re.M))
+          bad = 0
+          for main in sorted(glob.glob('*/*.php')):
+              slug = os.path.dirname(main)
+              if os.path.basename(main) != slug + '.php':
+                  continue
+              m = re.search(r'^[ \t/*#@]*Version:\s*([0-9][0-9.]*)', open(main).read(), re.M)
+              if not m:
+                  continue
+              if slug not in rows:
+                  print(f'::error file=README.md::{slug} {m.group(1)} has no row in the plugin table.')
+                  bad += 1
+              elif rows[slug] != m.group(1):
+                  print(f'::error file=README.md::{slug} row says {rows[slug]}, {main} says {m.group(1)}. Update the row.')
+                  bad += 1
+          for slug in rows:
+              if not os.path.isfile(f'{slug}/{slug}.php'):
+                  print(f'::error file=README.md::{slug} has a row but no plugin folder.')
+                  bad += 1
+          print(f'{len(rows)} rows checked.')
+          sys.exit(1 if bad else 0)
+          PY
+
   design:
     name: Design module checks
     runs-on: ubuntu-latest
