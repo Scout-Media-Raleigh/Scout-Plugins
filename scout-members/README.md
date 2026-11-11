@@ -2,7 +2,7 @@
 
 A membership the owner runs from the dashboard. People apply on the site, the
 owner reads each application and approves it, and members sign in to see
-members-only pages and events. Built for Bliss Boogie Connections first and
+members-only pages and events. Built for an events client's members' club first and
 kept general, so any client with a members' club can use it.
 
 With WooCommerce active, members pay their dues and renew through the site's
@@ -41,7 +41,7 @@ ever saved: every payment, renewals included, is a fresh checkout.
 - **Each plan links to a product** (Settings, Dues and renewals). **Create the
   product for this plan** makes a simple, virtual product hidden from the
   shop, sold one at a time, at the plan price, named "Name on receipts, plan,
-  1 year" (for example "Bliss Boogie Connections membership, Club Member, 1
+  1 year" (for example "Example Club membership, Club Member, 1
   year") so receipts and card statements read plainly. A warning shows when
   the product's price and the plan's differ; the checkout charges the
   product's.
@@ -210,7 +210,7 @@ Class names stay stable for themes: `.sm-portal`, `.sm-form`, `.sm-group`,
 
 ## What themes rely on (keep stable)
 
-The Bliss Boogie theme (2.5.0) builds on these. Change one only together with
+A client theme (the first events client's, from 2.5.0) builds on these. Change one only together with
 the theme, and say so in the changelog.
 
 - `Scout_Members_Front::member_link()` stays public and returns

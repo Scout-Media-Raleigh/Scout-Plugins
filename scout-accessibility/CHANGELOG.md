@@ -57,11 +57,11 @@
 
 ## 0.1.8 (2026-10-14)
 
-- **Fix: "a second main heading (H1)" on every page of some block themes.** The heading check assumed the theme prints each page title as the H1. Block themes that put the H1 in the page content (Hair by Patrick does) were flagged on 16 pages. The check now reads the page's template: when the template prints no H1, the content's first H1 is the page title and counts as correct. A second H1 is still flagged.
+- **Fix: "a second main heading (H1)" on every page of some block themes.** The heading check assumed the theme prints each page title as the H1. Block themes that put the H1 in the page content (one client's salon theme does) were flagged on 16 pages. The check now reads the page's template: when the template prints no H1, the content's first H1 is the page title and counts as correct. A second H1 is still flagged.
 
 ## 0.1.7 (2026-10-14)
 
-- **A hand-written Accessibility page is kept word for word.** If a site already has its own page at /accessibility/ (Hair by Patrick has one with his text-first contact and his in-person notes), saving the statement now uses that page as is: it's linked and checked, and our statement is never added on top. The screen says so.
+- **A hand-written Accessibility page is kept word for word.** If a site already has its own page at /accessibility/ (one client site has one with the owner's text-first contact and in-person notes), saving the statement now uses that page as is: it's linked and checked, and our statement is never added on top. The screen says so.
 
 ## 0.1.6 (2026-10-14)
 

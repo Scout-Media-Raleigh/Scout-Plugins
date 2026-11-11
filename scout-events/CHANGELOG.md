@@ -15,7 +15,7 @@
 - **Volunteers.** A status line ("3 of 5 spots filled. 2 volunteers signed up.") replaces the three numbers, and each shift shows "2 open" in grey or "Full" in green instead of an amber "3 / 5". Email and phone are separated by a comma, and a shift's note sits on its own line.
 - **Calmer colors and words.** The admin stylesheet uses the kit's tokens instead of typed hex colors, and the edit-screen grids stop at three across. "Sign-ups & check-in" and "Prices & Google". Shorter ledes and help.
 - **The calendar gets options** (from the Oct 27 work, never released until now). `[scout_events views="list,month"]` adds a List & Month switch; Month draws a calendar for every month with an event. `filter="series"` adds chips to show one kind of event at a time. Events that repeat share a title, so the title is the series; the `scout_events_series` filter names one otherwise. Every event stays in the page, so it all works without the script, which only shows and hides.
-- **Past events as a photo gallery.** `layout="gallery"` shows each event's photo on its card and groups by year (`group="year"` works on any list). Built for Bliss Boogie's "Where we have gathered" (Joy, 2026-10-26). A plain `[scout_events]` is unchanged; Bliss Boogie's theme already asks for these options, so its Events page picks them up with this release.
+- **Past events as a photo gallery.** `layout="gallery"` shows each event's photo on its card and groups by year (`group="year"` works on any list). Built for an events client's past-gatherings page (Joy, 2026-10-26). A plain `[scout_events]` is unchanged; that client's theme already asks for these options, so its Events page picks them up with this release.
 
 ## 0.16.7 (2026-11-05)
 
@@ -57,8 +57,8 @@
 
 ## 0.16.0 (2026-11-03)
 
-- **A members directory people can contact from.** `[scout_directory contact="yes"]` adds where each speaker or vendor works and how to reach them to their card: Website, Book, Email, phone, and their social and shop links named by site (Instagram, Facebook, Linktree, Etsy and so on). Search also finds them by city. Off by default, so a public directory shows what it showed before. Built for Bliss Boogie's members Portal; it turns on there once each educator has approved what members see.
-- **A list layout.** `[scout_directory layout="list"]` shows speakers or vendors the way people look for help: a search box, a Kind of work choice and a Where choice (plain dropdowns), everyone A to Z with a letter rail, and a name that opens to its sheet in place (contact in contact mode, topics, the link to their page). Works without JavaScript; filters as you type with it. Built for Bliss Boogie's members Portal from Joy's approved review page.
+- **A members directory people can contact from.** `[scout_directory contact="yes"]` adds where each speaker or vendor works and how to reach them to their card: Website, Book, Email, phone, and their social and shop links named by site (Instagram, Facebook, Linktree, Etsy and so on). Search also finds them by city. Off by default, so a public directory shows what it showed before. Built for an events client's members Portal; it turns on there once each educator has approved what members see.
+- **A list layout.** `[scout_directory layout="list"]` shows speakers or vendors the way people look for help: a search box, a Kind of work choice and a Where choice (plain dropdowns), everyone A to Z with a letter rail, and a name that opens to its sheet in place (contact in contact mode, topics, the link to their page). Works without JavaScript; filters as you type with it. Built for that client's members Portal from Joy's approved review page.
 - **Public contact fields.** Speakers gain Where they work, Booking or services link, Business email and Business phone; vendors gain Business email, Business phone and social links. They show only in a `contact="yes"` directory, never on the public speaker page, and stay separate from the private presenter and vendor details. The CSV import takes `city`, `booking`, `email`, `phone` (speakers) and `email`, `phone`, `links` (vendors).
 - Email links are encoded against address harvesters; each link carries the person's name for screen readers.
 
@@ -131,7 +131,7 @@
 
 ## 0.7.1 (2026-10-23)
 
-- Speaker cards answer to their address word, so a link to `/summit-speakers#nick-blum` lands on that card (the first time a speaker appears on the page).
+- Speaker cards answer to their address word, so a link to `/summit-speakers#sam-lee` lands on that card (the first time a speaker appears on the page).
 - Event lists longer than eight fall under month headings, and on phones those lists show name, date, place and price without the summary line. `[scout_events group="month"]` or `group="none"` sets it either way.
 
 ## 0.7.0 (2026-10-23)
@@ -160,7 +160,7 @@
 
 ## 0.5.1 (2026-10-22)
 
-- Fix: a speaker page no longer says the same thing twice when the full bio opens with the short bio (seven 2026 Bliss Boogie presenters, Kai among them). The short bio still feeds cards and schema.
+- Fix: a speaker page no longer says the same thing twice when the full bio opens with the short bio (seven presenters on one client site). The short bio still feeds cards and schema.
 
 ## 0.5.0 (2026-10-22)
 

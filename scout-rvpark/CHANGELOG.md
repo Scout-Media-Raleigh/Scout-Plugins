@@ -1,4 +1,4 @@
-# Scout — North Crest RV Park — Changelog
+# Scout RV Park: changelog
 
 ## 0.2.3 (2026-11-05)
 

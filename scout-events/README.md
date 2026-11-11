@@ -4,7 +4,7 @@ Events, sessions and speakers that the owner edits in plain forms. Each event
 gets a page with its details, ticket button, schedule and speakers, and Event
 schema so it can appear in Google's event results.
 
-Built for Bliss Boogie first and shaped for larger multi-day events (several
+Built for an events client first and shaped for larger multi-day events (several
 rooms or tents a day, dozens of speakers). It works with any ticket link (a
 partner's checkout, Acuity, Eventbrite), with free sign-ups on the site, and
 with paid tickets through the site's own WooCommerce checkout. Free and paid
