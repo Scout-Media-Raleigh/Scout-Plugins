@@ -56,8 +56,8 @@ $r = $S::admins_row( array( $admin( 'Joy McNamara', 'joy', $now - 3 * $day ), $a
 ok( 'good' === $r['state'] && '2 admins' === $r['value'] && false !== strpos( $r['note'], 'Joy McNamara; Sean McNamara' ), 'named admins who sign in are ok, listed by display name' );
 $r = $S::admins_row( array( $admin( 'Joy McNamara', 'joy', $now - 3 * $day ), $admin( 'Admin', 'admin', $now - $day ) ), $now, $now );
 ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Admin (a generic name)' ), 'a generic display name wants a look' );
-$r = $S::admins_row( array( $admin( 'Patrick', 'test2', $now - $day ) ), $now, $now );
-ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Patrick (a generic name)' ) && false === strpos( $r['note'], 'test2' ), 'a generic login name wants a look, and the login name is never shown' );
+$r = $S::admins_row( array( $admin( 'Sam', 'test2', $now - $day ) ), $now, $now );
+ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Sam (a generic name)' ) && false === strpos( $r['note'], 'test2' ), 'a generic login name wants a look, and the login name is never shown' );
 $r = $S::admins_row( array( $admin( 'Old Bob', 'bob', $now - 200 * $day ) ), $now, $now );
 ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Old Bob (no sign-in in 180 days)' ), 'an admin last seen over 180 days ago wants a look' );
 $r = $S::admins_row( array( $admin( 'Quiet Ann', 'ann', 0 ) ), $now, $now - 10 * $day );
@@ -151,7 +151,8 @@ $words = '';
 foreach ( array( $S::xmlrpc_row( true, false, true, $protect ), $S::file_edit_row( false ), $S::two_step_row( array(), array() ), $S::backups_row( '' ), $S::restore_row( '', $now ), $S::uptime_row( '', '' ) ) as $row ) {
 	$words .= $row['label'] . ' ' . $row['value'] . ' ' . $row['note'] . ' ';
 }
-ok( false === strpos( $words, "\u{2014}" ) && ! preg_match( '/\bclaude\b|optima/i', $words ), 'no em dashes, and no names that do not belong' );
+// The partner name is stored encoded so it never appears in this public repo.
+ok( false === strpos( $words, "\u{2014}" ) && ! preg_match( '/\bclaude\b|' . str_rot13( 'bcgvzn' ) . '/i', $words ), 'no em dashes, and no names that do not belong' );
 
 // Clients never see the two rows only Scout can clear.
 ok( ! Scout_Hub_Security::client_row( Scout_Hub_Security::restore_row( '', time() ) ) && ! Scout_Hub_Security::client_row( Scout_Hub_Security::uptime_row( '', '' ) ), 'Restore test and Uptime alert are Scout only' );

@@ -129,8 +129,8 @@ ok( 'good' === $r['state'], 'inactive plugins are skipped' );
 
 t_reset();
 plugin( 'scout-build', '0.7.9' );
-$GLOBALS['t']['plugins']['scout-andysgolfcarts/scout-andysgolfcarts.php'] = array( 'Name' => "Scout - Andy's Golf Car Garage", 'Version' => '0.6.0', 'Author' => 'Scout Media & Consulting', 'UpdateURI' => '' );
-$GLOBALS['t']['active'][] = 'scout-andysgolfcarts/scout-andysgolfcarts.php';
+$GLOBALS['t']['plugins']['scout-example-client/scout-example-client.php'] = array( 'Name' => "Scout - Example Client", 'Version' => '0.6.0', 'Author' => 'Scout Media & Consulting', 'UpdateURI' => '' );
+$GLOBALS['t']['active'][] = 'scout-example-client/scout-example-client.php';
 feed( array( 'scout-build-v0.7.9' ) );
 $r = Scout_Hub_Health::test_builds();
 ok( 'good' === $r['state'], 'client companion plugin (no Scout Plugins Update URI) is not a test build' );
@@ -148,16 +148,16 @@ function forms_row( array $forms, $home = 'https://example-firm.com' ) {
 }
 $r = forms_row(
 	array(
-		array( 'id' => 1, 'title' => 'Request service', 'notifications' => array( array( 'isActive' => true, 'toType' => 'email', 'to' => '{admin_email}, andy@example-firm.com' ), array( 'isActive' => true, 'toType' => 'field', 'to' => '3' ) ) ),
+		array( 'id' => 1, 'title' => 'Request service', 'notifications' => array( array( 'isActive' => true, 'toType' => 'email', 'to' => '{admin_email}, owner2@example-firm.com' ), array( 'isActive' => true, 'toType' => 'field', 'to' => '3' ) ) ),
 		array( 'id' => 2, 'title' => 'Quote', 'notifications' => array( array( 'toType' => 'routing', 'to' => '' ), array( 'isActive' => true, 'toType' => 'email', 'to' => '{Email:4}' ) ) ),
 	)
 );
-ok( 'good' === $r['state'] && false !== strpos( $r['note'], 'Request service (form 1): owner@example-firm.com, andy@example-firm.com, the address in field 3.' ) && false !== strpos( $r['note'], 'Quote (form 2): routing rules, the address in field 4.' ), 'resolves {admin_email}, field and routing recipients' );
+ok( 'good' === $r['state'] && false !== strpos( $r['note'], 'Request service (form 1): owner@example-firm.com, owner2@example-firm.com, the address in field 3.' ) && false !== strpos( $r['note'], 'Quote (form 2): routing rules, the address in field 4.' ), 'resolves {admin_email}, field and routing recipients' );
 $r = forms_row( array( array( 'id' => 1, 'title' => 'Contact', 'notifications' => array( array( 'isActive' => false, 'toType' => 'email', 'to' => 'a@b.com' ) ) ) ) );
 ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'Contact (form 1): no email is sent.' ), 'live site, form with only an inactive notification: warn' );
 $r = forms_row( array( array( 'id' => 1, 'title' => 'Contact', 'notifications' => array( array( 'toType' => 'email', 'to' => 'joy@scoutraleigh.com' ) ) ) ) );
 ok( 'warn' === $r['state'] && false !== strpos( $r['note'], 'emails only Scout' ), 'live site, form emailing only scoutraleigh.com: warn' );
-$r = forms_row( array( array( 'id' => 1, 'title' => 'Contact', 'notifications' => array( array( 'toType' => 'email', 'to' => 'joy@scoutraleigh.com, andy@example-firm.com' ) ) ) ) );
+$r = forms_row( array( array( 'id' => 1, 'title' => 'Contact', 'notifications' => array( array( 'toType' => 'email', 'to' => 'joy@scoutraleigh.com, owner2@example-firm.com' ) ) ) ) );
 ok( 'good' === $r['state'], 'Scout plus the business: good' );
 $r = forms_row( array( array( 'id' => 1, 'title' => 'Contact', 'notifications' => array( array( 'toType' => 'email', 'to' => 'joy@scoutraleigh.com' ) ) ) ), 'https://examplestage.wpengine.com' );
 ok( 'good' === $r['state'], 'staging copy emailing only Scout: good' );

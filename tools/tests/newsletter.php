@@ -100,8 +100,8 @@ function configure( $extra = array() ) {
 		array(
 			'enabled'      => 1,
 			'publication'  => PUB,
-			'name'         => 'Elevate',
-			'utm_source'   => 'blissboogie.com',
+			'name'         => 'Monthly Notes',
+			'utm_source'   => 'example-events.com',
 			'field_first'  => 'First Name',
 			'field_joined' => 'Joined From',
 			'field_plan'   => 'Member Plan',
@@ -147,7 +147,7 @@ function run_queue() {
 configure();
 clear_runs();
 reset_http();
-do_action( 'scout_newsletter_optin', 'nokey@example.test', 'Nia', 'event', array(), array( 'wording' => 'Send me Elevate.' ) );
+do_action( 'scout_newsletter_optin', 'nokey@example.test', 'Nia', 'event', array(), array( 'wording' => 'Send me Monthly Notes.' ) );
 $r = row_for( 'nokey@example.test' );
 ok( $r && 'held' === $r['status'], 'missing key: the sign-up is saved and held' );
 ok( 0 === run_queue() && 0 === count( calls() ), 'missing key: the queue does nothing and makes no HTTP call' );
@@ -164,9 +164,9 @@ ok( Scout_Newsletter::sending(), 'key + publication + switch: sending is on' );
 /* ---------- 2. Test connection ---------- */
 
 reset_http();
-answer( 'GET', '#^/v2/publications/' . PUB . '$#', 200, array( 'data' => array( 'id' => PUB, 'name' => 'Elevate' ) ) );
+answer( 'GET', '#^/v2/publications/' . PUB . '$#', 200, array( 'data' => array( 'id' => PUB, 'name' => 'Monthly Notes' ) ) );
 $t = Scout_Newsletter_Beehiiv::test();
-ok( $t['ok'] && 'Elevate' === $t['data']['name'], 'test connection: reads the publication name' );
+ok( $t['ok'] && 'Monthly Notes' === $t['data']['name'], 'test connection: reads the publication name' );
 ok( 'Bearer bh_test_key_123' === calls()[0]['headers']['Authorization'], 'test connection: sends the key as a Bearer token' );
 reset_http();
 answer( 'GET', '#^/v2/publications/#', 401, array( 'errors' => array( array( 'code' => 'unauthorized', 'message' => 'x' ) ) ) );
@@ -176,12 +176,12 @@ ok( ! $t['ok'] && 401 === $t['code'] && ! $t['retry'], 'test connection: a refus
 /* ---------- 3. Subscribe a new person ---------- */
 
 reset_http();
-$id = Scout_Newsletter::optin( 'New.Person@Example.test', 'Ana', 'event', array( 'Pause and Play' ), array( 'wording' => 'Yes, send me Elevate.', 'url' => 'http://127.0.0.1:8931/events/pause/', 'campaign' => 'pause-and-play' ) );
+$id = Scout_Newsletter::optin( 'New.Person@Example.test', 'Ana', 'event', array( 'Pause and Play' ), array( 'wording' => 'Yes, send me Monthly Notes.', 'url' => 'http://127.0.0.1:8931/events/pause/', 'campaign' => 'pause-and-play' ) );
 ok( 0 === count( calls() ), 'the visitor never waits: ticking the box makes no HTTP call' );
 ok( (bool) next_run(), 'subscribe: a queue run is scheduled (' . ( Scout_Newsletter_Queue::uses_action_scheduler() ? 'Action Scheduler' : 'WP-Cron' ) . ')' );
 $r = Scout_Newsletter_Store::get( $id );
 ok( 'new.person@example.test' === $r['email'] && 'queued' === $r['status'], 'consent record: email saved lower case, queued' );
-ok( 'Yes, send me Elevate.' === $r['wording'] && 'http://127.0.0.1:8931/events/pause/' === $r['url'] && 'event' === $r['source'] && '' !== $r['created'], 'consent record: who, when, where and the words shown' );
+ok( 'Yes, send me Monthly Notes.' === $r['wording'] && 'http://127.0.0.1:8931/events/pause/' === $r['url'] && 'event' === $r['source'] && '' !== $r['created'], 'consent record: who, when, where and the words shown' );
 ok( array( 'Event', 'Pause and Play' ) === $r['tags'], 'tags: the event tag from the map plus the extra tag' );
 
 answer( 'GET', $RE_FIND, 404, array( 'errors' => array( array( 'code' => 'not_found', 'message' => 'x' ) ) ) );
@@ -193,7 +193,7 @@ ok( 3 === count( $c ) && 'GET' === $c[0]['method'] && 'POST' === $c[1]['method']
 ok( false !== strpos( $c[0]['path'], '/by_email/new.person%40example.test' ), 'lookup: the email is URL encoded in the path' );
 $body = $c[1]['body'];
 ok( false === $body['reactivate_existing'], 'create: reactivate_existing is false' );
-ok( 'blissboogie.com' === $body['utm_source'] && 'event' === $body['utm_medium'] && 'pause-and-play' === $body['utm_campaign'], 'create: utm source, medium and campaign' );
+ok( 'example-events.com' === $body['utm_source'] && 'event' === $body['utm_medium'] && 'pause-and-play' === $body['utm_campaign'], 'create: utm source, medium and campaign' );
 ok( 'http://127.0.0.1:8931/events/pause/' === $body['referring_site'], 'create: referring_site is the page' );
 ok( array( array( 'name' => 'First Name', 'value' => 'Ana' ), array( 'name' => 'Joined From', 'value' => 'Event sign-up' ) ) === $body['custom_fields'], 'create: custom fields as name/value pairs' );
 ok( false === $body['send_welcome_email'] && ! isset( $body['double_opt_override'] ), 'create: welcome email off, Beehiiv double opt-in default kept' );
@@ -330,9 +330,9 @@ configure();
 /* ---------- 10. Scout Events, Gravity Forms and the sign-up box ---------- */
 
 reset_http();
-do_action( 'scout_events_person', array( 'email' => 'rsvp@example.test', 'name' => 'Fay Lee', 'role' => 'attendee', 'event' => 0, 'newsletter' => true, 'newsletter_text' => 'Send me Elevate too.' ) );
+do_action( 'scout_events_person', array( 'email' => 'rsvp@example.test', 'name' => 'Fay Lee', 'role' => 'attendee', 'event' => 0, 'newsletter' => true, 'newsletter_text' => 'Send me Monthly Notes too.' ) );
 $r = row_for( 'rsvp@example.test' );
-ok( $r && 'event' === $r['source'] && 'Fay' === $r['first_name'] && 'Send me Elevate too.' === $r['wording'], 'Scout Events: a ticked RSVP box is saved with its words' );
+ok( $r && 'event' === $r['source'] && 'Fay' === $r['first_name'] && 'Send me Monthly Notes too.' === $r['wording'], 'Scout Events: a ticked RSVP box is saved with its words' );
 do_action( 'scout_events_person', array( 'email' => 'quiet@example.test', 'name' => 'Gus', 'role' => 'attendee', 'event' => 0 ) );
 ok( null === row_for( 'quiet@example.test' ), 'Scout Events: no box ticked, nobody added' );
 
@@ -343,13 +343,13 @@ $form  = array(
 	'fields'                 => array(
 		array( 'id' => 1, 'type' => 'name', 'label' => 'Name' ),
 		array( 'id' => 2, 'type' => 'email', 'label' => 'Email' ),
-		array( 'id' => 4, 'type' => 'consent', 'label' => 'Newsletter', 'checkboxLabel' => 'Send me Elevate.' ),
+		array( 'id' => 4, 'type' => 'consent', 'label' => 'Newsletter', 'checkboxLabel' => 'Send me Monthly Notes.' ),
 	),
 );
-$entry = array( 'status' => 'active', 'source_url' => 'http://127.0.0.1:8931/contact/', '1.3' => 'Hal', '2' => 'gf@example.test', '4.1' => '1', '4.2' => 'Send me Elevate (as shown).', '4.3' => '1' );
+$entry = array( 'status' => 'active', 'source_url' => 'http://127.0.0.1:8931/contact/', '1.3' => 'Hal', '2' => 'gf@example.test', '4.1' => '1', '4.2' => 'Send me Monthly Notes (as shown).', '4.3' => '1' );
 Scout_Newsletter_Sources::gf_submission( $entry, $form );
 $r = row_for( 'gf@example.test' );
-ok( $r && 'form' === $r['source'] && 'Hal' === $r['first_name'] && 'Send me Elevate (as shown).' === $r['wording'] && array( 'Form', 'Contact' ) === $r['tags'], 'Gravity Forms: a ticked consent field sends the person with its words and tags' );
+ok( $r && 'form' === $r['source'] && 'Hal' === $r['first_name'] && 'Send me Monthly Notes (as shown).' === $r['wording'] && array( 'Form', 'Contact' ) === $r['tags'], 'Gravity Forms: a ticked consent field sends the person with its words and tags' );
 $entry['2'] = 'gf-no@example.test';
 unset( $entry['4.1'] );
 Scout_Newsletter_Sources::gf_submission( $entry, $form );
@@ -362,8 +362,8 @@ ok( null === row_for( 'gf-spam@example.test' ), 'Gravity Forms: spam entries are
 $settings = Scout_Newsletter_Sources::gf_settings( array(), $form );
 ok( '4' === $settings['scout_newsletter']['fields'][0]['choices'][1]['value'], 'Gravity Forms: the form setting lists the consent field' );
 
-$html = do_shortcode( '[scout_newsletter heading="Join Elevate" tag="Footer"]' );
-ok( false !== strpos( $html, 'name="nl_email"' ) && false !== strpos( $html, 'Join Elevate' ) && false !== strpos( $html, 'unsubscribe at any time' ), 'sign-up box: renders the form with the words people agree to' );
+$html = do_shortcode( '[scout_newsletter heading="Join Monthly Notes" tag="Footer"]' );
+ok( false !== strpos( $html, 'name="nl_email"' ) && false !== strpos( $html, 'Join Monthly Notes' ) && false !== strpos( $html, 'unsubscribe at any time' ), 'sign-up box: renders the form with the words people agree to' );
 ok( false !== strpos( $html, 'name="nl_sig"' ), 'sign-up box: source and tag are signed' );
 
 /* ---------- 11. Privacy: the log holds no email ---------- */
@@ -478,7 +478,7 @@ if ( function_exists( 'wc_create_order' ) ) {
 
 if ( class_exists( 'Scout_Members' ) && class_exists( 'Scout_Members_Form' ) ) {
 	$old_q = get_option( 'scout_members_questions' );
-	update_option( 'scout_members_questions', "text | How did you hear about us?\ncheck | Send me the Elevate newsletter" );
+	update_option( 'scout_members_questions', "text | How did you hear about us?\ncheck | Send me the Monthly Notes newsletter" );
 	foreach ( array( 'applicant-yes@example.test' => 'Yes', 'applicant-no@example.test' => 'No' ) as $mail => $answer ) {
 		$existing = get_user_by( 'email', $mail );
 		if ( $existing ) {
@@ -486,11 +486,11 @@ if ( class_exists( 'Scout_Members' ) && class_exists( 'Scout_Members_Form' ) ) {
 			wp_delete_user( $existing->ID );
 		}
 		$uid = wp_insert_user( array( 'user_login' => sanitize_user( strtok( $mail, '@' ) ), 'user_email' => $mail, 'user_pass' => wp_generate_password(), 'first_name' => 'Kim' ) );
-		Scout_Members::save( $uid, array( 'answers' => array( 'How did you hear about us?' => 'A friend', 'Send me the Elevate newsletter' => $answer ) ) );
+		Scout_Members::save( $uid, array( 'answers' => array( 'How did you hear about us?' => 'A friend', 'Send me the Monthly Notes newsletter' => $answer ) ) );
 		Scout_Members::set_status( $uid, 'applied' );
 	}
 	$r = row_for( 'applicant-yes@example.test' );
-	ok( $r && 'Send me the Elevate newsletter' === $r['wording'] && 'Kim' === $r['first_name'], 'Scout Members: a ticked newsletter question sends the applicant' );
+	ok( $r && 'Send me the Monthly Notes newsletter' === $r['wording'] && 'Kim' === $r['first_name'], 'Scout Members: a ticked newsletter question sends the applicant' );
 	ok( null === row_for( 'applicant-no@example.test' ), 'Scout Members: an unticked question sends nobody' );
 	false === $old_q ? delete_option( 'scout_members_questions' ) : update_option( 'scout_members_questions', $old_q );
 } else {

@@ -43,7 +43,7 @@ space: { wrap: "1240px", section: "72px 128px" }
 motion: { fast: ".2s", ease: "cubic-bezier(.2,.7,.2,1)" }
 radius: { pill: "0", card: "0", control: "0", chip: "0" }
 ---
-# Avanté-style fixture
+# Serif boutique-style fixture
 
 ### Feature: call buttons
 - bar: rgba(251,249,246,.97)

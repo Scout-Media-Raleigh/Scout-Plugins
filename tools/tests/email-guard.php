@@ -31,9 +31,9 @@ function ldjson( $html ) {
 	return $m[1] ?? '';
 }
 
-$email = 'GolfCarSolutions22@gmail.com';
+$email = 'repairs.example@gmail.com';
 $page  = function ( $body, $head = '' ) {
-	return "<!doctype html>\n<html><head><title>Andy</title>{$head}</head><body>{$body}</body></html>";
+	return "<!doctype html>\n<html><head><title>Shop</title>{$head}</head><body>{$body}</body></html>";
 };
 
 // 1. Mailto link.
@@ -61,7 +61,7 @@ ok( $out === $in, 'textarea, input value and data attribute: untouched' );
 $data = array(
 	'@context' => 'https://schema.org',
 	'@graph'   => array(
-		array( '@type' => 'AutoRepair', '@id' => 'https://andysgolfcarts.com/#business', 'email' => $email, 'name' => "Andy's Golf Car Garage", 'url' => 'mailto:' . $email ),
+		array( '@type' => 'AutoRepair', '@id' => 'https://example-shop.com/#business', 'email' => $email, 'name' => "Sam's Cart Repair", 'url' => 'mailto:' . $email ),
 	),
 );
 $json = json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -79,7 +79,7 @@ $out = guard( $in );
 ok( $out === $in, 'inline script, style and HTML comment: untouched' );
 
 // 6. No email: byte for byte.
-$in = $page( '<p>Call (919) 704-5207. Follow @andysgolfcars and see https://x.com/@andy.</p>' );
+$in = $page( '<p>Call (555) 010-0123. Follow @exampleshop and see https://x.com/@shop.</p>' );
 ok( guard( $in ) === $in, 'page with no email address: unchanged byte for byte' );
 $plain = $page( '<p>Nothing to see</p>' );
 ok( guard( $plain ) === $plain, 'page with no "@" at all: unchanged byte for byte' );
