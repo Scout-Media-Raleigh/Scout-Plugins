@@ -32,6 +32,7 @@ EMOJI_OK = set("\u2605\u2606\u2713\u2714\u2717\u2718\u2726")
 # Tests feed emoji in as input data on purpose.
 TEST_DIRS = {"test", "tests", "__tests__"}
 COMMENT_RE = re.compile(r"^\s*(//|#(?![!\[{])|/\*|\*(?!/)|<!--)")
+QUOTED_RE = re.compile(r'"[^"\n]*"|“[^”\n]*”')
 FILLER_RE = re.compile(
     r"\b(elegant(ly)?|seamless(ly)?|robust|comprehensive|leverag(e|es|ing)|cutting[- ]edge|"
     r"state[- ]of[- ]the[- ]art|delve|effortless(ly)?|powerful|this (function|method|class) (will )?(handles?|is responsible)|"
@@ -94,7 +95,8 @@ def check_file(path, report):
         if debug_re and debug_re.search(line) and not COMMENT_RE.match(line):
             report("FAIL", path, n, f"debug output left in: {debug_re.search(line).group(0)}")
         if COMMENT_RE.match(line):
-            m = FILLER_RE.search(line)
+            # A quoted phrase is a UI label being named ("Let's talk"), not filler.
+            m = FILLER_RE.search(QUOTED_RE.sub('""', line))
             if m:
                 report("WARN", path, n, f"filler in comment: {m.group(0)!r}. Say what it does or why, plainly")
             if BANNER_RE.match(line):
