@@ -1,7 +1,7 @@
 # Site log: spec (2026-11-04)
 
 One line on the client's own site for every change made to it, written by the plugins that make the
-change, with room for a plain-words note from Joy, Sean or Claude. It is the record the Scout Client
+change, with room for a plain-words note from Joy, Sean or Scout. It is the record the Scout Client
 Hub (the Google Sheet), the client's "Your site" screen and the monthly client message all read from.
 Nothing is typed twice.
 
@@ -52,7 +52,7 @@ the activity log is this log, and the monthly email is step 4 of the hub plan.
 | Status | `_scout_log_status` | `done` (default), `planned` (shows under Coming up), `waiting` (on the client). Planned and waiting lines are the only ones that can change later; done lines are append-only. |
 | Version | `_scout_log_version` | The theme or plugin version the change shipped in, when there is one. "1.1.8", "Scout Build 0.6.3". |
 | Measure | `_scout_log_measure` | Optional before and after, in the client's units: "PageSpeed phone 85 to 88". Filled when the work is done. |
-| Source | `_scout_log_source` | Who or what wrote it: the plugin name ("Scout Build", "Scout Core"), or a person ("Joy", "Sean", "Claude"). People lines also set `post_author` when a WordPress user made them. |
+| Source | `_scout_log_source` | Who or what wrote it: the plugin name ("Scout Build", "Scout Core"), or a person ("Joy", "Sean"), or "Scout" for notes from Scout's tools (older notes saved as "Claude" read as "Scout"). People lines also set `post_author` when a WordPress user made them. |
 | Reference | `_scout_log_ref` | Optional link or ID: the request post ID, a GitHub release, a PR. |
 | Import ID | `_scout_log_import` | Set only by the history import. Stops a second import from making duplicates. |
 
@@ -103,15 +103,15 @@ brief asks for them when a client repo moved and the site log did not.
 - **Import history** (operators only, hidden once used): takes one of the JSON files in
   `docs/site-log-import/`. Uses `import_id` to skip lines already in. Shows "N added, M skipped".
 
-### The read endpoint (for the Sheet and for Claude)
+### The read endpoint (for the Sheet and for Scout's tools)
 
 Namespace `scout-build/v1`. Bearer token per site. Two tokens. Since 0.10.0 operators make them on
 the Site log screen (shown once, stored encrypted like the theme key); `wp-config.php` constants are
 an optional override that wins when set:
 
 - `SCOUT_HUB_READ_TOKEN`: read only.
-- `SCOUT_HUB_WRITE_TOKEN`: read, and `POST /log` for `note` lines only. This is Claude's key for
-  logging work as it ships. It cannot change feature switches, requests or settings.
+- `SCOUT_HUB_WRITE_TOKEN`: read, and `POST /log` for `note` lines only. This is the key Scout's
+  tools use for logging work as it ships. It cannot change feature switches, requests or settings.
 
 | Call | Returns |
 |---|---|
@@ -119,7 +119,7 @@ an optional override that wins when set:
 | `GET /log?month=2026-10&client=1` | The month the monthly message is built from. |
 | `GET /requests?status=received,progress` | Open requests: title, when asked, how soon, status, page. Never the attachment. |
 | `GET /site` | Site name, home URL, live or staging, plan (The Build, The Partnership, The Whole System), WordPress and PHP versions, theme name and version, every Scout plugin and version with update waiting or not, the Site health summary lines, review totals and their last-updated date when Scout Reviews is on, spam blocked this month when Forms Guard is on. |
-| `POST /log` | One `note` line. Body: title, client_text, topic, version, measure, status, show_client, source. Source is forced to "Claude" or "Sheet" by which token is used. |
+| `POST /log` | One `note` line. Body: title, client_text, topic, version, measure, status, show_client, source. Only the write key can post, and its lines always carry the source "Scout". |
 
 Rules: 60 calls a minute per token; every refused call is logged as an `alert` line with the IP
 left out; responses carry no visitor data, no form entries, no keys; the endpoint is off on
