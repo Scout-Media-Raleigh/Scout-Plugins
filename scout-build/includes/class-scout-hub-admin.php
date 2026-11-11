@@ -1948,7 +1948,7 @@ final class Scout_Hub_Admin {
 			);
 		}
 		// The plugin rows get their own list; the copied report keeps its old order.
-		$plugin_labels = array( __( 'Updates waiting', 'scout-build' ), __( 'Test builds', 'scout-build' ) );
+		$plugin_labels = array_merge( array( __( 'Updates waiting', 'scout-build' ), __( 'Test builds', 'scout-build' ) ), class_exists( 'Scout_Hub_Plugins' ) ? Scout_Hub_Plugins::labels() : array() );
 		$plugins       = array_values( array_filter( $basics, static fn( $c ) => in_array( $c['label'], $plugin_labels, true ) ) );
 		$basic_rows    = array_values( array_filter( $basics, static fn( $c ) => ! in_array( $c['label'], $plugin_labels, true ) ) );
 

@@ -782,6 +782,10 @@ final class Scout_Hub_Health {
 			$out[] = $sent;
 		}
 		$out[]   = self::test_builds();
+		// Outside plugins and WPMU DEV (Site Standard rules 8 and 34; Scout_Hub_Plugins).
+		if ( class_exists( 'Scout_Hub_Plugins' ) ) {
+			$out = array_merge( $out, Scout_Hub_Plugins::checks() );
+		}
 		$reviews = self::review_totals();
 		if ( $reviews ) {
 			$out[] = $reviews;

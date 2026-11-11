@@ -162,6 +162,37 @@ To switch a site from Branda: add the section, update the theme, check the
 login screen, admin bar and footer, then deactivate Branda. Branda's settings
 are not imported.
 
+## Site status: the Plugins list (0.16.0+)
+
+Site status files four rows under **Plugins**. Each also goes into the copied
+report, the update report's site status text, and the Hub's `/site` read.
+
+| Row | When it shows | What it says |
+|---|---|---|
+| Updates waiting | always | How many plugins have an update ready. |
+| Test builds | always | Any Scout plugin on a test build or a version with no release. |
+| Outside plugins | always | Every active plugin that is not a Scout plugin and not Gravity Forms (Site Standard rules 8 and 34). One on the site's approved list reads "approved"; any other reads "needs a decision" and turns the row yellow. None at all reads "None". |
+| WPMU DEV | only when one is on | Red. WPMU DEV was retired from every Scout site on 2026-11-02, so any active WPMU DEV plugin (Dashboard, Defender, Smush, Hummingbird, Branda, SmartCrawl, Forminator, Hustle, Beehive, Snapshot, Shipper, or any plugin by WPMU DEV or Incsub) is a fix. The approved list never clears it. |
+
+How a plugin is sorted (`includes/class-scout-hub-plugins.php`):
+
+- **Scout:** its `Update URI` is this repo, or its author is Scout Media, or
+  its author or plugin address is on scoutraleigh.com (client companion plugins).
+- **Gravity Forms:** the `gravityforms` folder, or any plugin by Gravity Forms
+  (gravityforms.com or rocketgenius.com), so its official add-ons count too.
+- **WPMU DEV:** a known WPMU DEV folder name, or an author or address of WPMU DEV
+  (wpmudev.com) or Incsub.
+- **Outside:** everything else.
+
+Only active plugins count. Must-use plugins and drop-ins (the host's own) are
+not in WordPress's plugin list and are not checked. The rows are on admin
+screens only; nothing here reaches visitors.
+
+**The approved list.** Rule 34 keeps the decision in the site's
+`docs/decisions.md` (the job, the owner and the version watch). Build cannot
+read that file, so the theme's `scout-setup.json` carries the same list as
+`approved_plugins`, and it arrives with each theme release.
+
 ## The feature list
 
 `catalog.json` at the root of this repo, mirrored in `scout-build/catalog.json`
@@ -182,7 +213,8 @@ repo's releases must stay public for this to work without a login.
 Scout Build has no visitor-facing output. It reads these from the theme:
 
 - **`scout-setup.json`** (child theme first): `features.use` and
-  `features.skip`, `scout_own_site`, and the sections it fills into other
+  `features.skip`, `scout_own_site`, `approved_plugins` (the outside plugins
+  the site has said yes to, read by Site status; see above), and the sections it fills into other
   plugins (`business`, `team`, `reviews`, `chat`, `hours`, `analytics`,
   `cards`). Most fill blanks only. In `reviews`, `totals` (each platform's
   rating, count and link, with the `checked` date) replace the saved totals
@@ -196,7 +228,15 @@ Scout Build has no visitor-facing output. It reads these from the theme:
   DESIGN.md, which each plugin reads itself. Values already saved on a site
   stay, and Fill from theme names any look keys a theme still carries. The `brand` section dresses the login screen and the admin: `logo`,
   `logo_width`, `color`, `background`, `text`, `message`, `hide_menus`, `off`.
-  Format: `includes/class-scout-hub-setup.php`.
+  Format: `includes/class-scout-hub-setup.php`. `approved_plugins` takes
+  plugin folder names or objects, one per dated entry in `docs/decisions.md`:
+
+  ```json
+  "approved_plugins": [
+    { "plugin": "wp-rocket", "job": "Page caching", "owner": "Scout", "decided": "2026-11-05" },
+    "another-plugin-folder"
+  ]
+  ```
 - **DESIGN.md** through `scout_design()`: `colors.accent_fill` as the
   detected color on the Email screen, and the pairs `scout_design_issues()`
   checks (`on_accent` on `accent_fill`, `text` on `bg` and `surface`, `text_2`
