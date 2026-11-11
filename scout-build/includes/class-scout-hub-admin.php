@@ -76,9 +76,9 @@ final class Scout_Hub_Admin {
 		add_submenu_page( $parent, __( 'To do', 'scout-build' ), __( 'To do', 'scout-build' ) . self::bubble( self::waiting_total() ), 'edit_posts', $base . '&tab=inbox', array( __CLASS__, 'render' ) );
 		add_submenu_page( $parent, __( 'Request a change', 'scout-build' ), __( 'Request a change', 'scout-build' ), 'edit_posts', $base . '&tab=requests', array( __CLASS__, 'render' ) );
 		add_submenu_page( $parent, __( 'Site status', 'scout-build' ), __( 'Site status', 'scout-build' ), 'edit_posts', $base . '&tab=health', array( __CLASS__, 'render' ) );
-		// Build (operators): the features, every update (rule 12), and Site history. The admin kit hides the group from everyone else.
-		add_submenu_page( $parent, __( 'Features', 'scout-build' ), __( 'Features', 'scout-build' ), 'edit_posts', $base . '&tab=features', array( __CLASS__, 'render' ) );
+		// Build (operators): every update and what needs doing (rule 12) first, then the features and Site history. The admin kit hides the group from everyone else.
 		add_submenu_page( $parent, __( 'Updates', 'scout-build' ), __( 'Updates', 'scout-build' ), 'edit_posts', $base . '&tab=updates', array( __CLASS__, 'render' ) );
+		add_submenu_page( $parent, __( 'Features', 'scout-build' ), __( 'Features', 'scout-build' ), 'edit_posts', $base . '&tab=features', array( __CLASS__, 'render' ) );
 		// One plain name for everyone: operators find the full Site history under Build, everyone
 		// else finds their own view of it under Home (the admin kit and Scout_Hub_Log::nav_group sort it).
 		// Clients read it as "What's new on your site" (Joy, 2026-11-05); Scout keeps "Site history".
@@ -144,10 +144,11 @@ final class Scout_Hub_Admin {
 			if ( false !== strpos( $slug, 'tab=health' ) ) {
 				return 100;
 			}
-			if ( false !== strpos( $slug, 'tab=features' ) ) {
+			// Scout tools opens on Updates, its to-do list; Features is the reference screen after it (Joy, 2026-11-11).
+			if ( false !== strpos( $slug, 'tab=updates' ) ) {
 				return 140;
 			}
-			if ( false !== strpos( $slug, 'tab=updates' ) ) {
+			if ( false !== strpos( $slug, 'tab=features' ) ) {
 				return 150;
 			}
 			if ( false !== strpos( $slug, 'tab=log' ) ) {

@@ -69,6 +69,9 @@ $files = array(
 	'scout-results/assets/scout-results.css',
 	'scout-hours/assets/scout-hours.css',
 	'scout-accessibility/assets/statement.css',
+	'scout-team/assets/scout-team.css',
+	'scout-team/assets/scout-team-details.css',
+	'scout-newsletter/assets/scout-newsletter.css',
 );
 
 // file => [ text in the declaration, why it stays fixed ]

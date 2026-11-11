@@ -1,5 +1,9 @@
 # Scout Writing changelog
 
+## 0.1.8 (2026-11-11)
+
+- **Neutral wording for the move from the earlier writing room.** The Writing settings heading now reads "Moved from the earlier writing room", and so does each new line in its log. Lines already logged keep their words. Code comments describe where the room came from by type. Stored keys, the old page address and the old filter name are unchanged, so old links and saved writing keep working.
+
 ## 0.1.7 (2026-11-05)
 
 - **Writing room names Scout only on Scout-branded sites.** "Send to Scout", "Sent to Scout", the private note and the email subject say "your web team" on white-label sites. "Let Joy or Sean know" is now "Let Scout know" (or "your web team").

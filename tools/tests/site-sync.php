@@ -7,6 +7,10 @@ require rtrim($argv[1] ?? '', '/').'/wp-load.php';
 if ('synctest' !== get_stylesheet()) { fwrite(STDERR, "Refusing: the active theme must be the throwaway 'synctest' theme.\n"); exit(1); }
 wp_set_current_user(1);
 $theme = get_stylesheet_directory();
+// The test writes its own copy files and a one-pixel photo into the throwaway theme.
+wp_mkdir_p($theme.'/sync/pages');
+wp_mkdir_p($theme.'/sync/img');
+file_put_contents($theme.'/sync/img/hero.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
 $fail = 0;
 function ok($cond, $msg){ global $fail; echo ($cond?'PASS ':'FAIL ').$msg."\n"; if(!$cond) $fail++; }
 function states(){ $o=array(); foreach(Scout_Sync::plan()['rows'] as $r){ $o[$r['id']]=$r['state']; } return $o; }
@@ -228,3 +232,4 @@ unlink($theme.'/scout-sync.json');
 ok(Scout_Sync::plan()['manifest']===false && Scout_Sync::summary(true)['review']===0, 'no manifest means status only, nothing to review');
 
 echo $fail ? "\n$fail FAILED\n" : "\nALL PASSED\n";
+exit($fail ? 1 : 0);

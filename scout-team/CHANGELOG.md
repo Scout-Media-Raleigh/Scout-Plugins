@@ -1,5 +1,9 @@
 # Scout Team changelog
 
+## 0.4.1 (2026-11-11)
+
+- **Link color from DESIGN.md (Site Standard rule 3).** On the profile page and the team page, links and the role line use the theme's own link color first, as before. A theme built from DESIGN.md that has none now gets DESIGN.md's accent instead of the plain text color. Every other theme sees no change.
+
 ## 0.4.0 (2026-11-05)
 
 - **Business card box on the People profile (Joy, 2026-11-05).** The Card only phone and email grew into a Business card box under Profile: Intro (one or two sentences in their own voice), Why talk to them (one line for the team card), Tags (comma separated), Card phone and Card email. Stored in the profile like every other field (`card_intro`, `card_why`, `card_tags`), through the same clean and store path. Scout Cards reads them through `Scout_Team::card()` (`intro`, `why`, `tags`), so they are typed once, in People.

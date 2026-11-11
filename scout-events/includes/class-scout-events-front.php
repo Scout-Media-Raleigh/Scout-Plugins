@@ -648,7 +648,7 @@ final class Scout_Events_Front {
 		$want = (string) ( $atts['id'] ?? ( $atts['event'] ?? '' ) );
 		$id   = absint( $want );
 		if ( ! $id && '' !== $want ) {
-			// An event's address word works too: [scout_speakers event="bliss-boogie-2026"].
+			// An event's address word works too: [scout_speakers event="spring-gathering-2026"].
 			$found = get_page_by_path( sanitize_title( $want ), OBJECT, Scout_Events::EVENT );
 			$id    = $found ? (int) $found->ID : 0;
 		}

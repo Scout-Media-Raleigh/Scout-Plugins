@@ -135,6 +135,8 @@ jobs:
         run: php tools/tests/core-empty-search.php
       - name: Language versions (no WordPress needed)
         run: php tools/tests/core-hreflang.php
+      - name: AI Search and Analytics read Scout Core's staging hosts (no WordPress needed)
+        run: php tools/tests/staging-hosts.php
       - name: Scout Core head on lists and error pages (no WordPress needed)
         run: php tools/tests/core-seo-head.php
       - name: Scout Core select fields keep their value on every write path (no WordPress needed)
@@ -205,6 +207,18 @@ jobs:
         run: php tools/tests/answer-scan.php
       - name: Site Sync carries lists in post meta, such as FAQ rows (no WordPress needed)
         run: php tools/tests/sync-array-meta-unit.php
+      - name: Scout Core email guard and comment switches (no WordPress needed)
+        run: php tools/tests/email-guard.php
+      - name: Forms Guard reads the message for spam pitches (no WordPress needed)
+        run: php tools/tests/forms-guard-content.php
+      - name: Forms Guard refuses List answers that carry hidden code (no WordPress needed)
+        run: php tools/tests/forms-guard-serialized.php
+      - name: Test builds, form email and review total rows, hidden-from-Google alert (no WordPress needed)
+        run: php tools/tests/fleet-checks.php
+      - name: Search engines row on live and staging sites (no WordPress needed)
+        run: php tools/tests/staging-check.php
+      - name: Site log entries, changelog headlines and the history import (no WordPress needed)
+        run: php tools/tests/site-log.php
 
   slop-check:
     name: Code slop check
@@ -217,8 +231,13 @@ jobs:
         run: python3 tools/slop-check.py
 
   wp-tests:
-    name: WordPress tests (fresh install)
+    name: WordPress tests (fresh install, PHP ${{ matrix.php-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.0 is the floor most plugins declare; 8.3 also runs scout-optimize (8.1+).
+        php-version: ['8.0', '8.3']
     services:
       mysql:
         image: mysql:8.0
@@ -232,26 +251,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up PHP 8.0 (scout-core's floor)
+      - name: Set up PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: ${{ matrix.php-version }}
           coverage: none
           tools: wp-cli
 
-      # A clean WordPress every run, Scout Core installed the way a site gets
-      # it (folder under wp-content/plugins), then the tests in tools/tests/.
-      - name: Install WordPress and Scout Core
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/wp && cd /tmp/wp
-          wp core download --quiet
-          wp config create --dbname=wp --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check
-          wp core install --url=http://localhost --title=Scout --admin_user=admin --admin_password=admin --admin_email=ci@example.com --skip-email
-          cp -r "$GITHUB_WORKSPACE/scout-core" "$GITHUB_WORKSPACE/scout-aeo" wp-content/plugins/
-          mkdir -p wp-content/mu-plugins
-          cp "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset.php" "$GITHUB_WORKSPACE/tools/tests/fixture-fieldset-register.php" wp-content/mu-plugins/
-          wp plugin activate scout-core scout-aeo
+      # A clean WordPress every run with every Scout plugin installed the way a
+      # site gets it (folder under wp-content/plugins), Scout Core activated
+      # first. Fails on any plugin that does not activate and on any PHP
+      # warning, notice or error while activating or loading the home page,
+      # the dashboard and every plugin screen. Then the tests in tools/tests/.
+      - name: Install WordPress and activate every Scout plugin
+        run: bash tools/tests/wp-fresh-install.sh /tmp/wp
 
       - name: Select fields keep their value
         run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/select-meta.php"
@@ -261,3 +274,33 @@ jobs:
 
       - name: Site Sync writes FAQ rows as an array, and Scout AI Search prints FAQPage from them
         run: cd /tmp/wp && wp eval-file "$GITHUB_WORKSPACE/tools/tests/sync-array-meta.php"
+
+      - name: Change log records edits to pages, menus, settings and photos
+        run: php tools/tests/change-log.php /tmp/wp
+
+      - name: Law firm approvals hold publishing until recorded
+        run: php tools/tests/law-approvals-wp.php /tmp/wp
+
+      - name: Newsletter consent, queue and Beehiiv calls (HTTP stubbed, nothing leaves)
+        run: php tools/tests/newsletter.php /tmp/wp
+
+      - name: Release rings for Scout Build
+        run: php tools/tests/release-rings.php /tmp/wp
+
+      # Last: it needs a throwaway theme and deletes every page and photo.
+      - name: Site Sync integration (throwaway synctest theme)
+        run: |
+          set -euo pipefail
+          theme=/tmp/wp/wp-content/themes/synctest
+          mkdir -p "$theme"
+          printf '/*\nTheme Name: Sync Test\nVersion: 1.0.0\n*/\n' > "$theme/style.css"
+          printf '<?php\n' > "$theme/index.php"
+          wp --path=/tmp/wp theme activate synctest
+          php tools/tests/site-sync.php /tmp/wp
+
+      - name: No PHP warnings while the tests ran
+        run: |
+          if grep -E 'PHP (Warning|Notice|Deprecated|Fatal error|Parse error)' /tmp/wp/wp-content/debug.log; then
+            echo "::error::The tests above logged PHP problems (listed above)."
+            exit 1
+          fi

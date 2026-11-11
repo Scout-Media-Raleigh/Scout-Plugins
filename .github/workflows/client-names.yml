@@ -1,0 +1,41 @@
+# No client names in this public repo (Scout Repo Standard rule 5). Fails when a
+# line a change adds, or the name of a file it adds, carries a client or partner
+# name. The deny list is hashed inside tools/client-names.py, and a match is
+# reported by file, line and entry id only, so neither the list nor the name
+# reaches this log. Intentional mentions: .github/client-names-allow.txt.
+name: Client names
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  names:
+    name: No client names in new lines
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the lines this change adds
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request" ]; then
+            git fetch origin "$BASE_REF" --quiet
+            BASE="origin/${BASE_REF}"
+          elif [ "$EVENT" = "push" ] && [ -n "$BEFORE" ] && ! [[ "$BEFORE" =~ ^0+$ ]]; then
+            BASE="$BEFORE"
+          else
+            BASE="HEAD~1"
+          fi
+          python3 -I tools/client-names.py --base "$BASE"

@@ -1,7 +1,7 @@
 <?php
 /**
  * Writing settings (administrators): where the prompts come from, an upload when the theme has none,
- * where "Send to Scout" goes, and what the move from the Bliss Boogie writing room did.
+ * where "Send to Scout" goes, and what the move from the earlier writing room did.
  *
  * @package Scout_Writing
  */
@@ -142,7 +142,7 @@ function scout_writing_settings_render() {
 	$log    = (array) get_option( SCOUT_WRITING_MIGRATION_LOG, array() );
 	$legacy = scout_writing_has_legacy();
 	if ( $log || $legacy ) {
-		echo '<section class="sh-box"><h2>Moved from the Bliss Boogie writing room</h2>';
+		echo '<section class="sh-box"><h2>Moved from the earlier writing room</h2>';
 		if ( $log ) {
 			echo '<ul>';
 			foreach ( array_reverse( $log ) as $row ) {

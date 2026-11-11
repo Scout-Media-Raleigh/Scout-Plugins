@@ -11,6 +11,10 @@
 - Forms the test can't fill by itself (payments, a CAPTCHA, a required upload, a login and a few others) are listed with the reason, so you can test them by hand.
 - `tools/tests/form-test.php` checks the scheduling, the answers, the two-failure rule, the cleanup and a full run with Forms Guard (Lint workflow).
 
+## 0.16.1 (2026-11-11)
+
+- **Scout tools opens on Updates (Joy, 2026-11-11).** Updates is the to-do list for Sean and Joy: the steps that need someone come first. So it is now the first screen in Scout tools, and Features, the list of what is on the site, comes second. Both screens keep their addresses.
+
 ## 0.16.0 (2026-11-11)
 
 - **Site status lists outside plugins (Site Standard rules 8 and 34).** A new Outside plugins row under Plugins names every active plugin that is not a Scout plugin and not Gravity Forms. One the site has said yes to reads "approved". Any other reads "needs a decision", so it gets kept with a dated entry in the site's decisions file or turned off. With none, the row reads "None".
