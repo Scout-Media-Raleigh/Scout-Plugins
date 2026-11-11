@@ -22,8 +22,8 @@ function check( $ok, $what ) { global $fail; echo ( $ok ? 'ok   ' : 'FAIL ' ) . 
 check( '' === Scout_Core_Map::shortcode( array(), null ), 'no business facts: prints nothing' );
 check( '<img>' === Scout_Core_Map::shortcode( array(), '<img>' ), 'no business facts: keeps the picture' );
 
-$GLOBALS['biz'] = array( 'name' => 'Chicago Prime Steakhouse', 'street' => '1444 E. Algonquin Rd', 'city' => 'Schaumburg', 'region' => 'IL', 'postal' => '60173' );
-check( 'Chicago Prime Steakhouse, 1444 E. Algonquin Rd, Schaumburg, IL 60173' === Scout_Core_Map::place(), 'place from the address' );
+$GLOBALS['biz'] = array( 'name' => 'Example Diner', 'street' => '1 Oak Ave', 'city' => 'Anytown', 'region' => 'ST', 'postal' => '00000' );
+check( 'Example Diner, 1 Oak Ave, Anytown, ST 00000' === Scout_Core_Map::place(), 'place from the address' );
 $out = Scout_Core_Map::shortcode( array(), '<img src="x.webp" alt="">' );
 check( false !== strpos( $out, '<img src="x.webp"' ), 'inner picture kept' );
 check( false !== strpos( $out, 'data-scout-map="https://www.google.com/maps?q=' ), 'embed address waits in a data attribute' );
