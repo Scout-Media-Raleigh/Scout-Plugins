@@ -1,5 +1,9 @@
 # Scout Writing changelog
 
+## 0.1.9 (2026-11-11)
+
+- **Next up comes first (Joy, 2026-11-11).** The writing room opens with the one prompt to write now (a starred one, else the next in the plan), and My writing lists pieces not sent yet before sent ones.
+
 ## 0.1.8 (2026-11-11)
 
 - **Neutral wording for the move from the earlier writing room.** The Writing settings heading now reads "Moved from the earlier writing room", and so does each new line in its log. Lines already logged keep their words. Code comments describe where the room came from by type. Stored keys, the old page address and the old filter name are unchanged, so old links and saved writing keep working.

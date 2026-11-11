@@ -1,5 +1,10 @@
 # Scout Build changelog
 
+## 0.17.1 (2026-11-11)
+
+- **Groups open on their to-do screen (Joy, 2026-11-11).** Site features opens on Redirects (broken links and missing pages). On law sites, Legal pages opens on Firm approvals, then Attorney sign-offs.
+- **Problems first.** Site status lists the checks that need someone (bad, then warn) before the ones that pass, in each list. To do lists what still waits on someone before what is done. "Copy the report" stays on top of Site status (Joy, 2026-11-05).
+
 ## 0.17.0 (2026-11-11)
 
 - **A nightly form test (Site Standard rule 31).** Once a night, around 2 am, each form you pick is sent with made-up answers. Its own emails go to their usual addresses with "[Test]" at the start of the subject and a first line that says it is a test. Then Site status shows one row: "Form test: Sent last night" in green, or "Failed: Contact did not send" in red.

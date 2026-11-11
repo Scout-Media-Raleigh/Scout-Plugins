@@ -1,5 +1,9 @@
 # Scout Team changelog
 
+## 0.4.2 (2026-11-11)
+
+- **People who need a look come first (Joy, 2026-11-11).** The People list shows anyone with something missing or waiting at the top, then everyone else, each part in team page order.
+
 ## 0.4.1 (2026-11-11)
 
 - **Link color from DESIGN.md (Site Standard rule 3).** On the profile page and the team page, links and the role line use the theme's own link color first, as before. A theme built from DESIGN.md that has none now gets DESIGN.md's accent instead of the plain text color. Every other theme sees no change.

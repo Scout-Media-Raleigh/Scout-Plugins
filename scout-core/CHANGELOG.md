@@ -1,5 +1,9 @@
 # Scout Core — Changelog
 
+## 1.13.2 (2026-11-11)
+
+- **Screens open on what needs doing (Joy, 2026-11-11).** Business info starts with a status line naming the main details still empty (name, type, phone, email, city, state, postal code), or saying they are all in. Search settings starts with how many search checks need a look, with the button for the first one, and "Searches that found nothing" moves above the form while it has searches in it.
+
 ## 1.13.1 (2026-11-11)
 
 - README: the Language versions (hreflang) section no longer says unreleased. It shipped in 1.10.0.

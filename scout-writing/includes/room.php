@@ -1070,6 +1070,19 @@ function scout_writing_render() {
 	echo '<span><span id="sw-written-n">' . (int) $written . '</span> written, ' . (int) $sent . ' sent to ' . esc_html( scout_writing_team() ) . '.</span></p></section>';
 	echo scout_writing_flash(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 
+	// Next up first: the one prompt to write now (Joy, 2026-11-11: open on what needs doing).
+	$next = scout_writing_next( $user_id );
+	if ( $next ) {
+		$going = isset( $entries[ $next['id'] ] );
+		echo '<section class="sh-box sw-next" aria-labelledby="sw-next-h"><h2 class="sh-title" id="sw-next-h">Next up</h2>';
+		echo '<p class="sw-q">' . esc_html( $next['q'] ) . '</p>';
+		echo '' !== (string) $next['why'] ? '<p class="sh-note">' . esc_html( $next['why'] ) . '</p>' : '';
+		echo '<p class="sh-actions"><a class="button button-primary" href="' . esc_url( scout_writing_url( $next['id'] ) ) . '">' . esc_html( $going ? 'Keep writing' : 'Write this one' ) . '</a></p></section>';
+	}
+
+	// Pieces not sent yet come first, newest first inside each part.
+	uasort( $entries, static fn( $a, $b ) => (int) (bool) get_post_meta( $a['post']->ID, '_sw_sent_at', true ) <=> (int) (bool) get_post_meta( $b['post']->ID, '_sw_sent_at', true ) );
+
 	// My writing: the newest five, the rest one tap away (open for ?view=mine).
 	echo '<section class="sh-box sw-mine" id="sw-mine" aria-labelledby="sw-mine-h"><h2 class="sh-title" id="sw-mine-h">My writing</h2>';
 	if ( ! $entries ) {

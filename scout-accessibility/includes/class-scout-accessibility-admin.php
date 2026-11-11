@@ -589,7 +589,16 @@ final class Scout_Accessibility_Admin {
 		self::messages();
 		?>
 		<?php
-		if ( $url ) {
+		// Open on what needs doing (Joy, 2026-11-11): weekly checks to fix lead, even with the page live.
+		if ( $url && $to_fix ) {
+			self::ui_status(
+				'warn',
+				/* translators: %d: number of checks */
+				sprintf( _n( 'Published, with %d check to fix.', 'Published, with %d checks to fix.', $to_fix, 'scout-accessibility' ), $to_fix ),
+				__( 'The statement page is live. The weekly checks found something on the site to fix.', 'scout-accessibility' ),
+				'<a class="button" href="' . esc_url( admin_url( 'admin.php?page=' . self::CHECKS ) ) . '">' . esc_html__( 'See the checks', 'scout-accessibility' ) . '</a>'
+			);
+		} elseif ( $url ) {
 			self::ui_status(
 				'good',
 				__( 'Published.', 'scout-accessibility' ),
