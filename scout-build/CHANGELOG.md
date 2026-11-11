@@ -1,5 +1,13 @@
 # Scout Build changelog
 
+## 0.15.1 (2026-11-11)
+
+- **Updates names the Scout Core version it needs.** On a site with Scout Core older than 1.13.0, the "client edits that go back to the repo" step now reads "Update Scout Core to 1.13.0 to see the Change log." instead of pointing at a later release.
+- **Import history no longer points at this repo.** The one-time history files hold client sites' update history, so they moved to Scout's private ops folder. The Import history note on Site history says the file comes from there. The import itself works the same. `tools/tests/site-log.php` now checks it with a made-up sample site.
+- README: the group is named Search & analytics, as on the menu, and no longer promises site search and the sitemap later (both are in Scout Core).
+- **Shared admin kit 1.11.1.** Reports stays reserved and empty: no screen is filed there, a Recon screen included, because Recon's numbers are never shown in WordPress (Joy, 2026-11-05).
+- Code comments describe client sites by type instead of by name. Nothing a person sees changes.
+
 ## 0.15.0 (2026-11-10)
 
 - **Fill from theme copies facts only.** The setup file is for facts (Site Standard §5), so Build no longer copies the look keys: in `reviews`, `background`, `text_color`, `accent`, `heading_font`, `body_font` and `label_font`; in `cards`, `mode`, `accent` and `font`. The look now comes from the theme's DESIGN.md, which each plugin reads itself (the review page from `### Feature: review page` in Scout Reviews 0.8.0, which needs Scout Core 1.11.0). Values already saved on a site stay as they are. The words on the review page and the cards (business, headline, ask, photo, card headline, name, phone and the rest) fill exactly as before.

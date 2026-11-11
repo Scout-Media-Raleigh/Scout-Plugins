@@ -1393,7 +1393,7 @@ final class Scout_Hub_Admin {
 	private static function update_changes(): array {
 		$out = array( 'state' => 'off', 'head' => '', 'detail' => '', 'count' => 0, 'url' => '', 'export' => '', 'line' => '' );
 		if ( ! class_exists( 'Scout_Changelog' ) || ! method_exists( 'Scout_Changelog', 'count_new' ) ) {
-			$out['head'] = __( 'The Change log comes with a later Scout Core release.', 'scout-build' );
+			$out['head'] = __( 'Update Scout Core to 1.13.0 to see the Change log.', 'scout-build' );
 			$out['line'] = 'The Change log is not on this site yet.';
 			return $out;
 		}
@@ -2518,7 +2518,7 @@ final class Scout_Hub_Admin {
 			<div class="sh-log-part">
 				<h3><?php esc_html_e( 'Import history', 'scout-build' ); ?></h3>
 				<?php if ( $show_import ) : ?>
-					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s file from docs/site-log-import. Lines already here are skipped.', 'scout-build' ); ?></p>
+					<p class="sh-note"><?php esc_html_e( 'One time: upload the site\'s history file, which Scout keeps in its private ops folder. Lines already here are skipped.', 'scout-build' ); ?></p>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="<?php echo esc_attr( Scout_Hub_Log::ACTION ); ?>">
 						<input type="hidden" name="do" value="import">

@@ -56,20 +56,16 @@ ok( Scout_Hub_Log::is_scout_plugin( array( 'UpdateURI' => 'https://github.com/Sc
 ok( Scout_Hub_Log::is_scout_plugin( array( 'UpdateURI' => 'https://github.com/joyrmac/Scout-Plugins/scout-reviews' ) ), 'old owner counts' );
 ok( ! Scout_Hub_Log::is_scout_plugin( array( 'UpdateURI' => 'https://gravityforms.com' ) ), 'a third-party plugin does not' );
 
-// import(): every real history file loads, and a second run adds nothing.
-$files = glob( __DIR__ . '/../../docs/site-log-import/*.json' );
-ok( 5 === count( $files ), 'five history files' );
-$total = 0;
-foreach ( $files as $file ) {
-	$data = json_decode( file_get_contents( $file ), true );
-	ok( is_array( $data ) && ! empty( $data['entries'] ), basename( $file ) . ' is valid JSON with entries' );
-	$r = Scout_Hub_Log::import( $data );
-	ok( $r['added'] === count( $data['entries'] ) && 0 === $r['skipped'], basename( $file ) . ': every line added (' . $r['added'] . ')' );
-	$again = Scout_Hub_Log::import( $data );
-	ok( 0 === $again['added'] && $again['skipped'] === count( $data['entries'] ), basename( $file ) . ': second import adds nothing' );
-	$total += $r['added'];
-}
-ok( 75 === $total, '75 lines in all (43 rows, the 8 for every site copied to 5 sites)' );
+// import(): a sample history file (a made-up site, the same shape as the real files Scout
+// keeps in its private ops folder) loads, and a second run adds nothing.
+$file = __DIR__ . '/site-log-sample.json';
+$data = json_decode( file_get_contents( $file ), true );
+ok( is_array( $data ) && ! empty( $data['entries'] ), basename( $file ) . ' is valid JSON with entries' );
+$r = Scout_Hub_Log::import( $data );
+ok( $r['added'] === count( $data['entries'] ) && 0 === $r['skipped'], basename( $file ) . ': every line added (' . $r['added'] . ')' );
+$again = Scout_Hub_Log::import( $data );
+ok( 0 === $again['added'] && $again['skipped'] === count( $data['entries'] ), basename( $file ) . ': second import adds nothing' );
+ok( 6 === $r['added'], '6 lines in the sample' );
 $money = 0;
 foreach ( $GLOBALS['posts'] as $p ) { if ( preg_match( '/\$\d/', $p['post_title'] . $p['post_content'] ) ) { $money++; } }
 ok( 0 === $money, 'no dollar figures in the imported lines' );

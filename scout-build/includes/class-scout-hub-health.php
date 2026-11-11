@@ -179,7 +179,7 @@ final class Scout_Hub_Health {
 	 * The pages that bring in business: the home page, then the pages in the
 	 * site's menus (what visitors are steered to), then top-level pages and
 	 * their children. Utility pages (legal, site map, search, the blog index)
-	 * are left out. Maravela's, Oct 15: picking top-level pages alphabetically
+	 * are left out. One client site, Oct 15: picking top-level pages alphabetically
 	 * checked the site map, gallery and booking forms and missed every service page.
 	 *
 	 * @return WP_Post[]
@@ -446,7 +446,7 @@ final class Scout_Hub_Health {
 	/**
 	 * Scout plugins running a test build: a version with a pre-release label
 	 * (0.6.7-test.1), or one newer than any published release. Neither updates
-	 * the normal way. Andy's site, Oct 2026: a test zip of Scout Build was
+	 * the normal way. One client site, Oct 2026: a test zip of Scout Build was
 	 * replaced by the next release and its unmerged features vanished, and a
 	 * Forms Guard test build had no release to update to.
 	 */
@@ -635,7 +635,7 @@ final class Scout_Hub_Health {
 	/**
 	 * How long ago the review totals (each platform's rating and count, typed
 	 * in on Review settings) were last saved. Scout Reviews 0.5.5 stamps each
-	 * save. Andy's site showed 17 Google reviews while Google showed 20. Null
+	 * save. One client site showed 17 Google reviews while Google showed 20. Null
 	 * when Scout Reviews is not running or no totals are entered.
 	 *
 	 * With Scout Reviews 0.7.0's daily Google check on (an API key and a place
