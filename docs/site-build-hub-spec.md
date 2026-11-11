@@ -117,8 +117,8 @@ Built for our law-firm clients first; most of it helps every client.
 
 ## Build order and rules
 
-- Phase 1 first, released and tested on scoutraleigh.com, then North Crest (first on the update
-  channel), then the rest.
+- Phase 1 first, released and tested on scoutraleigh.com, then the first client site on the update
+  channel, then the rest.
 - Every phase is a normal Scout-Plugins release: version bump, changelog, `tools/core-contract.sh`
   updated if it calls Scout Core.
 - Plain-language labels everywhere, sentence case, no em dashes, Scout branded on Scout client sites.

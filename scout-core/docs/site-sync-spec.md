@@ -21,9 +21,9 @@ themes:
 | Site | Mechanism today | Where it lives |
 |---|---|---|
 | Scout Media | One-click setup + Tools → Scout Build (WXR and form import checklist); copy hardcoded in PHP templates | `scout-media/inc/setup.php`, `inc/build-tools.php` |
-| Hair by Patrick | Scout dashboard: status table, page-content freshness (theme copy vs DB by character count), re-sync button, seeders, SEO description filler | the HBP theme |
-| Maravela's | Tools page importer: bundled static HTML imported as `wp:html` blocks, dry run, force overwrite, identity reset, seeders, category backfill | the Maravela's theme |
-| North Crest | Theme Dashboard: status and health, re-run setup, content map (page to template file, copy edited in the repo then deployed), integrations list deferring to the Scout plugins | the North Crest theme |
+| A salon site | Scout dashboard: status table, page-content freshness (theme copy vs DB by character count), re-sync button, seeders, SEO description filler | that site's theme |
+| A banquet hall site | Tools page importer: bundled static HTML imported as `wp:html` blocks, dry run, force overwrite, identity reset, seeders, category backfill | that site's theme |
+| An RV park site | Theme Dashboard: status and health, re-run setup, content map (page to template file, copy edited in the repo then deployed), integrations list deferring to the Scout plugins | that site's theme |
 
 Every improvement is currently made three times or not at all, which is exactly
 the per-client fork the architecture doc says will sink the platform. The sync
@@ -49,8 +49,8 @@ directory. The manifest declares, per entry, everything the engine needs:
 {
   "sync_version": 1,
   "identity": {
-    "title": "Maravela's Banquets & Catering",
-    "tagline": "Family-owned banquet hall in Ingleside, IL since 1982.",
+    "title": "Example Banquet Hall",
+    "tagline": "A family-owned banquet hall and caterer.",
     "logo": "sync/identity/wordmark-black.png",
     "icon": "sync/identity/brandmark-black.png",
     "posts_page": "blog"
@@ -80,7 +80,7 @@ Rules of the contract:
 
 ## The freshness engine (hashes, not character counts)
 
-The HBP dashboard compares character counts, so two different texts of the same
+The salon site's dashboard compares character counts, so two different texts of the same
 length read as in sync. The engine compares content hashes instead, and it
 keeps a third value that makes automatic decisions safe:
 
@@ -128,15 +128,15 @@ WordPress-side edit.
 
 | Site | Migration |
 |---|---|
-| Hair by Patrick | Closest to target. Port its dashboard into scout-core, replace char counts with hashes, generate the manifest from its existing bundled copy, delete the theme's own sync code. |
-| Maravela's | Its importer becomes the same manifest (pages as HTML sources, seeds, identity block). Dry run and force overwrite survive as engine features for the unmanaged-page path. |
+| The salon site | Closest to target. Port its dashboard into scout-core, replace char counts with hashes, generate the manifest from its existing bundled copy, delete the theme's own sync code. |
+| The banquet hall site | Its importer becomes the same manifest (pages as HTML sources, seeds, identity block). Dry run and force overwrite survive as engine features for the unmanaged-page path. |
 | Scout Media | Adopts the dashboard in status-only mode first (its copy is hardcoded in PHP templates, so there is nothing to diff). Pages move under sync management as copy migrates per the update-path rule in the architecture doc. |
-| North Crest | Already the model status-only site: scout-core active, dashboard defers to the plugins, content map names each page's template file. Its dashboard becomes the shared status-only UI; the content map and integrations panels are worth porting into the engine for every site. |
+| The RV park site | Already the model status-only site: scout-core active, dashboard defers to the plugins, content map names each page's template file. Its dashboard becomes the shared status-only UI; the content map and integrations panels are worth porting into the engine for every site. |
 
 ## Build order
 
 1. **Engine + dashboard in scout-core**: manifest reader, hash freshness with
-   stored base, manual re-sync, seeders, identity, SEO filler. HBP is the pilot.
+   stored base, manual re-sync, seeders, identity, SEO filler. The salon site is the pilot.
 2. **Automation**: version-change trigger, auto-sync of safe pages, review
    notices, WP-CLI commands.
 3. **Section markers** and per-section freshness.
@@ -151,7 +151,7 @@ WordPress-side edit.
 - `scout-importer` (Model B, WP-CLI bulk import from git files) stays a
   separate concern; Site Sync may share its readers but serves the theme-update
   loop, not migrations.
-- Per-client extras (Maravela's category backfill, one-off fixups) live in that
+- Per-client extras (the banquet hall site's category backfill, one-off fixups) live in that
   client's companion plugin as extra dashboard actions, registered through a
   scout-core hook, so the shared engine never grows client-specific code.
 

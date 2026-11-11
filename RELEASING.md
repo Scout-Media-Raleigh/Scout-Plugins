@@ -43,7 +43,7 @@ rename there can break a dependent plugin on every site at once.
   `tools/core-contract.sh` in that same change.
 - **Release order when both change:** Scout Core first, then the dependent plugin,
   so no site runs the new plugin against an old core.
-- **Smoke-test one site** (North Crest is first on the channel) after a Scout Core
+- **Smoke-test one site** (the first client site on the channel) after a Scout Core
   release: open a card page and the Scout menu before calling the release done.
 
 ## Shipping a release
@@ -92,7 +92,7 @@ A zip built from an unmerged branch with a normal version number causes two
 problems. If its number is already released, or lower than the next release,
 that release overwrites it and the branch's unreleased work disappears. If its
 number is higher than any release, it never updates at all. Both happened on
-Andy's site in October 2026 (Scout Build 0.6.7 and Forms Guard 0.3.0 test zips).
+a client site in October 2026 (Scout Build 0.6.7 and Forms Guard 0.3.0 test zips).
 
 Build staging zips with the script instead:
 
