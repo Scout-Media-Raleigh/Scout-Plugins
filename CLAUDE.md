@@ -10,10 +10,10 @@ private Scout-Internal repo, `ops/fleet.md`).
 - How the plugins fit together: `README.md` and each plugin's own README.
 - How every site uses them: the Site Standard, `Scout-Internal/ops/playbook/site-standard.md`.
 
-## Scout Repo Standard (Joy, 2026-11-04)
+## Scout Repo Standard (adopted by Joy, 2026-11-11)
 
 Git, branches, pull requests, releases, READMEs, routines and skills follow the Scout Repo
-Standard: `Scout-Media-Raleigh/Scout-Internal`, `ops/playbook/repo-standard.md`. **Read its §0
+Standard: `Scout-Media-Raleigh/Scout-Internal`, [`ops/playbook/repo-standard.md`](https://github.com/Scout-Media-Raleigh/Scout-Internal/blob/main/ops/playbook/repo-standard.md). **Read its §0
 rules before starting work, and scan every branch first (rule 1).** `main` is the branch of
 record; work on a branch and merge by pull request. Where this file and the standard disagree
 on git, the standard wins.

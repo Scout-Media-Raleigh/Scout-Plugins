@@ -17,9 +17,13 @@ releases safe. Run every command from the repo root.
   its `DESIGN.md`, and fails when the contrast pairs miss 4.5:1.
 - `test-build.sh`: builds a labeled test zip of one plugin for a staging site.
 - `slop-check.py`: the code slop check. This is the original; copies elsewhere are edited here first.
-- `tests/`: PHP checks for the admin kit groups, design module, email guard, fleet checks, forms
-  guard, newsletter, Site log, Site Sync and staging check. Two of them (`newsletter.php`,
-  `site-sync.php`) wipe data and run only against a disposable local WordPress.
+- `parity/`: the before and after capture and compare for a site conversion (Site Standard rule
+  20). Its own `README.md` has the commands.
+- `visitor-data.php`: copies each plugin's `visitor-data.json` into its README and, with
+  `--check`, fails when a list is missing or out of step (Site Standard rule 24).
+- `tests/`: PHP checks for the plugins and kits, one file per area. Some of them (for example
+  `newsletter.php` and `site-sync.php`) wipe data and run only against a disposable local
+  WordPress.
 
 ## Who owns it
 Joy and Sean at Scout Media.

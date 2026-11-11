@@ -5,4 +5,4 @@ to the private Scout-Internal repo: `ops/fleet.md`.
 
 This repo is public so client sites can read its releases without a key. Install names, site
 versions and access notes stay out of it (Scout Repo Standard rule 5,
-`Scout-Internal/ops/playbook/repo-standard.md`).
+[`Scout-Internal/ops/playbook/repo-standard.md`](https://github.com/Scout-Media-Raleigh/Scout-Internal/blob/main/ops/playbook/repo-standard.md)).
