@@ -406,3 +406,15 @@ Scout Core sets no cookies. Its email guard only changes how email addresses are
 
 Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
 <!-- visitor-data:end -->
+
+## Map (1.15.0)
+
+`[scout_map]` puts a "Show the map" button over whatever the theme wraps inside it; the Google map loads in place only when a visitor taps it. The place comes from Business info. Before the tap the button is a plain link to Google Maps, so it works without JavaScript. Taps send `map_open` to Scout Analytics. A theme that ships the shortcode in a pattern should register a fallback that returns the inner content when Scout Core is older than 1.15.0:
+
+```php
+add_action( 'init', function () {
+	if ( ! shortcode_exists( 'scout_map' ) ) {
+		add_shortcode( 'scout_map', function ( $a, $c = '' ) { return do_shortcode( (string) $c ); } );
+	}
+}, 20 );
+```

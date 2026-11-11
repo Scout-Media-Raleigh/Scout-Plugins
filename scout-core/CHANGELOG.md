@@ -1,5 +1,15 @@
 # Scout Core — Changelog
 
+## 1.15.0 (2026-11-11)
+
+A map of the business that loads only when a visitor taps it. Sites that don't use it are unchanged.
+
+- **`[scout_map]`.** Prints a "Show the map" button over whatever the theme wraps inside it (a photo of the building, or nothing for a plain panel). The tap loads Google's map in place, so the page stays fast and Google's cookies reach only visitors who asked for the map. Before the tap, or without JavaScript, the button is a link to Google Maps.
+- The place comes from Business info: the street address, or the latitude and longitude when there is no street. Nothing is typed twice.
+- Looks: DESIGN.md's `--scout-accent-fill`, `--scout-on-accent`, `--scout-font-label` and `--scout-radius-control`; a theme can restyle `.scout-map` and `.scout-map-show`.
+- Tracking: the button carries `data-scout-track="map_open"` for Scout Analytics.
+- Privacy: Google Maps is listed in `visitor-data.json`, so the Privacy & terms draft names it.
+
 ## 1.14.0 (2026-11-11)
 
 - **No single word alone on a line.** Scout's typography rule moves from theme code into Core: on a theme with `add_theme_support( 'scout-no-orphans' )`, the last two words of each heading and FAQ question are tied with a non-breaking space on the finished page. Headings of three words or more and pairs up to 22 characters only, so a tied pair can't push past a 320px phone; a heading that is already tied is left alone. A theme can name its own `elements`, `max` and `skip` classes. Off until a theme asks, so no live page changes on update (Site Standard rule 20). Settings came from a client's first design gate, where tying list items made a narrow phone footer spill.

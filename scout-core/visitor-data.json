@@ -12,8 +12,14 @@
       "where": "A temporary record in this website's database",
       "kept": "30 minutes",
       "when": "only while the search words are kept"
+    },
+    {
+      "what": "Google loads its map of the business and may set its own cookies and record the visitor's IP address, as Google does on google.com",
+      "where": "Google (Google Maps)",
+      "kept": "Under Google's own privacy policy",
+      "when": "only after a visitor taps \"Show the map\" on a page that has the map"
     }
   ],
   "cookies": [],
-  "notes": "Scout Core sets no cookies. Its email guard only changes how email addresses are written into the page, and it stores nothing. The dashboard remembers which sections a staff member opened, in their own browser (scoutSections), which never touches visitors."
+  "notes": "Scout Core sets no cookies. Its email guard only changes how email addresses are written into the page, and it stores nothing. The dashboard remembers which sections a staff member opened, in their own browser (scoutSections), which never touches visitors. The map ([scout_map]) loads nothing from Google until a visitor taps it."
 }

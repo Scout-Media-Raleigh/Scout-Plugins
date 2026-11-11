@@ -22,7 +22,7 @@ instead of a data-loss event.
 
 | Plugin | Version | Kind | What it does | Requires |
 |---|---|---|---|---|
-| [`scout-core`](scout-core/) | 1.14.0 | Core | The engine: business facts typed once, the content model (post types, fields, Block Bindings), the JSON-LD schema graph, the in-house SEO head tags and sitemap, Page copy (Site Sync), the Change log and heading word ties. | WP 6.5+, PHP 8.0+ |
+| [`scout-core`](scout-core/) | 1.15.0 | Core | The engine: business facts typed once, a map that loads on tap, the content model (post types, fields, Block Bindings), the JSON-LD schema graph, the in-house SEO head tags and sitemap, Page copy (Site Sync), the Change log and heading word ties. | WP 6.5+, PHP 8.0+ |
 | [`scout-build`](scout-build/) | 0.17.2 | Core | The Scout dashboard hub: Home, To do, Site status, Features and plan, Updates with the update order, Site history, Request a change, theme self-updates from the client's own repo. | WP 6.5+, PHP 8.0+ |
 | [`scout-aeo`](scout-aeo/) | 0.2.14 | Core | AI search readiness: names the AI crawlers in robots.txt, serves `/llms.txt`, sends IndexNow pings, and adds a questions-and-answers box with matching FAQ schema to every page. | WP 6.5+, PHP 8.0+ (Scout Core optional) |
 | [`scout-optimize`](scout-optimize/) | 0.9.11 | Core | Image optimizer: every upload is resized and compressed, WebP and AVIF twins are served, and the original is kept as a backup. | WP 6.5+, PHP 8.1+ |
