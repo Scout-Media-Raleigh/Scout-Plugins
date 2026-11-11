@@ -33,8 +33,19 @@ Put the ID here.
   - With Tag Manager the event goes into the `dataLayer` (make a Custom Event
     trigger per name); with only GA4 it is sent with `gtag()`.
 
-Events in use: `card_view`, `card_save_contact`, `card_call`, `card_email`,
-`card_book`, `links_click`, `links_post_click`, `scout_consent_update`.
+Events in use (what the Scout plugins send today):
+
+| Plugin | Events |
+|---|---|
+| Scout Analytics | `scout_consent_update` (a visitor answers the cookie notice) |
+| Call buttons (Scout Contact) | `contact_call`, `contact_text`, `contact_open` (the Let's talk sheet opens), `contact_book` |
+| Scout Chat | `chat_open`, `chip_click`, `lead_submit`, `handoff`, and link buttons `chat_work`, `chat_book` or `chat_link` |
+| Scout Cards | `card_view`, `card_save_contact`, `card_call`, `card_email`, `card_book`, `card_links_click`, `links_click`, `links_card_click`, `links_post_click` |
+| Scout People | `team_profile_view`, `team_profile_click`, `team_call`, `team_email` |
+| Scout Events | `ticket_click`, `calendar_add`, `directions_click`, `signup_submit` |
+| Scout Hours | `hours_notice_hide` |
+| Scout Accessibility | `accessibility_contact` |
+| Scout Case Results | `results_filter` |
 
 ## Settings
 

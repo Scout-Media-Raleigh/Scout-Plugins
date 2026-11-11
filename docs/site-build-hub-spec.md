@@ -100,8 +100,9 @@ Built for our law-firm clients first; most of it helps every client.
 - **Two-factor login and firewall rules.** WP Engine and dedicated security plugins do this better;
   we recommend one instead of building our own.
 - **Backups.** WP Engine already backs up daily. The hub links to it.
-- **Cookie consent banner.** Worth doing for consent mode, but it is its own plugin; listed in the
-  catalog later.
+- **Cookie consent banner.** Its own plugin, not the hub: Scout Analytics has shipped it since
+  0.1.0 (consent mode defaults, a small opt-out notice), and the catalog lists it as "Analytics
+  and cookie notice".
 - **Billing or pricing inside the dashboard.** Out of scope; no money in client dashboards.
 
 ## What we need before building

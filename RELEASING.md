@@ -50,7 +50,9 @@ rename there can break a dependent plugin on every site at once.
 
 **1. Bump the version.** In the plugin's main file, update the `Version:` header
 and the matching `SCOUT_*_VERSION` constant where the plugin defines one. This
-header is the source of truth for the release.
+header is the source of truth for the release. Update the plugin's row in the
+root `README.md` table too: the Lint workflow fails when a row differs from
+the header.
 
 **2. Write the changelog.** Add a dated entry at the top of that plugin's
 `CHANGELOG.md`. The release notes are pulled from this entry automatically.

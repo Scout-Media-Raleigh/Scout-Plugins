@@ -239,7 +239,7 @@ requests unpaid after the pay window, and sends reminders.
 - Deleting the plugin removes the table and options. The WooCommerce products
   stay, because past orders point at them.
 
-## Not in 0.1
+## Not built yet
 
 - Card payments: a real payment service (Stripe, Square or PayPal) plugs into
   the WooCommerce checkout; nothing in this plugin changes.
