@@ -157,6 +157,8 @@ jobs:
         run: php tools/tests/core-policies.php
       - name: WordPress's own Site Health, run by Scout (no WordPress needed)
         run: php tools/tests/wp-health.php
+      - name: Outside plugins and WPMU DEV in Site status (Site Standard rules 8 and 34, no WordPress needed)
+        run: php tools/tests/outside-plugins.php
       - name: Security baseline in Site status (no WordPress needed)
         run: php tools/tests/security-baseline.php
       - name: Form emails sent, in Site status (no WordPress needed)

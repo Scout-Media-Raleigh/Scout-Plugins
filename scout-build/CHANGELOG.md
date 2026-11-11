@@ -1,5 +1,14 @@
 # Scout Build changelog
 
+## 0.16.0 (2026-11-11)
+
+- **Site status lists outside plugins (Site Standard rules 8 and 34).** A new Outside plugins row under Plugins names every active plugin that is not a Scout plugin and not Gravity Forms. One the site has said yes to reads "approved". Any other reads "needs a decision", so it gets kept with a dated entry in the site's decisions file or turned off. With none, the row reads "None".
+- **The approved list lives in the theme's `scout-setup.json`** as `approved_plugins`: plugin folder names, or objects with the plugin, the job, the owner and the date decided. Each one mirrors an entry in the site's `docs/decisions.md`, which Build cannot read. It arrives with each theme release. A theme without it changes nothing except that every outside plugin needs a decision.
+- **A red WPMU DEV row whenever a WPMU DEV plugin is on.** WPMU DEV was retired from every Scout site on 2026-11-02. Its Dashboard, Defender, Smush, Hummingbird, Branda, SmartCrawl, Forminator, Hustle, Beehive, Snapshot, Shipper, and any plugin by WPMU DEV or Incsub, each count. The approved list never clears it, and it shows on Today as a fix.
+- Gravity Forms' own add-ons count as Gravity Forms. Client companion plugins (by Scout Media) count as Scout plugins.
+- Both rows go into the copied report, the update report's site status text and the Hub's site read, like every other row. Visitors notice nothing.
+- `tools/tests/outside-plugins.php` checks the sorting, the approved list and the rows (Lint workflow).
+
 ## 0.15.1 (2026-11-11)
 
 - **Updates names the Scout Core version it needs.** On a site with Scout Core older than 1.13.0, the "client edits that go back to the repo" step now reads "Update Scout Core to 1.13.0 to see the Change log." instead of pointing at a later release.

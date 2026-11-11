@@ -20,6 +20,7 @@
  *   "hours":   { "confirmed": true, "days": { "tuesday": [ ["09:00", "17:00"] ] } },
  *   "analytics": { "gtm": "GTM-XXXXXXX" },
  *   "features":  { "use": [ "scout-core", "scout-forms-guard" ], "skip": [ "scout-chat" ] },
+ *   "approved_plugins": [ "plugin-folder", { "plugin", "job", "owner", "decided": "YYYY-MM-DD" } ],
  *   "cards":   { "name", "phone", "email", "city", "region", "postal",
  *                "footer", "note", "team_intro", "links_intro", "photo", "spot_heading", "spot_text",
  *                "pick_heading", "spot_label", "spot_sub", "spot_url", "logo", "share_card", "share_links",
@@ -27,6 +28,7 @@
  *                "links": [ { "label", "sub", "url" } ] },
  *   "brand":   { "on", "logo", "logo_width", "color", "background", "text", "message", "hide_menus", "off" }
  * }
+ * "approved_plugins" is read live by Site status (Scout_Hub_Plugins), never filled into a plugin.
  * "brand" is read live by Scout_Hub_Brand (login screen, admin bar, footer, menus, Dashboard message).
  * Having the section at all turns that layer on; a theme without it changes nothing.
  * "photo" values are a path inside the theme (assets/img/joy.webp) or a full https:// address.
@@ -79,6 +81,33 @@ final class Scout_Hub_Setup {
 		$use  = array_values( array_unique( array_filter( array_map( 'sanitize_key', (array) ( $f['use'] ?? array() ) ) ) ) );
 		$skip = array_values( array_diff( array_unique( array_filter( array_map( 'sanitize_key', (array) ( $f['skip'] ?? array() ) ) ) ), $use ) );
 		return array( 'use' => $use, 'skip' => $skip );
+	}
+
+	/**
+	 * The outside plugins this site has said yes to, from "approved_plugins"
+	 * (Site Standard rule 34). Each entry mirrors a dated entry in the site's
+	 * decisions file: either the plugin's folder name ("wp-rocket") or an object
+	 * { "plugin", "job", "owner", "decided" }. Site status reads it; nothing is filled.
+	 *
+	 * @param array|null $data The setup file, or null to read the theme's.
+	 * @return array<string, array{job:string, owner:string, decided:string}> Folder name => entry.
+	 */
+	public static function approved_plugins( ?array $data = null ): array {
+		$data = null === $data ? self::data() : $data;
+		$out  = array();
+		foreach ( (array) ( $data['approved_plugins'] ?? array() ) as $entry ) {
+			$entry = is_array( $entry ) ? $entry : array( 'plugin' => $entry );
+			$slug  = is_scalar( $entry['plugin'] ?? null ) ? sanitize_key( (string) $entry['plugin'] ) : '';
+			if ( '' === $slug ) {
+				continue;
+			}
+			$out[ $slug ] = array(
+				'job'     => is_scalar( $entry['job'] ?? null ) ? (string) $entry['job'] : '',
+				'owner'   => is_scalar( $entry['owner'] ?? null ) ? (string) $entry['owner'] : '',
+				'decided' => is_scalar( $entry['decided'] ?? null ) ? (string) $entry['decided'] : '',
+			);
+		}
+		return $out;
 	}
 
 	public static function run(): void {
