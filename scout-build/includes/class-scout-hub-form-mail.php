@@ -106,6 +106,10 @@ final class Scout_Hub_Form_Mail {
 		}
 		self::$sending = null;
 		self::$error   = '';
+		// The nightly form test reads its own emails and never counts here (Scout_Hub_Form_Test).
+		if ( class_exists( 'Scout_Hub_Form_Test' ) && Scout_Hub_Form_Test::note_email( (string) $sending['n'], $ok, $error ) ) {
+			return;
+		}
 		self::record( 'form', $form, (string) $sending['n'], $ok, $error );
 	}
 
