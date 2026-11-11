@@ -1,5 +1,9 @@
 # Scout Events changelog
 
+## 0.17.1 (2026-11-11)
+
+- **Code comments use example names.** The name-sorting, screen reader and shortcode examples in the code no longer name a client or a real person. Nothing visitors or the dashboard show changes.
+
 ## 0.17.0 (2026-11-09)
 
 - **Address only in the confirmation.** For events at a home or a private place, where the address goes out with the ticket confirmation. A tick in each event's Where box, and a site-wide default under Events, Settings. When it is on, the event page shows the venue and city with "The address comes with your ticket." under them, with no street, ZIP code or map link. The Google Calendar link and the public calendar file carry the venue and city too, and the Event schema keeps the place's name, town, state and country without streetAddress or postalCode. The sign-up email, the paid ticket email, the ticket page (with a Directions link) and the calendar file attached to both emails carry the full address. A ticket holder's own ticket link also shows the full address on the event page and in its Add to calendar links, and only a ticket that is going for that event unlocks it.

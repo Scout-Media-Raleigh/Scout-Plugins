@@ -2,7 +2,7 @@
 /**
  * The writing room: a client's writing plan inside wp-admin, so they write where they log in.
  *
- * Built for Kai Baylis (Bliss Boogie) in Scout — Bliss Boogie 0.2.0 to 0.2.3 and moved here so every Scout
+ * Built first in one client's companion plugin (0.2.0 to 0.2.3) and moved here so every Scout
  * client can have one (Joy, 2026-11-03: "yes move the writing room into a scout plugin").
  *
  * - Your Writing (edit_posts): the plan's steps and prompts from the theme's prompts file (includes/config.php).
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const SCOUT_WRITING_CPT   = 'scout_writing';
 const SCOUT_WRITING_PAGE  = 'scout-writing';
-/** The room's address in Scout — Bliss Boogie 0.2.x. Links to it (Kai's writing plan) still open the room. */
+/** The room's address in that companion plugin (0.2.x). Links to it (the client's writing plan) still open the room. */
 const SCOUT_WRITING_OLD_PAGE = 'scout-bb-writing';
 const SCOUT_WRITING_NONCE = 'scout_writing';
 /** User meta: array( 'star' => string[], 'done' => string[] ) of prompt ids. */
@@ -336,7 +336,7 @@ function scout_writing_send( int $user_id, WP_Post $entry ): bool {
 	wp_update_post( array( 'ID' => $entry->ID ) ); // Bumps "last edited".
 
 	/**
-	 * Who gets "Send to Scout" emails. The Bliss Boogie name of this filter still works.
+	 * Who gets "Send to Scout" emails. The companion plugin's name of this filter still works.
 	 *
 	 * @param string[] $to Email addresses (Writing settings, the theme's send_to, or team@scoutraleigh.com).
 	 */
@@ -629,7 +629,7 @@ add_action( 'admin_menu', function () {
 }, 31 );
 
 /**
- * The room's old address (Scout — Bliss Boogie 0.2.x, admin.php?page=scout-bb-writing&write=<id>) opens the room.
+ * The room's old address (the companion plugin 0.2.x, admin.php?page=scout-bb-writing&write=<id>) opens the room.
  * WordPress refuses an unknown page before admin_init, so this listens for that refusal.
  */
 add_action( 'admin_page_access_denied', function () {

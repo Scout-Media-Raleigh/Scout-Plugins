@@ -160,7 +160,7 @@ final class Scout_Members {
 		);
 	}
 
-	/** "Bliss Boogie Connections membership": the setting, else the site name and "membership". */
+	/** "Riverside Club membership": the setting, else the site name and "membership". */
 	public static function receipt_name(): string {
 		$name = trim( self::settings()['receipt'] );
 		/* translators: %s: site name. */
