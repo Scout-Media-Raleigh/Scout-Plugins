@@ -40,14 +40,14 @@ if ( extension_loaded( 'imagick' ) && class_exists( 'Imagick' ) ) {
 	$formats                = array_map( 'strtoupper', Imagick::queryFormats() );
 	$report['WEBP encode']  = in_array( 'WEBP', $formats, true ) ? 'YES' : 'NO';
 	$report['AVIF encode']  = in_array( 'AVIF', $formats, true ) ? 'YES (not used in v1)' : 'NO (expected; not used in v1)';
-	$report['JPEG/PNG/GIF'] = ( in_array( 'JPEG', $formats, true ) && in_array( 'PNG', $formats, true ) && in_array( 'GIF', $formats, true ) ) ? 'YES' : 'PARTIAL — investigate';
+	$report['JPEG/PNG/GIF'] = ( in_array( 'JPEG', $formats, true ) && in_array( 'PNG', $formats, true ) && in_array( 'GIF', $formats, true ) ) ? 'YES' : 'PARTIAL, investigate';
 
 	if ( 'NO' === $report['WEBP encode'] ) {
-		$warnings[] = 'Imagick lacks WEBP encoding — v1 engine plan needs revisiting (GD fallback or host ticket).';
+		$warnings[] = 'Imagick lacks WEBP encoding. The v1 engine plan needs revisiting (GD fallback or host ticket).';
 	}
 } else {
 	$report['Imagick'] = 'MISSING';
-	$warnings[]        = 'Imagick not available — the v1 engine decision assumed it. STOP and surface to operator.';
+	$warnings[]        = 'Imagick is not available, and the v1 engine decision assumed it. Stop and raise it with the operator.';
 }
 
 $report['GD'] = extension_loaded( 'gd' ) ? 'present (fallback available)' : 'absent';
@@ -83,7 +83,7 @@ $upload_path = $uploads['basedir'];
 
 $bytes_total = 0;
 $files_total = 0;
-$files_large = 0; // > 1 MB — the sweep-candidate count.
+$files_large = 0; // Files over 1 MB: the sweep-candidate count.
 
 if ( is_dir( $upload_path ) ) {
 	$iterator = new RecursiveIteratorIterator(
@@ -112,14 +112,14 @@ if ( false !== $disk_free ) {
 	$report['Disk free (uploads volume)'] = size_format( $disk_free, 2 );
 	// Originals preservation roughly doubles image storage during rollout.
 	if ( $disk_free < $bytes_total ) {
-		$warnings[] = 'Free disk is smaller than the current uploads dir — originals preservation may not fit. Surface to operator before any sweep.';
+		$warnings[] = 'Free disk is smaller than the current uploads dir, so keeping the originals may not fit. Surface to operator before any sweep.';
 	}
 }
 
 /* ----------------------------------------------------------------- Output */
 
 WP_CLI::log( '' );
-WP_CLI::log( '=== Scout Optimize — Stage A Environment Audit (read-only) ===' );
+WP_CLI::log( 'Scout Optimize: Stage A environment audit (read-only)' );
 foreach ( $report as $key => $value ) {
 	WP_CLI::log( str_pad( $key, 36 ) . ' : ' . $value );
 }
@@ -129,8 +129,8 @@ if ( $warnings ) {
 	foreach ( $warnings as $warning ) {
 		WP_CLI::warning( $warning );
 	}
-	WP_CLI::log( 'Gate result: BLOCKERS FOUND — resolve with operator before Stage B.' );
+	WP_CLI::log( 'Gate result: blockers found. Resolve them with the operator before Stage B.' );
 } else {
 	WP_CLI::log( '' );
-	WP_CLI::success( 'Gate result: no blockers — Imagick path confirmed for Stage B.' );
+	WP_CLI::success( 'Gate result: no blockers. Imagick path confirmed for Stage B.' );
 }

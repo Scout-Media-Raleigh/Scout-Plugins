@@ -385,7 +385,7 @@ final class Scout_Hub_Admin {
 			$lede = self::branded() ? __( 'What Scout has done on your website, and anything you have asked for.', 'scout-build' ) : __( 'What your web team has done on your website, and anything you have asked for.', 'scout-build' );
 		}
 		// Site name in the eyebrow, trimmed at a " | " tagline so it fits a phone.
-		$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+		$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 		// The canvas layout (Joy, 2026-11-04): Home leads with a sentence, Home and the
 		// Inbox have no section list, and the Inbox bar carries Request a change.
 		if ( in_array( $tab, array( 'overview', 'inbox' ), true ) && method_exists( 'Scout_Admin_UI', 'no_local' ) ) {
@@ -436,7 +436,7 @@ final class Scout_Hub_Admin {
 		$count = $words[ $n ] ?? sprintf( __( '%d things', 'scout-build' ), $n );
 		if ( Scout_Hub_Access::is_operator() ) {
 			$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
-			$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+			$site = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 			$head = $n
 				/* translators: %s: "Three things" */
 				? sprintf( 1 === $n ? __( '%s on this site is waiting.', 'scout-build' ) : __( '%s on this site are waiting.', 'scout-build' ), $count )
@@ -497,7 +497,7 @@ final class Scout_Hub_Admin {
 		$updates  = self::waiting();
 		$theme    = wp_get_theme();
 		$log      = class_exists( 'Scout_Hub_Log' ) ? Scout_Hub_Log::query( array( 'per_page' => 3, 'client' => ! $operator ) ) : array( 'items' => array() );
-		$site     = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] );
+		$site     = trim( (string) preg_split( '/\s+[|–—-]\s+/u', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) )[0] ); // slop-ok: splits the site name on its dash separators.
 		if ( $bad ) {
 			$state = 'bad';
 			/* translators: %d: failing checks */
