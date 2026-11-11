@@ -6,6 +6,10 @@
  *
  *   /event/name/?se_ics=1   the event as an .ics file
  *
+ * With "Address only in the confirmation" on, the public links and file carry
+ * the venue and city only. The file in the ticket email, and the links on a
+ * ticket page (?se_ticket=code&se_ics=1), carry the full address.
+ *
  * @package Scout_Events
  */
 
@@ -50,14 +54,19 @@ final class Scout_Events_Calendar {
 		);
 	}
 
-	private static function where( array $e ): string {
+	/** The location line: the full address with $full, else what the public may see. */
+	private static function where( array $e, int $id, bool $full ): string {
 		if ( 'online' === $e['mode'] ) {
 			return $e['online_url'];
+		}
+		if ( ! $full && Scout_Events::address_private( $id, $e ) ) {
+			return trim( implode( ', ', array_filter( array( $e['venue'], Scout_Events::city_label( $e ) ) ) ) );
 		}
 		return trim( implode( ', ', array_filter( array( $e['venue'], Scout_Events::address_label( $e ) ) ) ) );
 	}
 
-	public static function google_url( int $id ): string {
+	/** A Google Calendar link. $full carries the street and ZIP code even when the address is private (ticket holders). */
+	public static function google_url( int $id, bool $full = false ): string {
 		$e    = Scout_Events::event( $id );
 		$span = self::span( $e );
 		if ( ! $span ) {
@@ -71,19 +80,24 @@ final class Scout_Events_Calendar {
 					'text'     => wp_specialchars_decode( get_the_title( $id ), ENT_QUOTES ),
 					'dates'    => $span['start'] . '/' . $span['end'],
 					'details'  => (string) get_permalink( $id ),
-					'location' => self::where( $e ),
+					'location' => self::where( $e, $id, $full ),
 				)
 			),
 			'https://calendar.google.com/calendar/render'
 		);
 	}
 
-	public static function ics_url( int $id ): string {
-		return add_query_arg( 'se_ics', 1, (string) get_permalink( $id ) );
+	/** The .ics address. With a ticket code, the file carries the full address. */
+	public static function ics_url( int $id, string $code = '' ): string {
+		$args = array( 'se_ics' => 1 );
+		if ( '' !== $code ) {
+			$args['se_ticket'] = $code;
+		}
+		return add_query_arg( $args, (string) get_permalink( $id ) );
 	}
 
-	/** The event as iCalendar text. */
-	public static function ics( int $id ): string {
+	/** The event as iCalendar text. $full carries the street and ZIP code even when the address is private. */
+	public static function ics( int $id, bool $full = false ): string {
 		$e    = Scout_Events::event( $id );
 		$span = self::span( $e );
 		if ( ! $span ) {
@@ -106,8 +120,9 @@ final class Scout_Events_Calendar {
 			'URL:' . get_permalink( $id ),
 			'DESCRIPTION:' . $esc( trim( wp_specialchars_decode( wp_strip_all_tags( $about ), ENT_QUOTES ) . "\n\n" . get_permalink( $id ) ) ),
 		);
-		if ( '' !== self::where( $e ) ) {
-			$lines[] = 'LOCATION:' . $esc( self::where( $e ) );
+		$where = self::where( $e, $id, $full );
+		if ( '' !== $where ) {
+			$lines[] = 'LOCATION:' . $esc( $where );
 		}
 		if ( 'cancelled' === $e['status'] ) {
 			$lines[] = 'STATUS:CANCELLED';
@@ -130,9 +145,9 @@ final class Scout_Events_Calendar {
 		return $out;
 	}
 
-	/** A temporary .ics file for an email, or an empty string. */
+	/** A temporary .ics file for an email, or an empty string. It always carries the full address. */
 	public static function ics_file( int $id ): string {
-		$ics = self::ics( $id );
+		$ics = self::ics( $id, true );
 		if ( '' === $ics ) {
 			return '';
 		}
@@ -145,7 +160,7 @@ final class Scout_Events_Calendar {
 			return;
 		}
 		$id  = (int) get_queried_object_id();
-		$ics = self::ics( $id );
+		$ics = self::ics( $id, Scout_Events::ticket_holder( $id ) );
 		if ( '' === $ics ) {
 			return;
 		}
@@ -163,8 +178,18 @@ final class Scout_Events_Calendar {
 		if ( Scout_Events::is_past( $e ) || 'cancelled' === $e['status'] || ! Scout_Events::start( $e ) ) {
 			return (string) $html;
 		}
-		return (string) $html . '<p class="se-addcal"><span>' . esc_html__( 'Add to calendar:', 'scout-events' ) . '</span> '
-			. '<a href="' . esc_url( self::google_url( $id ) ) . '" rel="noopener" data-scout-track="calendar_add">' . esc_html__( 'Google', 'scout-events' ) . '</a>'
-			. ' · <a href="' . esc_url( self::ics_url( $id ) ) . '" data-scout-track="calendar_add">' . esc_html__( 'Apple or Outlook', 'scout-events' ) . '</a></p>';
+		$code = Scout_Events::address_private( $id, $e ) && Scout_Events::ticket_holder( $id ) && isset( $_GET['se_ticket'] ) ? sanitize_text_field( wp_unslash( $_GET['se_ticket'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the code itself is the key.
+		return (string) $html . self::links_html( $id, $code );
+	}
+
+	/**
+	 * The two Add to calendar links. With a ticket holder's code they carry the
+	 * full address: the Google link in its location, the file through the code.
+	 */
+	public static function links_html( int $id, string $code = '' ): string {
+		$full = '' !== $code;
+		return '<p class="se-addcal"><span>' . esc_html__( 'Add to calendar:', 'scout-events' ) . '</span> '
+			. '<a href="' . esc_url( self::google_url( $id, $full ) ) . '" rel="noopener" data-scout-track="calendar_add">' . esc_html__( 'Google', 'scout-events' ) . '</a>'
+			. ' · <a href="' . esc_url( self::ics_url( $id, $code ) ) . '" data-scout-track="calendar_add">' . esc_html__( 'Apple or Outlook', 'scout-events' ) . '</a></p>';
 	}
 }

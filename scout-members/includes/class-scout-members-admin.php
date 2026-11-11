@@ -1309,6 +1309,16 @@ final class Scout_Members_Admin {
 					</p>
 				</section>
 
+				<?php if ( class_exists( 'Scout_Events' ) ) : ?>
+					<section class="sh-box" id="sm-events">
+						<h2 class="sh-title"><?php esc_html_e( 'Members-only events', 'scout-members' ); ?></h2>
+						<p class="sm-field">
+							<label for="sm-set-hide-events"><input type="checkbox" id="sm-set-hide-events" name="scout_members[hide_events]" value="1" aria-describedby="sm-set-hide-events-help" <?php checked( $s['hide_events'] ); ?>> <?php esc_html_e( 'Keep members-only events off the public calendar', 'scout-members' ); ?></label>
+							<span class="sh-note" id="sm-set-hide-events-help"><?php esc_html_e( 'Members see them everywhere with a Members only tag. Everyone else never sees them in lists, search or the sitemap, and their page shows how to join. Off, they stay on the calendar with the tag.', 'scout-members' ); ?></span>
+						</p>
+					</section>
+				<?php endif; ?>
+
 				<section class="sh-box" id="sm-plans">
 					<h2 class="sh-title"><?php esc_html_e( 'Plans & approval', 'scout-members' ); ?></h2>
 					<p class="sm-field">

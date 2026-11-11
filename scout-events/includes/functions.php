@@ -15,7 +15,7 @@ if ( ! function_exists( 'scout_events_upcoming' ) ) {
 	 * Upcoming published events as plain data, soonest first.
 	 *
 	 * @param int $limit 0 for all.
-	 * @return array<int,array{id:int,title:string,url:string,dates:string,times:string,price:string,tickets:string,ticket_url:string,status:string,event:array}>
+	 * @return array<int,array{id:int,title:string,url:string,dates:string,times:string,price:string,tickets:string,ticket_url:string,status:string,event:array,address_private:bool}>
 	 */
 	function scout_events_upcoming( int $limit = 0 ): array {
 		$out = array();
@@ -28,12 +28,16 @@ if ( ! function_exists( 'scout_events_upcoming' ) ) {
 
 if ( ! function_exists( 'scout_event_data' ) ) {
 	/**
-	 * One event as plain data with ready-made labels.
+	 * One event as plain data with ready-made labels. This is public data: an
+	 * event with "Address only in the confirmation" comes without its street
+	 * and ZIP code, and address_private says so.
 	 *
 	 * @param int $id Event post ID.
 	 */
 	function scout_event_data( int $id ): array {
-		$e = Scout_Events::event( $id );
+		$e       = Scout_Events::event( $id );
+		$private = Scout_Events::address_private( $id, $e );
+		$e       = $private ? Scout_Events::without_street( $e ) : $e;
 		return array(
 			'id'         => $id,
 			'title'      => html_entity_decode( wp_strip_all_tags( get_the_title( $id ) ), ENT_QUOTES, 'UTF-8' ),
@@ -45,6 +49,7 @@ if ( ! function_exists( 'scout_event_data' ) ) {
 			'ticket_url' => Scout_Events::ticket_open( $e ) ? $e['ticket_url'] : '',
 			'status'     => $e['status'],
 			'event'      => $e,
+			'address_private' => $private,
 		);
 	}
 }

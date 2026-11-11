@@ -56,6 +56,8 @@ final class Scout_Events {
 				'schema'       => 1,
 				'agreements_url'   => '',
 				'agreements_label' => '',
+				'address_private'  => 0,
+				'address_note'     => '',
 			)
 		);
 		foreach ( array( 'event_slug', 'speaker_slug', 'session_slug' ) as $key ) {
@@ -68,7 +70,17 @@ final class Scout_Events {
 		if ( '' === $s['agreements_label'] ) {
 			$s['agreements_label'] = __( 'Community Agreements', 'scout-events' );
 		}
+		$s['address_private'] = ! empty( $s['address_private'] ) ? 1 : 0;
+		$s['address_note']    = sanitize_text_field( (string) $s['address_note'] );
+		if ( '' === $s['address_note'] ) {
+			$s['address_note'] = self::default_address_note();
+		}
 		return $s;
+	}
+
+	/** The line under the venue when the address goes out with the ticket. */
+	public static function default_address_note(): string {
+		return __( 'The address comes with your ticket.', 'scout-events' );
 	}
 
 	/** Where application notices go: the shared notice address from Business info, else the site email. */
@@ -270,6 +282,8 @@ final class Scout_Events {
 			'photo_ask'    => 0,
 			'know'         => '',
 			'schema_type'  => 'Event',
+			// '' follows the site default under Settings; 'yes' or 'no' is this event's own choice.
+			'address_private' => '',
 		);
 	}
 
@@ -316,6 +330,7 @@ final class Scout_Events {
 		$out['agree']        = empty( $in['agree'] ) ? 0 : 1;
 		$out['waiver']       = mb_substr( str_replace( "\r\n", "\n", sanitize_textarea_field( (string) ( $in['waiver'] ?? '' ) ) ), 0, 20000 );
 		$out['photo_ask']    = empty( $in['photo_ask'] ) ? 0 : 1;
+		$out['address_private'] = self::yes_no( $in['address_private'] ?? '' );
 
 		// An end before the start is a typo; drop it rather than publish it.
 		if ( '' !== $out['end_date'] && '' !== $out['start_date'] && $out['end_date'] < $out['start_date'] ) {
@@ -470,6 +485,65 @@ final class Scout_Events {
 		}
 		/* translators: 1: lowest price, 2: highest price. */
 		return sprintf( __( '%1$s to %2$s', 'scout-events' ), $from, self::money( $e['price_to'] ) );
+	}
+
+	/** 'yes', 'no' or '' from a tick, a stored value or a spreadsheet cell (yes, no, 1, 0, true, false). */
+	public static function yes_no( $value ): string {
+		$v = strtolower( trim( (string) $value ) );
+		if ( in_array( $v, array( 'yes', 'y', '1', 'true', 'on' ), true ) ) {
+			return 'yes';
+		}
+		return in_array( $v, array( 'no', 'n', '0', 'false', 'off' ), true ) ? 'no' : '';
+	}
+
+	/**
+	 * Address only in the confirmation: the event's own choice, else the site
+	 * default. When on, the public page, cards, calendar links and Event schema
+	 * carry the venue and city only; the sign-up confirmation, the ticket
+	 * email, the ticket page and the .ics file carry the full address.
+	 */
+	public static function address_private( int $post_id, ?array $e = null ): bool {
+		$e   = $e ?? self::event( $post_id );
+		$own = (string) ( $e['address_private'] ?? '' );
+		if ( '' !== $own ) {
+			return 'yes' === $own;
+		}
+		return (bool) self::settings()['address_private'];
+	}
+
+	/**
+	 * True when this page view should leave the street and ZIP code out: the
+	 * address is private and the person is not looking at their own ticket
+	 * (a valid ?se_ticket code for this event that is going).
+	 */
+	public static function address_hidden( int $post_id, ?array $e = null ): bool {
+		return self::address_private( $post_id, $e ) && ! self::ticket_holder( $post_id );
+	}
+
+	/** The ticket code in the address belongs to a going ticket for this event. */
+	public static function ticket_holder( int $post_id ): bool {
+		$code = isset( $_GET['se_ticket'] ) ? sanitize_text_field( wp_unslash( $_GET['se_ticket'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the code itself is the key.
+		if ( '' === $code || ! class_exists( 'Scout_Events_RSVP' ) ) {
+			return false;
+		}
+		static $seen = array();
+		if ( ! array_key_exists( $code, $seen ) ) {
+			$seen[ $code ] = Scout_Events_RSVP::find( $code );
+		}
+		$row = $seen[ $code ];
+		return $row && (int) $row['event_id'] === $post_id && 'going' === $row['status'];
+	}
+
+	/** The event with the street and ZIP code taken out, for anything public. */
+	public static function without_street( array $e ): array {
+		$e['street'] = '';
+		$e['postal'] = '';
+		return $e;
+	}
+
+	/** "Raleigh, NC", or ''. */
+	public static function city_label( array $e ): string {
+		return implode( ', ', array_filter( array( $e['city'], $e['region'] ) ) );
 	}
 
 	/** One line of the full address, or ''. */

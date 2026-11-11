@@ -673,6 +673,16 @@ final class Scout_Events_RSVP {
 		}
 		$when = trim( Scout_Events::dates_label( $e ) . ' · ' . Scout_Events::times_label( $e ), ' ·' );
 		$out .= '<p class="se-ticket-when">' . esc_html( get_the_title( $id ) . ( '' !== $when ? ' · ' . $when : '' ) ) . '</p>';
+		$private = 'going' === $status && 'online' !== $e['mode'] && Scout_Events::address_private( $id, $e );
+		if ( $private ) {
+			// Address only in the confirmation: the ticket is where the full address lives.
+			$addr  = Scout_Events::address_label( $e );
+			$where = implode( ', ', array_filter( array( $e['venue'], $addr ) ) );
+			if ( '' !== $where ) {
+				$map  = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( trim( $e['venue'] . ' ' . $addr ) );
+				$out .= '<p class="se-ticket-where">' . esc_html( $where ) . ' <a class="se-map" href="' . esc_url( $map ) . '" rel="noopener" data-scout-track="directions_click">' . esc_html__( 'Directions', 'scout-events' ) . '</a></p>';
+			}
+		}
 
 		if ( $staff ) {
 			$out .= self::staff_controls( $row );

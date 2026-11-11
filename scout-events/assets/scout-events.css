@@ -23,6 +23,7 @@
 .se-facts > :where(div) > :where(dt), .se-facts > :where(div) > :where(dd) { margin: 0; padding: 0; }
 .se-facts :where(dd) { line-height: 1.45; overflow-wrap: anywhere; }
 .se-map { white-space: nowrap; }
+.se-address-note { display: inline-block; margin-top: .2em; font-size: .9em; color: var(--se-muted); text-wrap: pretty; }
 .se-banner { margin: 0 0 1em; padding: .6em .9em; border-radius: calc(var(--se-radius) - 6px); background: var(--se-inset); font-weight: 600; }
 .se-banner.is-cancelled { color: #B42318; }
 .se-cta { margin: 1.25em 0 0; }
@@ -165,6 +166,8 @@
 .se-ticket-title { margin: .2em 0 .3em; text-wrap: balance; }
 .se-ticket-who { margin: 0; font-size: 1.15em; font-weight: 600; }
 .se-ticket-when { margin: .3em 0 1em; opacity: .8; text-wrap: pretty; }
+.se-ticket-where { margin: -.6em 0 1em; text-wrap: pretty; }
+.se-ticket-where .se-map { margin-left: .35em; }
 .se-ticket-qr { margin: 0 auto 1em; max-width: 16rem; border-radius: 10px; overflow: hidden; }
 .se-qr { display: block; width: 100%; height: auto; }
 .se-ticket-note { margin: 0 0 1em; text-wrap: pretty; }
