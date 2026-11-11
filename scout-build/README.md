@@ -24,7 +24,7 @@ screen or feature, is in `../docs/dashboard-map.md`.
 |---|---|---|
 | **Home** | everyone, the first screen | Is the site all right, what needs you, what Scout is doing, the things a client does here, and one line to ask for more. Clients also find **Site history** here (what Scout has done on the site, with Approve). |
 | **To do** (key `inbox`) | everyone | One list of everything waiting on a person, newest first, with filter chips: chat questions, new reviews, change requests and their status, site check requests, booking requests. Plugins add items with `scout_hub_inbox_items` (or a count row with `scout_hub_inbox`). Each person picks Inbox emails: never, once a day, or every new item. |
-| **Reports** | owner, operator | Recon's numbers, when Recon is on. Empty groups never show to clients. |
+| **Reports** | owner, operator | Reserved and empty. Recon's numbers are never shown in WordPress (Joy, 2026-11-05). Empty groups never show to clients. |
 | **Business** | everyone | Facts typed once: Business info, Hours, Team, Case results, a companion plugin's own types. |
 | **Site features** | owner, operator | What visitors see and use: Call buttons, Chat, Reviews and Review settings, Cards & links, Newsletter, Redirects, Free site check. |
 | **Search** | owner, operator | SEO, AI search, Analytics and the cookie notice, Search engine rules (robots.txt), and later site search and the sitemap. |
