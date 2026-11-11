@@ -1,5 +1,9 @@
 # Scout Members changelog
 
+## 0.5.1 (2026-11-11)
+
+- **Code comments use example names.** The receipt name and members-area examples in the code no longer name a client site. Nothing visitors or the dashboard show changes.
+
 ## 0.5.0 (2026-11-09)
 
 - **Keep members-only events off the public calendar** (Settings, Members-only events). For clubs whose member events are private and are not posted publicly. When it is on, anyone who cannot see members-only content never sees a members-only event or its sessions in event lists, the month calendar, cards, upcoming and directory blocks, previous and next links, search, feeds or the REST API, and the sitemap leaves them out for everyone. The event's own address shows the members note with the sign-in form, search engines are told to skip it, its description reads "A page for members.", its Event schema does not print, and its calendar file sends people back to the page. Members and the people who run the site see it everywhere, with its Members only tag. A member opening their ticket link while signed out still gets their ticket (with Scout Events 0.17.0 or later). Scheduled reminders, the dashboard and WP-CLI see every event as before.

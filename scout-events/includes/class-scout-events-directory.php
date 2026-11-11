@@ -455,7 +455,7 @@ final class Scout_Events_Directory {
 		return $out . '</li>';
 	}
 
-	/** "kai baylis" for "Dr. Kai Baylis", so the list and its letters follow the name. */
+	/** "jane rivera" for "Dr. Jane Rivera", so the list and its letters follow the name. */
 	private static function sort_key( string $title ): string {
 		return self::fold( trim( (string) preg_replace( '/^(dr\.?|the|mr\.?|ms\.?|mrs\.?)\s+/i', '', wp_strip_all_tags( $title ) ) ) );
 	}
@@ -561,7 +561,7 @@ final class Scout_Events_Directory {
 	/** Where they work and how to reach them, for a members directory. */
 	private static function contact( array $c, string $name ): string {
 		$links = array();
-		// "Website Kai Baylis" to a screen reader, so a list of cards is not a list of identical links.
+		// "Website Jane Rivera" to a screen reader, so a list of cards is not a list of identical links.
 		$sr    = '<span class="screen-reader-text"> ' . esc_html( $name ) . '</span>';
 		if ( '' !== (string) ( $c['website'] ?? '' ) ) {
 			$links[] = '<a href="' . esc_url( $c['website'] ) . '" rel="noopener">' . esc_html__( 'Website', 'scout-events' ) . $sr . '</a>';

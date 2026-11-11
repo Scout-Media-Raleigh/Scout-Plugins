@@ -4,7 +4,7 @@
  *
  * Each plan can link to a WooCommerce product (Settings, Dues and renewals):
  * a simple, virtual product hidden from the shop, named in plain words for
- * receipts ("Bliss Boogie Connections membership, Club Member, 1 year").
+ * receipts ("Riverside Club membership, Club Member, 1 year").
  * "Create the product for this plan" makes one in a click.
  *
  * A pay link (pay_url()) carries the member and a signed key. Opening it puts
@@ -121,7 +121,7 @@ final class Scout_Members_Woo {
 		update_option( self::OPTION, $clean, false );
 	}
 
-	/** "Bliss Boogie Connections membership, Club Member, 1 year". */
+	/** "Riverside Club membership, Club Member, 1 year". */
 	public static function product_name( string $plan ): string {
 		$p     = Scout_Members::plans()[ $plan ] ?? null;
 		$parts = array( Scout_Members::receipt_name() );
