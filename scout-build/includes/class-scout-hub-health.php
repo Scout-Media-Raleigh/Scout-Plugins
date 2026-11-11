@@ -781,6 +781,11 @@ final class Scout_Hub_Health {
 		if ( $sent ) {
 			$out[] = $sent;
 		}
+		// The nightly form test (Site Standard rule 31; Scout_Hub_Form_Test). No row while it is off.
+		$tested = class_exists( 'Scout_Hub_Form_Test' ) ? Scout_Hub_Form_Test::row() : null;
+		if ( $tested ) {
+			$out[] = $tested;
+		}
 		$out[]   = self::test_builds();
 		// Outside plugins and WPMU DEV (Site Standard rules 8 and 34; Scout_Hub_Plugins).
 		if ( class_exists( 'Scout_Hub_Plugins' ) ) {

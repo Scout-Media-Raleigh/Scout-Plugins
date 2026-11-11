@@ -416,6 +416,11 @@ final class Scout_Redirects_Admin {
 		}
 		?>
 
+		<?php
+		// Broken links and missing pages are the to-do part, so they come first; the form follows
+		// them unless someone is changing a redirect (Joy, 2026-11-11).
+		ob_start();
+		?>
 		<section class="sh-box" id="scout-add-box">
 			<h2 class="sh-title"><?php echo $editing ? esc_html__( 'Change a redirect', 'scout-redirects' ) : esc_html__( 'Add a redirect', 'scout-redirects' ); ?></h2>
 			<form method="post" action="<?php echo esc_url( $post_url ); ?>" class="sr-add" id="scout-add">
@@ -446,6 +451,12 @@ final class Scout_Redirects_Admin {
 			</form>
 			<p class="sh-note sr-hint"><?php esc_html_e( 'The old address is a path on this site, and the new one can be a path or a full web address.', 'scout-redirects' ); ?></p>
 		</section>
+		<?php
+		$add_box = (string) ob_get_clean();
+		if ( $editing ) {
+			echo $add_box; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped as it was built above.
+		}
+		?>
 
 		<?php if ( $internal ) : ?>
 		<section class="sh-box" id="scout-broken">
@@ -542,6 +553,11 @@ final class Scout_Redirects_Admin {
 				</div>
 			<?php endif; ?>
 		</section>
+		<?php
+		if ( ! $editing ) {
+			echo $add_box; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped as it was built above.
+		}
+		?>
 
 		<section class="sh-box" id="scout-list">
 			<h2 class="sh-title"><?php esc_html_e( 'Your redirects', 'scout-redirects' ); ?></h2>

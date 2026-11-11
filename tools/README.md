@@ -16,6 +16,9 @@ releases safe. Run every command from the repo root.
 - `design-build.php`: builds a theme's `theme.json` tokens and `assets/css/design-tokens.css` from
   its `DESIGN.md`, and fails when the contrast pairs miss 4.5:1.
 - `test-build.sh`: builds a labeled test zip of one plugin for a staging site.
+- `client-names.py`: fails CI when a change adds a client or partner name to this public repo
+  (Scout Repo Standard rule 5). The deny list is stored hashed; intentional mentions go in
+  `.github/client-names-allow.txt`. `--all` scans every tracked file.
 - `slop-check.py`: the code slop check. This is the original; copies elsewhere are edited here first.
 - `parity/`: the before and after capture and compare for a site conversion (Site Standard rule
   20). Its own `README.md` has the commands.
@@ -23,7 +26,9 @@ releases safe. Run every command from the repo root.
   `--check`, fails when a list is missing or out of step (Site Standard rule 24).
 - `tests/`: PHP checks for the plugins and kits, one file per area. Some of them (for example
   `newsletter.php` and `site-sync.php`) wipe data and run only against a disposable local
-  WordPress.
+  WordPress. `tests/wp-fresh-install.sh` builds that WordPress with every Scout plugin active
+  (Scout Core first) and fails on any activation error or PHP warning; the Lint workflow's
+  WordPress job runs it, then those tests. Every test file here runs in the Lint workflow.
 
 ## Who owns it
 Joy and Sean at Scout Media.

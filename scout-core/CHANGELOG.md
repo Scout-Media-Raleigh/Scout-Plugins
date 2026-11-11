@@ -7,6 +7,14 @@
 - **The site name in schema is plain text.** WordPress stores the site title escaped, so the WebSite name (and the business name when Business info has none) printed as `Joe&#039;s ...`. Both now go through the same plain-text step as every other schema name (1.10.5). Test added to `tools/tests/core-schema-plain-text.php`.
 - Test: `php tools/tests/core-typography.php` (no WordPress needed), in CI.
 
+## 1.13.3 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
+## 1.13.2 (2026-11-11)
+
+- **Screens open on what needs doing (Joy, 2026-11-11).** Business info starts with a status line naming the main details still empty (name, type, phone, email, city, state, postal code), or saying they are all in. Search settings starts with how many search checks need a look, with the button for the first one, and "Searches that found nothing" moves above the form while it has searches in it.
+
 ## 1.13.1 (2026-11-11)
 
 - README: the Language versions (hreflang) section no longer says unreleased. It shipped in 1.10.0.

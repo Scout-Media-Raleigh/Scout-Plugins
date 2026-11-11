@@ -193,6 +193,87 @@ screens only; nothing here reaches visitors.
 read that file, so the theme's `scout-setup.json` carries the same list as
 `approved_plugins`, and it arrives with each theme release.
 
+## Site status: the nightly form test (0.17.0+)
+
+Site Standard rule 31: a form with no received test submission is a blocker.
+The nightly form test sends each picked Gravity Forms form once a night and
+checks that its emails go out. Code: `includes/class-scout-hub-form-test.php`.
+
+**Off until switched on.** Nothing happens after an update. An operator opens
+**Scout tools, Features, More options: nightly form test**, ticks **Run the
+test every night**, ticks the forms, and saves. **Save and run it now** runs
+it at once (for a ring 1 check). The theme's `scout-setup.json` can suggest
+forms, but it can never switch the test on:
+
+```json
+"form_test": { "forms": [ 3, "Contact" ] }
+```
+
+Forms are named by id or exact title. With no saved list and no `form_test`
+section, the box pre-ticks the forms placed on a published page or post (by
+shortcode or block) that send email. Nothing runs until an operator saves.
+
+**What one test does.** Around 2 am in the site's time zone (each site gets
+its own minute between 2:00 and 3:59, so they don't all run at once), each
+ticked form gets one submission through `GFAPI::submit_form`:
+
+- Every required field gets a made-up answer ("Nightly form test", a 555
+  phone number, the first choice). Every email field gets the notice address
+  (`scout_core_notice_email()`), so an auto-reply meant for "the visitor"
+  goes to the business, never to a stranger. Boxes that are not required stay
+  unticked.
+- The form's own notifications go to their real addresses, with `[Test]` at
+  the start of the subject, a first line that says it is a test, and an
+  `X-Form-Test: nightly` header for mail filters.
+- No add-on feed runs (Mailchimp, a CRM, Zapier, webhooks): feeds are emptied
+  for the test with `gform_addon_pre_process_feeds`. Scout Newsletter's form
+  listener is paused. Other plugins can check `scout_build_form_test_running()`.
+  An outside plugin that acts on every submission without a feed is not
+  stopped, so check the site's outside plugins before switching it on.
+- The entry is deleted right after the check. Its id is saved before the
+  emails go out, and the entry carries a `scout_form_test` mark, so a run that
+  stops halfway is cleaned up the next night. Only marked entries are deleted.
+- It never counts in analytics: it runs on the server, so no page loads and
+  no browser event fires, and the deleted entry leaves Gravity Forms' own
+  counts. It never counts in the Form emails sent row either.
+- Scout Forms Guard is not loosened. The test carries the same signed token a
+  real page gives a visitor, made with the site's own secret inside the run.
+  `tools/tests/form-test.php` checks the token still matches the guard.
+- It is skipped on staging copies (the staging email guard would drop the
+  client's emails) and on copies that are not the live site.
+- Forms it can't send by itself are skipped with the reason: payments, a
+  CAPTCHA, a required file upload or signature, a login, a form that makes a
+  post, a password field, an input mask, or a required field type it doesn't
+  know. Those need a test by hand.
+
+**How sending is confirmed.** Gravity Forms reports each notification's
+result, which is WordPress's mailer answer: the mailer, or the mail server it
+signs in to, took the email. The site can't see anyone's inbox, so the row
+says the emails were "handed to the mailer", never "delivered". Check that a
+`[Test]` email arrives now and then. The test's notifications are kept in the same
+request (`gform_is_asynchronous_notifications_enabled` returns false for it),
+so a site that sends notifications in the background still gets a reading.
+
+**The Site status row** (Basics, under Form emails sent; only while the test
+is on):
+
+| Value | State | When |
+|---|---|---|
+| Sent last night | green | Every picked form sent all its emails. |
+| Trying again tonight | green | A form failed once. One miss can be a blip. |
+| Failed: Contact did not send | red | A form failed two nights in a row. The notice address gets one email, then one a week while it keeps failing. Notice emails go out on failure only. |
+| Could not test Contact | yellow | A form was skipped or refused (a spam filter, or Gravity Forms turned down the answers). The reason is in the note. |
+| No test since Nov 9 | yellow | No run in 36 hours: WordPress's scheduled tasks may be off on the host. |
+| No forms picked | yellow | On, with nothing ticked. |
+| First test tonight | green | Just switched on. |
+| Off on staging | green | A staging copy. |
+
+**What is kept** (options, nothing about visitors): `scout_hub_form_test`
+(the switch, the ticked form ids, who saved it and when) and
+`scout_hub_form_test_state` (each form's last result, how many emails went,
+the error with every address taken out, the failures in a row, and test
+entry ids waiting to be deleted). Uninstall deletes both.
+
 ## The feature list
 
 `catalog.json` at the root of this repo, mirrored in `scout-build/catalog.json`
@@ -214,7 +295,8 @@ Scout Build has no visitor-facing output. It reads these from the theme:
 
 - **`scout-setup.json`** (child theme first): `features.use` and
   `features.skip`, `scout_own_site`, `approved_plugins` (the outside plugins
-  the site has said yes to, read by Site status; see above), and the sections it fills into other
+  the site has said yes to, read by Site status; see above), `form_test.forms`
+  (forms the nightly form test suggests; it never switches the test on), and the sections it fills into other
   plugins (`business`, `team`, `reviews`, `chat`, `hours`, `analytics`,
   `cards`). Most fill blanks only. In `reviews`, `totals` (each platform's
   rating, count and link, with the `checked` date) replace the saved totals

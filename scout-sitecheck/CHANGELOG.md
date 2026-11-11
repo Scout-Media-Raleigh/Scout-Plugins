@@ -1,5 +1,9 @@
 # Scout Site Check changelog
 
+## 0.2.13 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.2.12 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** the form and report rows now read the theme's DESIGN.md (the `--scout-*` names from `design-tokens.css`) when the theme's own `--surface`, `--accent-fill` and the rest are not set; button text reads DESIGN.md's on accent. Sites that set them, or set neither, look exactly the same. The emailed report is unchanged.

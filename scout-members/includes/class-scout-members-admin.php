@@ -656,7 +656,7 @@ final class Scout_Members_Admin {
 
 	/**
 	 * What members can open: the members home, each page under it, and any
-	 * other members-only page, with who each one is for. Kai's map of the
+	 * other members-only page, with who each one is for. The site owner's map of the
 	 * members area, and the place to start a new members page.
 	 */
 	private static function area(): void {

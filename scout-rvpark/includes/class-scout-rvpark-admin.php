@@ -75,6 +75,14 @@ final class Scout_RVPark_Admin {
 		/* translators: %d: amenities. */
 		$detail = sprintf( _n( '%d amenity listed.', '%d amenities listed.', count( $amenities ), 'scout-rvpark' ), count( $amenities ) );
 		$state  = $sites ? 'good' : 'off';
+		// Open on what needs doing (Joy, 2026-11-11): a site type with neither rate shows no price to visitors.
+		$no_rate = array_filter( $sites, static fn( $p ) => '' === self::field( $p->ID, 'nightly' ) && '' === self::field( $p->ID, 'monthly' ) );
+		if ( $no_rate ) {
+			$state = 'warn';
+			/* translators: %d: site types. */
+			$head   = sprintf( _n( '%d site type has no rate.', '%d site types have no rate.', count( $no_rate ), 'scout-rvpark' ), count( $no_rate ) );
+			$detail = implode( ', ', array_map( 'get_the_title', $no_rate ) ) . '. ' . __( 'Add a nightly or monthly rate in the table below.', 'scout-rvpark' );
+		}
 		if ( method_exists( 'Scout_Admin_UI', 'status' ) ) {
 			Scout_Admin_UI::status( $state, $head, $detail );
 		} else {

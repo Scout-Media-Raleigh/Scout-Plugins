@@ -65,11 +65,19 @@ Core goes first, then the rest, one at a time. A plugin whose version did not
 change is skipped, so merging never ships anything by accident. The version can
 never disagree with the code because nobody retypes it.
 
+**4. Update the fleet row.** The fleet matrix (every site, what it runs, how it
+updates) is private: it lives in the Scout-Internal repo, `ops/fleet.md`, not
+here (`fleet.md` in this repo is only a pointer). Once the release is out, ask a
+Scout session to update it: the plugin's new version in the Versions table, and
+each site's row as the sites pick the release up. Site names, install names and
+versions per site never go in this public repo.
+
 ### By hand, as a backup
 
-> **Actions → Release → Run workflow →** pick the plugin → **Run**
+> **Actions → Release → Run workflow →** leave **Use workflow from** on `main` → pick the plugin → **Run**
 
-Same build, for one plugin. It refuses a version that already shipped.
+Same build, for one plugin. It refuses a version that already shipped, and it
+refuses to run from any branch but `main`, so a working branch never ships.
 
 Each plugin is versioned and released on its own. Releasing one never touches
 the others.
@@ -83,8 +91,9 @@ git tag scout-core-v1.0.2
 git push origin scout-core-v1.0.2
 ```
 
-Here the tag has to match the plugin's `Version:` header, and the build fails on
-purpose if it does not.
+Here the tag has to match the plugin's `Version:` header and sit on a commit
+that is already on `main` (merge first, then tag). The build fails on purpose
+if either is not true.
 
 ---
 
@@ -178,15 +187,23 @@ screen is where those notes show up.
 
 ## The updater file itself
 
-`includes/class-scout-plugin-updater.php` is identical in every plugin, so
-each one can update itself when the others are inactive. Change it in one place
-and copy it to the rest:
+`includes/class-scout-plugin-updater.php` is identical in every plugin (all
+25 today), so each one can update itself when the others are inactive. No
+script or CI check copies or compares it: you do both by hand. Change it in
+Scout Core's copy, then copy that over every other plugin's, from the repo root:
 
 ```bash
-for p in scout-forms-guard scout-optimize scout-reviews scout-rvpark; do
+for dir in scout-*/; do
+  p="${dir%/}"
+  [ "$p" = "scout-core" ] && continue
+  [ -f "$p/includes/class-scout-plugin-updater.php" ] || continue
   cp scout-core/includes/class-scout-plugin-updater.php "$p/includes/"
 done
+md5sum scout-*/includes/class-scout-plugin-updater.php | awk '{print $1}' | sort -u | wc -l   # 1 means every copy matches
 ```
 
-The class guards itself with `class_exists`, so whichever copy loads first is
-the one that runs. Release the suite together after changing it.
+The loop skips a folder without its own copy, so a new plugin needs the file
+added once by hand (and the `require_once` in its main file) before the loop
+reaches it. The class guards itself with `class_exists`, so whichever copy
+loads first is the one that runs. Bump and release every plugin you copied it
+into, in one pull request; the Release workflow ships Scout Core first.

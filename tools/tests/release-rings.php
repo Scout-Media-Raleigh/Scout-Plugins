@@ -7,7 +7,7 @@ $fail = 0;
 function ok( $cond, $msg ) { global $fail; echo ( $cond ? 'PASS ' : 'FAIL ' ) . $msg . "\n"; if ( ! $cond ) { $fail++; } }
 $repo = Scout_Hub_Catalog::REPO;
 $now  = time();
-$rel  = static function ( $slug, $ver, $ago_days ) use ( $now ) {
+$rel  = static function ( $slug, $ver, $ago_days ) use ( $now, $repo ) {
 	return array( 'tag_name' => "$slug-v$ver", 'draft' => false, 'prerelease' => false, 'published_at' => gmdate( 'c', $now - (int) ( $ago_days * DAY_IN_SECONDS ) ), 'assets' => array( array( 'name' => "$slug.zip", 'browser_download_url' => "https://github.com/$repo/releases/download/$slug-v$ver/$slug.zip" ) ) );
 };
 $feed = array( $rel( 'scout-hours', '9.0.0', 0.2 ), $rel( 'scout-chat', '9.0.0', 1.5 ), $rel( 'scout-aeo', '9.0.0', 3 ),

@@ -1,5 +1,9 @@
 # Scout Cards changelog
 
+## 1.2.1 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 1.2.0 (2026-11-10)
 
 - **The card pages follow the theme's DESIGN.md (Site Standard gap 11).** With Scout Core 1.11.0 and a `### Feature: cards` section in the theme's DESIGN.md, its `mode`, `accent` and `font` lines win over the Cards screen for the keys they set. In light mode the page and card colors come from the theme's `bg`, `surface`, `surface_2`, `text`, `text_2` and `line`; in dark mode from `night`, `on_night` and `on_night_2` when the theme has them. The text on the accent buttons uses `on_accent`, the corners follow the theme's `radius` map, and with no font set anywhere the body and heading fonts come from the theme's font roles. The browser bar color and the home-screen app color follow the page color.

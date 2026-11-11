@@ -1,6 +1,6 @@
 <?php
 /**
- * Moving writing over from Scout — Bliss Boogie 0.2.x.
+ * Moving writing over from the earlier writing room, which lived in one client's companion plugin (0.2.x).
  *
  * That plugin kept entries as private "bb_writing" posts with "_bb_*" meta, and stars and done marks in the
  * "scout_bb_writing_marks" user meta. This renames them in place: the same post IDs, authors, dates, words,
@@ -86,7 +86,7 @@ function scout_writing_migrate(): array {
 	}
 	if ( array_sum( $moved ) ) {
 		$line = sprintf(
-			'Moved from the Bliss Boogie writing room: %d writing %s, stars and done marks for %d %s, %d draft-post %s.',
+			'Moved from the earlier writing room: %d writing %s, stars and done marks for %d %s, %d draft-post %s.',
 			$moved['entries'],
 			1 === $moved['entries'] ? 'entry' : 'entries',
 			$moved['people'],
@@ -106,7 +106,7 @@ function scout_writing_migrate(): array {
 
 /**
  * When to move: on activation, and on any admin screen while old rows exist and the old room's code has not
- * been switched off yet (Scout — Bliss Boogie 0.2.x still active), or once after an update.
+ * been switched off yet (the companion plugin 0.2.x still active), or once after an update.
  */
 add_action( 'admin_init', function () {
 	if ( wp_doing_ajax() ) {

@@ -1,5 +1,13 @@
 # Scout Redirects changelog
 
+## 0.2.2 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
+## 0.2.1 (2026-11-11)
+
+- **Broken links and missing pages come first (Joy, 2026-11-11).** The Add a redirect form moves below them. While someone is changing a redirect, the form stays on top.
+
 ## 0.2.0 (2026-11-05)
 
 - **One status line instead of three stat cards (Joy, 2026-11-05).** "4 redirects live. Visitors tried 12 missing addresses in the last 7 days, and 1 link on your own pages is broken." It turns amber only when a link on the site's own pages is broken, with a quiet link down to them.

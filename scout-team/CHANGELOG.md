@@ -1,5 +1,13 @@
 # Scout Team changelog
 
+## 0.4.3 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
+## 0.4.2 (2026-11-11)
+
+- **People who need a look come first (Joy, 2026-11-11).** The People list shows anyone with something missing or waiting at the top, then everyone else, each part in team page order.
+
 ## 0.4.1 (2026-11-11)
 
 - **Link color from DESIGN.md (Site Standard rule 3).** On the profile page and the team page, links and the role line use the theme's own link color first, as before. A theme built from DESIGN.md that has none now gets DESIGN.md's accent instead of the plain text color. Every other theme sees no change.

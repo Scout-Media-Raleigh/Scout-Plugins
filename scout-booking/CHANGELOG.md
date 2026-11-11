@@ -1,5 +1,9 @@
 # Scout Booking changelog
 
+## 0.3.1 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
 ## 0.3.0 (2026-11-05)
 
 - **Colors and fonts from DESIGN.md (Site Standard rule 3):** the booking steps now read the theme's DESIGN.md (accent fill, on accent, line, surface 2 and card corner, from `design-tokens.css`) when the theme does not set `--scout-booking-*`. Sites that set them, or set neither, look exactly the same.

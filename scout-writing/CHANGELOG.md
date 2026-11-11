@@ -1,5 +1,17 @@
 # Scout Writing changelog
 
+## 0.1.10 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
+## 0.1.9 (2026-11-11)
+
+- **Next up comes first (Joy, 2026-11-11).** The writing room opens with the one prompt to write now (a starred one, else the next in the plan), and My writing lists pieces not sent yet before sent ones.
+
+## 0.1.8 (2026-11-11)
+
+- **Neutral wording for the move from the earlier writing room.** The Writing settings heading now reads "Moved from the earlier writing room", and so does each new line in its log. Lines already logged keep their words. Code comments describe where the room came from by type. Stored keys, the old page address and the old filter name are unchanged, so old links and saved writing keep working.
+
 ## 0.1.7 (2026-11-05)
 
 - **Writing room names Scout only on Scout-branded sites.** "Send to Scout", "Sent to Scout", the private note and the email subject say "your web team" on white-label sites. "Let Joy or Sean know" is now "Let Scout know" (or "your web team").

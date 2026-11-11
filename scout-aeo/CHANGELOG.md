@@ -1,5 +1,13 @@
 # Scout AI Search changelog
 
+## 0.2.14 (2026-11-11)
+
+- **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
+
+## 0.2.13 (2026-11-11)
+
+- **Every staging address Scout Core knows counts as staging.** The check that keeps robots.txt, /llms.txt and IndexNow off staging copies now reads Scout Core's list of hosting providers' staging addresses (WP Engine, Kinsta, Flywheel, Pantheon and Cloudways) instead of its own shorter list, which knew only WP Engine. Without Scout Core it keeps the WP Engine pair. Local and private addresses are treated as before. Live sites see no change.
+
 ## 0.2.12 (2026-11-09)
 
 - **Fix: quotes in page titles showed as code in the schema.** A page's FAQPage entry was named with HTML entities when its title had an apostrophe or quote (`New Year&#8217;s Eve`). It now uses the title as typed, as plain text. Release after Scout Core 1.10.5. Nothing visitors see changes.
