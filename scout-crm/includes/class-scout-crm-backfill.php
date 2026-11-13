@@ -2,8 +2,12 @@
 /**
  * Events, Contacts (called Customer list before 2026-11-05): whether the sync is on, and one button that brings
  * in everyone from before it was switched on (sign-ups, volunteers, vendors,
- * presenters, members and paid shop tickets), tagged the same way. Running it
- * twice changes nothing: each person is matched by email.
+ * presenters, members, paid shop tickets and bookings), tagged the same way.
+ * Running it twice changes nothing: each person is matched by email.
+ *
+ * On a site with Scout Booking and without Scout Events, the same screen sits
+ * under Bookings instead (one screen, one place). With Scout Booking it also
+ * counts the requests declined in the last 30 days, by reason.
  *
  * @package Scout_CRM
  */
@@ -14,15 +18,51 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Scout_CRM_Backfill {
 
-	const PAGE = 'scout-events-crm';
+	const PAGE         = 'scout-events-crm';
+	const BOOKING_PAGE = 'scout-booking-contacts';
 
 	public static function boot(): void {
 		add_action( 'scout_events_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'scout_booking_menu', array( __CLASS__, 'booking_menu' ) );
 		add_action( 'admin_post_scout_crm_backfill', array( __CLASS__, 'run' ) );
+	}
+
+	/** Under Events when Scout Events is on, else under Bookings. */
+	public static function page(): string {
+		return class_exists( 'Scout_Events_Admin' ) ? self::PAGE : self::BOOKING_PAGE;
 	}
 
 	public static function menu( $parent ): void {
 		add_submenu_page( (string) $parent, __( 'Contacts', 'scout-crm' ), __( 'Contacts', 'scout-crm' ), 'manage_options', self::PAGE, array( __CLASS__, 'render' ) );
+	}
+
+	public static function booking_menu( $parent ): void {
+		if ( class_exists( 'Scout_Events_Admin' ) ) {
+			return; // Events holds the screen; never a second copy.
+		}
+		add_submenu_page( (string) $parent, __( 'Contacts', 'scout-crm' ), __( 'Contacts', 'scout-crm' ), 'manage_options', self::BOOKING_PAGE, array( __CLASS__, 'render' ) );
+	}
+
+	/** Declined booking requests in the last 30 days, by the owner's reason, when Scout Booking is on. */
+	private static function declines_box(): void {
+		if ( ! class_exists( 'Scout_Booking' ) || ! method_exists( 'Scout_Booking', 'decline_counts' ) ) {
+			return;
+		}
+		$counts = Scout_Booking::decline_counts( 30 );
+		$fit    = __( 'Not a fit', 'scout-crm' );
+		echo '<section class="sh-box"><h2 class="sh-title">' . esc_html__( 'Declined requests, last 30 days', 'scout-crm' ) . '</h2>';
+		if ( ! $counts ) {
+			echo '<p>' . esc_html__( 'No requests declined in the last 30 days.', 'scout-crm' ) . '</p></section>';
+			return;
+		}
+		$n = (int) ( $counts[ $fit ] ?? 0 );
+		/* translators: %d: number of requests declined as not a fit. */
+		echo '<p><strong>' . esc_html( sprintf( __( 'Declined as not a fit: %d.', 'scout-crm' ), $n ) ) . '</strong></p><p class="sh-row-facts">';
+		foreach ( $counts as $reason => $count ) {
+			$label = '' !== $reason ? $reason : __( 'No reason given', 'scout-crm' );
+			echo '<span class="sh-tag">' . esc_html( $label . ': ' . number_format_i18n( (int) $count ) ) . '</span> ';
+		}
+		echo '</p><p class="sh-note">' . esc_html__( 'Each person is tagged with the reason in FluentCRM, so you can find them later.', 'scout-crm' ) . '</p></section>';
 	}
 
 	public static function render(): void {
@@ -31,7 +71,7 @@ final class Scout_CRM_Backfill {
 		}
 		$ui = class_exists( 'Scout_Admin_UI' );
 		if ( $ui ) {
-			Scout_Admin_UI::open( __( 'Contacts', 'scout-crm' ), __( 'Everyone who buys, signs up, volunteers, applies or joins goes to your FluentCRM contacts.', 'scout-crm' ), __( 'Events', 'scout-crm' ) );
+			Scout_Admin_UI::open( __( 'Contacts', 'scout-crm' ), __( 'Everyone who buys, signs up, volunteers, applies, joins or books goes to your FluentCRM contacts.', 'scout-crm' ), self::BOOKING_PAGE === self::page() ? __( 'Bookings', 'scout-crm' ) : __( 'Events', 'scout-crm' ) );
 		} else {
 			echo '<div class="wrap"><h1>' . esc_html__( 'Contacts', 'scout-crm' ) . '</h1>';
 		}
@@ -60,6 +100,7 @@ final class Scout_CRM_Backfill {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="scout_crm_backfill">';
 			wp_nonce_field( 'scout_crm_backfill' );
 			echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Bring them in', 'scout-crm' ) . '</button></p></form></section>';
+			self::declines_box();
 		}
 		$labels = array(
 			__( 'Attendee', 'scout-crm' ),
@@ -75,6 +116,12 @@ final class Scout_CRM_Backfill {
 			__( 'Region: (region name)', 'scout-crm' ),
 			__( 'Ticket: (ticket type)', 'scout-crm' ),
 		);
+		if ( class_exists( 'Scout_Booking' ) ) {
+			$labels[] = __( 'Booking request', 'scout-crm' );
+			$labels[] = __( 'Booked a session', 'scout-crm' );
+			$labels[] = __( 'Session: (session name)', 'scout-crm' );
+			$labels[] = __( 'The reason for a declined request', 'scout-crm' );
+		}
 		echo '<section class="sh-box"><h2 class="sh-title">' . esc_html__( 'Labels it adds', 'scout-crm' ) . '</h2><p class="sh-row-facts">';
 		foreach ( $labels as $label ) {
 			echo '<span class="sh-tag">' . esc_html( $label ) . '</span> ';
@@ -159,8 +206,19 @@ final class Scout_CRM_Backfill {
 				}
 			}
 		}
+		if ( class_exists( 'Scout_Booking' ) ) {
+			// Name, email and phone only; the intake answers stay with the booking.
+			$rows = $wpdb->get_results( 'SELECT * FROM ' . Scout_Booking::table() . " WHERE status <> 'blocked' AND email <> '' ORDER BY id ASC LIMIT 5000", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			foreach ( (array) $rows as $r ) {
+				Scout_CRM::booking( $r );
+				if ( 'declined' === $r['status'] && '' !== (string) ( $r['reason'] ?? '' ) ) {
+					Scout_CRM::booking_declined( $r, (string) $r['reason'] );
+				}
+				$add( __( 'bookings', 'scout-crm' ), true );
+			}
+		}
 		set_transient( 'scout_crm_backfill_' . get_current_user_id(), $count, 10 * MINUTE_IN_SECONDS );
-		wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::page() ) );
 		exit;
 	}
 }

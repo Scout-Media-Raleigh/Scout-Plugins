@@ -84,6 +84,7 @@ final class Scout_Events_Admin {
 			Scout_Events::SESSION => __( 'Sessions', 'scout-events' ),
 			Scout_Events::SPEAKER => __( 'Speakers', 'scout-events' ),
 			Scout_Events_Vendors::TYPE => __( 'Vendors', 'scout-events' ),
+			Scout_Events_Courses::TYPE => __( 'Courses', 'scout-events' ),
 		);
 		foreach ( $lists as $type => $label ) {
 			$list = 'edit.php?post_type=' . $type;
@@ -631,6 +632,7 @@ final class Scout_Events_Admin {
 				<tr><td>[scout_event id="12"]</td><td><?php esc_html_e( 'One event’s details and ticket button. Without an id, the next event.', 'scout-events' ); ?></td></tr>
 				<tr><td>[scout_schedule event="12"]</td><td><?php esc_html_e( 'The schedule, day by day. Add layout="grid" for rooms side by side.', 'scout-events' ); ?></td></tr>
 				<tr><td>[scout_speakers event="12"]</td><td><?php esc_html_e( 'Speaker cards for one event. Without event, every speaker.', 'scout-events' ); ?></td></tr>
+				<tr><td>[scout_course id="7"]</td><td><?php esc_html_e( 'A course’s dates, place, prices, teachers and register button. Add show="dates" for the dates and button only.', 'scout-events' ); ?></td></tr>
 			</table>
 			<p class="sh-note"><?php esc_html_e( 'The event id is the number in the address bar when you edit the event (post=12).', 'scout-events' ); ?></p>
 		<?php self::ui_fold_close(); ?>

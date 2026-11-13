@@ -390,3 +390,11 @@
 .se-events.is-gallery .se-date { display: none; }
 .se-events.is-gallery .se-event-body { padding: 1em 1.1em 1.2em; }
 @media (max-width: 600px) { .se-cal-event { font-size: 0; width: .6em; height: .6em; padding: 0; } .se-cal-event::before { top: 0; width: .6em; height: .6em; } }
+
+/* Courses: the same panel as an event, with runs, sessions and price tiers as short lists. */
+.se-course-title { margin: 0 0 .75em; }
+.se-course-runs, .se-course-tiers, .se-course-sessions { list-style: none; margin: 0; padding: 0; }
+.se-course-runs > :where(li) + :where(li), .se-course-tiers > :where(li) + :where(li) { margin-top: .5em; }
+.se-course-run-name { font-weight: 600; }
+.se-course-sessions { margin-top: .35em; padding-left: .9em; border-left: 2px solid var(--se-line); }
+.se-course-sessions > :where(li) { margin: .2em 0; }

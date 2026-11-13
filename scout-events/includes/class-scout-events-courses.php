@@ -700,7 +700,7 @@ final class Scout_Events_Courses {
 	 * a private address, and nothing for an online course.
 	 */
 	private static function place( array $c, array $event_ids ): array {
-		if ( 'online' === $c['mode'] ) {
+		if ( 'online' === $c['mode'] || $c['address_private'] ) {
 			return array();
 		}
 		if ( '' !== $c['venue'] || '' !== $c['street'] ) {
@@ -913,7 +913,7 @@ final class Scout_Events_Courses {
 				</div>
 				<p class="se-field se-wide">
 					<label for="se-c-private"><input type="checkbox" id="se-c-private" name="<?php echo esc_attr( $n ); ?>[address_private]" value="1" aria-describedby="se-c-private-help" <?php checked( (bool) $c['address_private'] ); ?>> <?php esc_html_e( 'Keep the address private', 'scout-events' ); ?></label>
-					<span class="se-help" id="se-c-private-help"><?php esc_html_e( 'The page shows the venue and city only, and Google gets no place for the course. Leave the venue empty to use the place of the events picked as sessions, when theirs is public.', 'scout-events' ); ?></span>
+					<span class="se-help" id="se-c-private-help"><?php esc_html_e( 'The page shows the venue and city only, and Google gets no place for the course.', 'scout-events' ); ?></span>
 				</p>
 			</fieldset>
 

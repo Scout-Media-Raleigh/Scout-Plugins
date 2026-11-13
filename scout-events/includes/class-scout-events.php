@@ -333,7 +333,7 @@ final class Scout_Events {
 		$out['waiver']       = mb_substr( str_replace( "\r\n", "\n", sanitize_textarea_field( (string) ( $in['waiver'] ?? '' ) ) ), 0, 20000 );
 		$out['photo_ask']    = empty( $in['photo_ask'] ) ? 0 : 1;
 		$out['address_private'] = self::yes_no( $in['address_private'] ?? '' );
-		$out['members_only']    = 'yes' === self::yes_no( $in['members_only'] ?? '' ) ? 1 : 0;
+		$out['members_only']    = ( 'yes' === self::yes_no( $in['members_only'] ?? '' ) || 'members' === strtolower( trim( (string) ( $in['members_only'] ?? '' ) ) ) ) ? 1 : 0;
 
 		// An end before the start is a typo; drop it rather than publish it.
 		if ( '' !== $out['end_date'] && '' !== $out['start_date'] && $out['end_date'] < $out['start_date'] ) {
