@@ -179,6 +179,8 @@ jobs:
         run: php tools/tests/today.php
       - name: Scout box on the WordPress Dashboard (no WordPress needed)
         run: php tools/tests/dashboard-box.php
+      - name: Owner view, Home cards and links, landing on Home, new setup file fills (no WordPress needed)
+        run: php tools/tests/owner-view.php
       - name: Inbox list (no WordPress needed)
         run: php tools/tests/inbox.php
       - name: Plans, picks and recommendations (no WordPress needed)
@@ -203,6 +205,8 @@ jobs:
         run: php tools/tests/events-courses.php
       - name: To do and Events permissions (no WordPress needed)
         run: php tools/tests/todo-capabilities.php
+      - name: Plus queues in To do, a calendar link per session type, send-only forms and the word for courses (no WordPress needed)
+        run: php tools/tests/plus-queues.php
       - name: Booking busy times from the owner's calendar (no WordPress needed)
         run: php tools/tests/booking-busy.php
       - name: Redirects leave out bot probes and check broken links (no WordPress needed)

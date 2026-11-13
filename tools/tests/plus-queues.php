@@ -73,7 +73,9 @@ final class Scout_Members {
 	public static $applied = array(); public static $due = array(); public static $asked = 0;
 	static function ids( $s ) { return 'applied' === $s ? self::$applied : array(); }
 	static function renewals_due( int $days = 30 ) { self::$asked = $days; return array_keys( array_filter( self::$due, static fn( $d ) => $d <= $days ) ); }
+	static function flagged_ids() { return array(); }
 }
+final class Scout_Members_Woo { static function active() { return false; } }
 require __DIR__ . '/../../scout-members/includes/class-scout-members-admin.php';
 require __DIR__ . '/../../scout-members/includes/class-scout-members-invitations.php';
 
@@ -90,13 +92,13 @@ class Scout_Hub_Requests { const META_STATUS = 's'; const STATUSES = array( 'rec
 class Scout_Hub_Admin { static function url( $t, $a = array() ) { return '/hub/' . $t; } static function waiting_on_you() { return array(); } }
 require __DIR__ . '/../../scout-build/includes/class-scout-hub-inbox.php';
 
-// ================= P2: Members =================
+// P2: Members
 Scout_Members::$applied = array( 11, 12 );
 Scout_Members::$due     = array( 21 => 5, 22 => 13, 23 => 25 ); // member => days until renewal
 $GLOBALS['posts'] = array(
 	31 => array( 'type' => Scout_Members_Invitations::TYPE, 'status' => 'pending', 'title' => 'Tea walk' ),
 	41 => array( 'type' => 'scout_speaker', 'status' => 'pending', 'title' => 'Dana Lee' ),
-	42 => array( 'type' => 'scout_speaker', 'status' => 'publish', 'title' => 'Sam Hill', 'meta' => array( '_scout_presenter_pending' => 1 ) ),
+	42 => array( 'type' => 'scout_speaker', 'status' => 'publish', 'title' => 'Sam Hill', 'meta' => array( Scout_Events_Presenters::PENDING => 1 ) ),
 	51 => array( 'type' => Scout_Events_Vendors::TYPE, 'status' => 'pending', 'title' => 'Tea stall' ),
 	52 => array( 'type' => Scout_Events_Vendors::TYPE, 'status' => 'pending', 'title' => 'Book stall' ),
 );
@@ -116,7 +118,7 @@ $GLOBALS['uid'] = 1;
 $w = Scout_Members_Admin::waiting();
 ok( isset( $w[0]['todo'] ) && 'members-applications' === $w[0]['todo']['id'] && false !== strpos( end( $w )['text'], '30 days' ), 'Needs you reads the same applications row, and its renewals line still looks 30 days ahead' );
 
-// ================= P2: Events =================
+// P2: Events
 $rows = Scout_Events_Vendors::needs_you( Scout_Events_Presenters::needs_you( array() ) );
 $rows[] = array( 'text' => '3 people are on the waitlist for Spring Day, and places are open.', 'url' => '/wp-admin/admin.php?page=scout-events-signups&event=7', 'action' => 'Move people in', 'todo' => array( 'id' => 'events-waitlist-7', 'label' => 'Waitlist, a place is open', 'count' => 3 ) );
 $rows[] = array( 'text' => 'A session is a draft.', 'url' => '/x', 'action' => 'Check sessions' ); // no todo part: Needs you only
@@ -145,12 +147,12 @@ ok( 7 === count( $owner ) && 0 === count( $staff ), 'the owner sees 7 To do item
 $GLOBALS['uid'] = 1;
 ok( 2 + 1 + 2 + 1 + 2 + 1 + 3 === Scout_Hub_Inbox::total( $owner ), 'the To do count adds each queue\'s own number' );
 
-// ================= P6a: a calendar link for one session type =================
+// P6a: a calendar link for one session type
 require __DIR__ . '/../../scout-booking/includes/class-scout-booking.php';
 require __DIR__ . '/../../scout-booking/includes/class-scout-booking-emails.php';
 require __DIR__ . '/../../scout-booking/includes/class-scout-booking-front.php';
 require __DIR__ . '/../../scout-booking/includes/class-scout-booking-admin.php';
-ok( array() === Scout_Booking::type_feeds() && '' === Scout_Booking_Front::type_feed_url( 'tantra1' ), 'no session type has a calendar link until one is made' );
+ok( array() === Scout_Booking::type_feeds() && '' === Scout_Booking_Front::type_feed_url( 'quiet1' ), 'no session type has a calendar link until one is made' );
 ok( false === Scout_Booking::settings()['type_feed_names'], 'initials, not names, by default' );
 $tok = Scout_Booking::new_token();
 Scout_Booking::set_type_feed( 'sat', $tok );
@@ -173,18 +175,20 @@ ok( false !== strpos( Scout_Booking_Emails::type_ics( $mine, 'Saturday session',
 Scout_Booking::set_type_feed( 'sat', '' );
 ok( '' === Scout_Booking::type_for_feed( $new ) && array() === Scout_Booking::type_feeds(), 'turning a link off removes it' );
 
-// ================= P10: the decline line on Schedule =================
+// P10: the decline line on Schedule
 ok( '' === Scout_Booking_Admin::declines_line( array() ), 'no decline line when nothing was declined' );
 ok( 'Declined in the last 30 days as not a fit: 3, as other: 1.' === Scout_Booking_Admin::declines_line( array( 'Not a fit' => 3, 'Other' => 1 ) ), 'one line counts declines by reason' );
 ok( false !== strpos( Scout_Booking_Admin::declines_line( array( '' => 2 ) ), 'as no reason given: 2' ), 'a decline without a reason is counted too' );
 ok( '' === Scout_Booking_Admin::declines_link(), 'no link without Scout CRM' );
-final class Scout_CRM_Backfill { static function page() { return 'scout-booking-contacts'; } }
+if ( ! class_exists( 'Scout_CRM_Backfill' ) ) { // Declared here, not hoisted, so the check above runs without it.
+	final class Scout_CRM_Backfill { static function page() { return 'scout-booking-contacts'; } }
+}
 ok( '/wp-admin/admin.php?page=scout-booking-contacts' === Scout_Booking_Admin::declines_link(), 'with Scout CRM, the line links to Contacts' );
 $GLOBALS['uid'] = 2;
 ok( '' === Scout_Booking_Admin::declines_link(), 'no Contacts link for someone who cannot open it' );
 $GLOBALS['uid'] = 1;
 
-// ================= P8: Send only, keep no entry =================
+// P8: Send only, keep no entry
 final class GFAPI {
 	public static $forms = array(); public static $deleted = array();
 	static function get_forms() { return array_values( self::$forms ); }
@@ -214,7 +218,7 @@ $kept = $S::inbox_items( array( array( 'id' => 'a', 'form_id' => 9 ), array( 'id
 ok( array( 'b', 'c' ) === array_column( $kept, 'id' ), 'a To do item naming a send-only form is left out' );
 ok( false === $S::content_check( true, GFAPI::$forms[9] ) && true === $S::content_check( true, GFAPI::$forms[3] ), 'the message check stays off for a send-only form only' );
 
-// ================= P12: the site's word for courses =================
+// P12: the site's word for courses
 ok( 'Courses' === Scout_Events_Courses::label() && 'Course' === Scout_Events_Courses::label( true ), 'Courses by default' );
 ok( 'Add course' === Scout_Events_Courses::labels()['add_new'] && 'Courses' === Scout_Events_Courses::labels()['name'], 'default screen words are unchanged' );
 $GLOBALS['opt']['scout_events'] = array( 'course_label' => 'Trainings' );
