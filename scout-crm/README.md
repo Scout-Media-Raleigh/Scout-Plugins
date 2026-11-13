@@ -18,6 +18,9 @@ site.
 | Scout Events presenters | a presenter applies | Presenter, Event, Region |
 | Scout Events + WooCommerce | a ticket order is paid | Ticket buyer, Ticket: (type), Event, Region |
 | Scout Members | applied / approved / paused, ended or not accepted | Member applicant / Member + Plan: (name) / Member removed |
+| Scout Booking | a booking or request is made | Booking request, Session: (session name), and Booked a session when it is booked straight away |
+| Scout Booking | a request is approved and booked, or paid | Booked a session, Session: (session name) |
+| Scout Booking | the owner declines a request with a reason | Booking request and the reason, such as Not a fit |
 
 Tag names are `Event: (event name)`, `Region: (region name)`, `Plan: (plan)`
 and `Ticket: (ticket type)`, made in FluentCRM the first time they are used.
@@ -28,21 +31,26 @@ New people are added as **transactional**: FluentCRM can send them receipts
 and event notes, and they join marketing emails only when they subscribe
 through a signup form. Someone already in FluentCRM keeps their status
 (subscribed, pending double opt-in, or unsubscribed). A CRM error never stops
-a ticket, sign-up or application.
+a ticket, sign-up or application. From a booking only the name, email and
+phone are copied; the intake answers and any agreement stay with the booking.
 
 ## Where it lives
 
 **Events, Contacts** (administrators): whether the sync is on, and
 **Bring them in**, which adds everyone from before it was switched on, tagged
-the same way. People are matched by email, so running it twice changes
-nothing.
+the same way, bookings included. People are matched by email, so running it
+twice changes nothing. On a site with Scout Booking and without Scout Events,
+the same screen is **Bookings, Contacts**. With Scout Booking it also shows
+the requests declined in the last 30 days: how many as not a fit, and a count
+for each reason.
 
 ## Hooks
 
 - `scout_crm_tags` filter ( $tags, $context ): change the tag names.
 - `scout_crm_contact` filter ( $data, $context ): add FluentCRM fields.
-- Listens to `scout_events_person`, `scout_events_ticket_bought` and
-  `scout_members_status_changed`.
+- Listens to `scout_events_person`, `scout_events_ticket_bought`,
+  `scout_members_status_changed`, `scout_booking_created`,
+  `scout_booking_status` and `scout_booking_declined`.
 
 Needs FluentCRM. Without it the plugin does nothing and says so on its page.
 

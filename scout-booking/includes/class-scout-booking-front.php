@@ -18,7 +18,7 @@
  * served from the home address with their own query keys.
  *
  * Attributes: type="id" opens one session straight away; types="id,id" lists
- * only some (a tantra page that shows only tantra sessions).
+ * only some (a page that shows only one kind of session).
  *
  * @package Scout_Booking
  */

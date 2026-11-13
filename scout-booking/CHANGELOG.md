@@ -1,5 +1,13 @@
 # Scout Booking changelog
 
+## 0.4.0 (2026-11-13)
+
+- **A tick box to agree.** A question on a session type can now be a tick box beside a sentence you write, such as "I have read what to expect and agree to it.", with an optional link beside it. Made required, the booking is refused until it is ticked, with a note at the top and the box marked on the form. The booking keeps the exact sentence, the time it was ticked and the link, and shows it on the Schedule, in your booking emails and in the privacy export. Existing questions read exactly as before.
+- **A reason when you decline.** Decline offers an optional reason from a short list you edit on Settings ("Not a fit", "No availability", "Other" to start). It stays on your side: the client gets the same kind note. The reason is kept with the booking and passed to other features through a new `scout_booking_declined` action (`scout_booking_created` and `scout_booking_status` are unchanged). The bookings table gets a `reason` column (database version 2, added in place).
+- **Where Book buttons go.** Settings has a new box, "Book buttons across the site": the booking page (the default, as before), an address you choose, or nothing from Bookings. You can also tick sessions so a page that only offers those, such as a by-request page, never becomes the whole site's Book link. Booking emails still use the booking page.
+- **Sessions described to search engines.** With the new Settings switch on (off by default) and Scout Core active, each public session on a page joins Core's schema graph as a Service with its note, price and length, linked to your business. Each session type chooses: when it has a price and a note (default), yes, or no. Hidden sessions are never described.
+- **For other features:** a `scout_booking_menu` action adds screens to the Bookings menu (Scout CRM's Contacts on a site without Scout Events), and `Scout_Booking::decline_counts()` counts recent declines by reason.
+
 ## 0.3.1 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

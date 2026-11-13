@@ -17,7 +17,7 @@ and Events), and the Scout menu bar on every screen:
 |---|---|
 | Schedule | Requests to approve, the schedule by day or week, paid and unpaid, client details and intake answers, blocked time, the phone calendar link. |
 | Session types | The sessions people can book, one plain form each. |
-| Settings | Booking page, owner email, cancellation window, notice and how far ahead, checkout hold, pay window, booking hours, newsletter box, busy times from your calendar. |
+| Settings | Booking page, owner email, cancellation window, notice and how far ahead, checkout hold, pay window, booking hours, reasons for declining, where Book buttons across the site go, search engines, newsletter box, busy times from your calendar. |
 
 Bookings hold clients' personal details, so every screen needs the
 `list_users` capability (administrators), the same rule as Scout Members.
@@ -33,11 +33,29 @@ Bookings hold clients' personal details, so every screen needs the
 | Paid to book it | The full price, a deposit of a set amount (the rest at the session), or nothing online. |
 | By request only | The client sends a request; the owner approves or declines; approval emails a pay link. For sessions where the owner talks with a client first. |
 | Days and hours | The business hours (below), or the type's own days and hours. |
-| Questions | Up to six short questions, each required or not, short or long answer. Keep health questions out; this form is not built to hold health records. |
+| Questions | Up to six questions, each required or not: a short answer, a longer answer, or a tick box to agree (below). Keep health questions out; this form is not built to hold health records. |
+| Search engines | Describe this session to search engines: when it has a price and a note (default), yes, or no. Only counts once Settings, Search engines is on. |
 | Note | A line or two shown before booking and in the client's emails. |
 | Video call link | Optional. A fixed room (Google Meet, Zoom), https only. It goes in the booked, moved and reminder emails, and in the calendar invite as the location and link. Meet links are not made for you; that needs a Google sign-in. |
 
 The plugin ships with no session types and no prices. The owner enters them.
+
+Questions belong to one session type, so a question meant only for some
+sessions (couples sessions, say) goes on those types and no others.
+
+### A tick box to agree
+
+A question can be a tick box beside a sentence the owner writes, such as "I
+have read what to expect and agree to it.", with an optional link beside it
+(a "what to expect" page; a path like `/what-to-expect/` works). Made
+required, the booking is refused until it is ticked: the form comes back with
+a note at the top and the box marked, with "This box needs a tick before you
+can book." under it. The booking keeps the exact sentence, whether it was
+ticked, the time it was ticked and the link shown, in its answers. The
+Schedule shows it under "Intake answers and agreement", and the owner's
+emails (new request, booked, moved, cancelled) print it as
+`Agreement: "the sentence"` with "Agreed on November 13, 2026 at 2:05 pm."
+under it. The privacy export lists it too.
 
 ## Working hours and open times
 
@@ -167,7 +185,11 @@ owner writes their own.
 
 ## Owner view
 
-- Requests to approve, with intake answers and Approve / Decline.
+- Requests to approve, with intake answers and Approve / Decline. Decline
+  offers an optional reason from the list on Settings ("Not a fit", "No
+  availability", "Other" until the owner edits it). The reason is kept with
+  the booking, shown on its row and passed to other features; the client's
+  email is the same kind note either way.
 - The schedule by day or week: time, session, status, client name, email and
   phone, paid and unpaid ("Deposit paid: $50.00 of $200.00. $150.00 due at
   the session."), coupon codes, the order link, intake answers, and Cancel.
@@ -205,6 +227,15 @@ requests unpaid after the pay window, and sends reminders.
   record of what the person agreed to.
 - `scout_booking_created` ( `$row`, `$type` ) after a booking or request is made.
 - `scout_booking_status` ( `$row`, `$status` ) after any status change.
+- `scout_booking_declined` ( `$row`, `$reason` ) after the owner declines a
+  request, with the reason picked ('' for none). `scout_booking_status` still
+  fires first with `declined`. Scout CRM tags the person by the reason.
+- `scout_booking_menu` ( `$parent` ) while the Bookings menu is built, before
+  Settings (Scout CRM adds Contacts here on a site without Scout Events).
+- `Scout_Booking::decline_counts( $days )` returns declined requests in the
+  last `$days` days by reason.
+- `scout_booking_currency` filters the currency in Service schema (default the
+  shop's currency, else USD).
 - `scout_booking_types_saved` after session types change.
 - `scout_booking_now` filters the clock (tests).
 
@@ -225,12 +256,31 @@ requests unpaid after the pay window, and sends reminders.
   `assets/scout-booking.css` loads only on that page.
 - **Booking link for other features:** once a booking page is published,
   Scout Booking defines `scout_booking_url()`, unless the theme already
-  defines its own. Call buttons, Chat and Site Check read it.
+  defines its own. Call buttons, Chat and Site Check read it. Settings, "Book
+  buttons across the site" changes where it points: the booking page
+  (default, the same as before), a chosen address, or nothing from Bookings
+  (each feature uses its own link, such as Contact). Sessions ticked under
+  "Never send Book buttons to a page that only offers these sessions" make it
+  pass over a page that offers only those (a by-request page, for example)
+  for the first published page with the booking form that offers something
+  else. Booking emails always link to the booking page.
+- **Search engines:** with Settings, Search engines on (off by default) and
+  Scout Core active, each public session type a page shows gets a `Service`
+  node in Core's one schema graph (through `scout_schema_graph`): name, the
+  note as the description, the page address, `provider` pointing at the
+  business node's `@id`, and, with a price, an `Offer` whose
+  `UnitPriceSpecification` carries the length in minutes. Without a price the
+  length goes in the description. Sessions off the booking page are never
+  described. The page is read from its `[scout_booking]` shortcodes, or the
+  booking page itself shows every public session.
 - **scout-setup.json:** nothing.
 
 ## Data
 
 - Table `{prefix}scout_bookings`: one row per booking, request or blocked time.
+  `reason` (added in 0.4.0, database version 2) holds the decline reason.
+- Transient `scout_booking_site_link` remembers which page Book buttons use
+  when sessions are passed over; it clears when a page or session type is saved.
 - Options `scout_booking` (settings and the feed token), `scout_booking_types`,
   `scout_booking_db`, and, not autoloaded, `scout_booking_busy_feeds` (the
   private calendar addresses) and `scout_booking_busy_state` (when each was
