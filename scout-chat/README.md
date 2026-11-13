@@ -30,6 +30,52 @@ Nothing is rebuilt between the modes. Fill in the AI connection and it switches.
 - **AI server address** and **connection key**. The key can instead be
   defined in `wp-config.php` as `SCOUT_CHAT_AI_KEY`, which wins.
 
+## Outside chat widget: Chat → More options
+
+For a site that runs its own chat service from an outside script. Site
+Standard rule 7 keeps that script out of the theme, so Scout Chat loads it.
+Off by default; a site that never ticks it sees no change.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Use an outside chat widget | Off | Prints the outside script in the footer in place of Scout Chat's own button. Show the chat on the site and the `scout_chat_show` filter still turn it on and off. |
+| Script address | Blank | The service's script link. `https://` only, a real host, no user name or password. Checked on save and again before it prints; a bad address is not saved and the widget stays off. |
+| How it loads | Neither | `async` and `defer`, as the service's snippet shows. |
+| Script attributes | Blank | One `name=value` per line. Names become `data-` attributes; `id`, `crossorigin`, `referrerpolicy`, `integrity` and `charset` stay as typed. Nothing else (no `on...` handlers, no second `src`). |
+| Settings (JSON) | Blank | A name, like `chatSettings`, and a JSON object. Printed as `window["chatSettings"] = {...}` just before the script, for services that read their settings that way. Must be valid JSON, 4 KB at most. |
+| Launcher corner | Bottom right | Which corner the service puts its button in. Set the same corner in the service. |
+| Clearance on phones | 86 px | How far the button moves up while Scout Call Buttons' bar shows (86 px clears the bar, the same as Scout Chat's own button). 0 to 400. |
+| Launcher selector | Blank | The CSS id or class of the service's button. With it, Scout Chat moves that button up by the clearance while the call bar shows. Blank leaves the button where the service puts it. |
+
+**The "chat is here" signal.** Scout Call Buttons lifts Scout Chat's own
+button on phones with `body.scc-on .sc-root`. That contract stays as it is.
+With an outside widget on, Scout Chat also gives the page:
+
+- body classes `scout-chat-on`, `scout-chat-outside`, and `scout-chat-right` or
+  `scout-chat-left` (the theme calls `body_class()`);
+- `--scout-chat-clearance: <px>` on `:root`;
+- `window.scoutChatPresence = { source: "outside", position, clearance }`;
+- with a launcher selector, `body.scc-on <selector> { bottom: <clearance> }`
+  on screens up to 760 px wide.
+
+**Allowlist.** An outside script runs with full access to the page, so only
+load a service the site owner has agreed to, and list it in the site's
+privacy policy. The `scout_chat_outside_hosts` filter limits which hosts the
+script may come from (a listed host allows its subdomains); empty, the
+default, allows any https host:
+
+```php
+add_filter( 'scout_chat_outside_hosts', fn() => array( 'widget.example.com' ) );
+```
+
+**Content Security Policy.** A site that sends a `Content-Security-Policy`
+header must add the service's script host to `script-src`, and usually its
+API and frame hosts to `connect-src`, `frame-src` and `img-src` (the service's
+docs list them). Scout Chat prints a small inline script (the presence signal
+and any settings object) through `wp_print_inline_script_tag()`, so a CSP
+plugin that adds nonces to inline scripts covers it; a policy with no nonces
+needs `'unsafe-inline'` or a hash for it.
+
 ## Messages: Scout Build → Chat messages
 
 Each saved conversation shows who asked, the type (Question, Change request,
@@ -102,7 +148,9 @@ Through Scout Analytics: `chat_open`, `chip_click`, `handoff`,
   page (20px from the edges, `z-index: 9998`), added at the end of `<body>` by
   its script, with the panel opening above it. On phones it moves up to clear
   Scout Call Buttons' bar. The theme calls `wp_footer()` and keeps the
-  bottom-right corner clear.
+  bottom-right corner clear. With an outside chat widget on, the
+  outside script prints in `wp_footer()` instead, and the theme never loads
+  it itself (Site Standard rule 7).
 - **scout-setup.json:** the `chat` section, filled in by Scout Build where the
   setting is blank: `name`, `team`, `notify`, `book_url`, `work_url`,
   `photo_1`, `photo_2` (photos as a theme path or an https address).
@@ -119,13 +167,14 @@ Through Scout Analytics: `chat_open`, `chip_click`, `handoff`,
 | Questions typed in the chat, the earlier messages in the chat, and the page address (only when an AI server is connected) | Sent from this website to the AI server. This website does not store them unless the visitor later leaves contact details. | Not kept by this website | The AI server set on the Chat screen |
 | A scrambled (hashed) copy of the visitor's IP address with a count, used to limit how many messages one visitor can send | A temporary record in this website's database | 10 minutes after the visitor's last chat message | Nobody |
 | Chat opens, button taps and sent messages (the button words or message type, never names or messages) (only when Scout Analytics is on) | Passed to Scout Analytics on the page | Not kept by this website | Google Analytics (Google), through Scout Analytics |
+| Whatever the outside chat service collects: usually the messages typed into it, the page address, and the visitor's browser and device details (only when Use an outside chat widget is on, in place of this chat) | On the outside chat service's own servers. This website does not store it. | As the outside chat service's own policy says | The outside chat service set on the Chat screen |
 
 | Cookie | Why | How long |
 |---|---|---|
 | `scoutChat (browser storage)` | Keeps the chat so far (up to 40 messages) so it stays in place when the visitor moves to another page | Until the browser tab is closed |
 | `scoutChatTeaser (browser storage)` | Remembers that the visitor opened the chat or closed the greeting, so the greeting does not show again | Until the browser tab is closed |
 
-Nothing is collected while the chat is switched off on the Chat screen. The chat sends no cookies with its messages.
+Nothing is collected while the chat is switched off on the Chat screen. The chat sends no cookies with its messages. With an outside chat widget on, that service may set its own cookies; list them from the service's own docs in the site's cookie notice and privacy policy.
 
 Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
 <!-- visitor-data:end -->
