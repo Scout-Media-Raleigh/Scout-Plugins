@@ -39,7 +39,7 @@ scout-core/scout-core.php | define( 'SCOUT_SEO_META_NOINDEX' | scout-aeo (noinde
 scout-core/includes/admin.php | public static function checks() | scout-build (Site health: search listing checks)
 scout-core/includes/admin.php | public static function render_checks( array $checks, bool $as_list = false ) | scout-build (Site health: same check cards)
 scout-core/includes/sync/class-scout-sync.php | do_action( 'scout_sync_applied', $journal['rows'], $who ); | scout-build (Site log: a line when Site Sync puts copy in; keep both arguments)
-scout-core/includes/schema/class-scout-schema.php | apply_filters( 'scout_schema_graph' | scout-events (adds Event and Person nodes to the graph)
+scout-core/includes/schema/class-scout-schema.php | apply_filters( 'scout_schema_graph' | scout-events (adds Event, Course and Person nodes to the graph)
 scout-core/includes/schema/class-scout-schema.php | home_url( '/#business' ) | scout-events (Event organizer points at the business)
 scout-core/includes/design.php | function scout_design( string $feature = '' ): array | scout-build and every plugin with a front-end look (DESIGN.md tokens from the theme)
 scout-core/includes/design.php | function scout_design_issues(): array | scout-build (Site health: design contrast)
