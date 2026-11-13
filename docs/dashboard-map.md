@@ -186,6 +186,9 @@ Decided by Joy, 2026-11-05:
   Home. Clients review their numbers in Recon, which stays completely separate.
   The plugins' only Recon job is capture: the analytics tag, form attribution and
   site health signals that feed it.
+  *Owner exception (2026-11-13):* a site where the owner runs bookings, members or
+  events from WordPress does have the owner logging in, so it uses the owner view
+  below. The Recon rule above is unchanged.
 
 Shape and color always travel together, so the kinds can be told apart without
 color.
@@ -318,6 +321,23 @@ site, how a site identifies its Recon client, and whether the capture pieces
 install through Scout Build or by hand.
 
 ---
+
+## Owners who log in: the simple view (2026-11-13)
+
+Scout Build 0.18.0 adds what an owner who runs the business from the dashboard needs. All of it is off until
+the site's `scout-setup.json` turns it on (README: "Owner view and Home").
+
+- **Simple view** (`dashboard.simple`): hides chosen groups, screens and WordPress menus from people who are not
+  operators. Home and To do never hide. A "Show everything in the menu" switch on each profile lifts it. Hiding is
+  never a lock.
+- **To do follows permission:** each item carries the capability of its screen; the list, its count, Today on Home
+  and the emails skip items the reader cannot open. Members and Events add their queues to To do, so there is one.
+- **Home** gains filters for cards and shortcuts (`scout_hub_home_cards`, `scout_hub_home_shortcuts`) and a
+  "Your other tools" card from `dashboard.links` (outside tools the owner keeps, linked, never rebuilt).
+- **Land on Home** (`dashboard.land_on_home`): owners open Scout Home after login.
+- **Operator-only boxes:** site-wide switches inside owner screens (Booking's Book link and schema) are disabled for
+  owners with "Your web team sets this."
+- **Door helper** role (Events): today's check-in list only.
 
 ## Adding a feature: the checklist
 
