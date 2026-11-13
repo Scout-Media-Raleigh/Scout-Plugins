@@ -112,6 +112,7 @@ final class Scout_Contact_Admin {
 			'book_note' => sanitize_text_field( (string) ( $in['book_note'] ?? '' ) ),
 			'photos'    => $photos,
 			'hide_on'   => sanitize_text_field( (string) ( $in['hide_on'] ?? '' ) ),
+			'sets'      => self::sanitize_sets( $in['sets'] ?? array() ),
 		);
 		$d = Scout_Contact::defaults();
 		foreach ( array( 'label', 'title' ) as $k ) {
@@ -123,6 +124,191 @@ final class Scout_Contact_Admin {
 			add_settings_error( Scout_Contact::OPTION, 'phone', __( 'That phone number has no digits in it.', 'scout-contact' ) );
 		}
 		return $out;
+	}
+
+	/** The button rows a set shows on the screen, in this order. */
+	const SLOTS = array( 'call', 'text', 'book', 'email', 'directions', 'link1', 'link2' );
+
+	/** Most sets one site can keep. */
+	const MAX_SETS = 20;
+
+	/**
+	 * Button sets from the form (or already in their stored shape).
+	 *
+	 * @param mixed $raw Posted sets.
+	 */
+	public static function sanitize_sets( $raw ): array {
+		$sets = array();
+		foreach ( (array) $raw as $one ) {
+			if ( ! is_array( $one ) || ! empty( $one['remove'] ) ) {
+				continue;
+			}
+			$one['buttons'] = self::form_buttons( $one['buttons'] ?? array() );
+			$set            = Scout_Contact::clean_set( $one );
+			if ( null === $set ) {
+				continue;
+			}
+			if ( '' === $set['name'] ) {
+				/* translators: %d: the set's number on the screen */
+				$set['name'] = sprintf( __( 'Button set %d', 'scout-contact' ), count( $sets ) + 1 );
+			}
+			$sets[] = $set;
+		}
+		return array_slice( $sets, 0, self::MAX_SETS );
+	}
+
+	/**
+	 * The screen posts one row per kind of button (ticked, order, wording,
+	 * link). Turn the ticked rows into the stored list, sorted by order.
+	 *
+	 * @param mixed $raw Posted button rows.
+	 */
+	private static function form_buttons( $raw ): array {
+		$raw = (array) $raw;
+		if ( isset( $raw[0] ) ) {
+			return $raw; // Already a stored list.
+		}
+		$rows = array();
+		foreach ( self::SLOTS as $i => $slot ) {
+			$row = (array) ( $raw[ $slot ] ?? array() );
+			if ( empty( $row['on'] ) ) {
+				continue;
+			}
+			$type  = 0 === strpos( $slot, 'link' ) ? 'link' : $slot;
+			$label = trim( (string) ( $row['label'] ?? '' ) );
+			$url   = trim( (string) ( $row['url'] ?? '' ) );
+			if ( 'link' === $type && ( '' === $label || '' === $url ) ) {
+				add_settings_error( Scout_Contact::OPTION, 'set-link', __( 'A link button needs its own wording and link, so one was left out.', 'scout-contact' ) );
+				continue;
+			}
+			$order  = absint( $row['order'] ?? 0 );
+			$rows[] = array( $order ? $order : 99, $i, array( 'type' => $type, 'label' => $label, 'url' => $url ) );
+		}
+		usort( $rows, static fn( $a, $b ) => array( $a[0], $a[1] ) <=> array( $b[0], $b[1] ) );
+		return array_column( $rows, 2 );
+	}
+
+	/** The pages to choose from, parents first with their child pages under them. */
+	private static function page_choices(): array {
+		$out = array();
+		foreach ( (array) get_pages( array( 'number' => 300, 'post_status' => 'publish,private,draft' ) ) as $page ) {
+			$out[] = array( (int) $page->ID, count( get_post_ancestors( $page ) ), get_the_title( $page ) );
+		}
+		return $out;
+	}
+
+	/** The Button sets box: every saved set, then one blank set to add a new one. */
+	private static function render_sets( array $s, string $o ): void {
+		$sets   = array_values( array_filter( (array) ( $s['sets'] ?? array() ), 'is_array' ) );
+		$pages  = self::page_choices();
+		$titles = array(
+			'call'       => __( 'Call', 'scout-contact' ),
+			'text'       => __( 'Text', 'scout-contact' ),
+			'book'       => __( 'Book', 'scout-contact' ),
+			'email'      => __( 'Email', 'scout-contact' ),
+			'directions' => __( 'Directions', 'scout-contact' ),
+			'link1'      => __( 'Link button', 'scout-contact' ),
+			'link2'      => __( 'Second link button', 'scout-contact' ),
+		);
+		$hints  = array(
+			'call'       => __( 'Blank uses the phone number above.', 'scout-contact' ),
+			'text'       => __( 'Blank uses the texting number above.', 'scout-contact' ),
+			'book'       => __( 'Blank uses the booking link above.', 'scout-contact' ),
+			'email'      => __( 'Blank uses the email in Business info.', 'scout-contact' ),
+			'directions' => __( 'Blank opens a map of the address in Business info.', 'scout-contact' ),
+			'link1'      => __( 'Needs its own wording and link.', 'scout-contact' ),
+			'link2'      => __( 'Needs its own wording and link.', 'scout-contact' ),
+		);
+		/* translators: %d: number of button sets */
+		$title = $sets ? sprintf( _n( 'Button sets (%d)', 'Button sets (%d)', count( $sets ), 'scout-contact' ), count( $sets ) ) : __( 'Button sets', 'scout-contact' );
+		self::ui_fold_open( $title );
+		?>
+		<p class="description"><?php esc_html_e( 'Different buttons on some pages. A page uses the first set that matches; every other page keeps the buttons above.', 'scout-contact' ); ?></p>
+		<?php
+		$count = count( $sets );
+		for ( $i = 0; $i <= $count && $i < self::MAX_SETS; $i++ ) :
+			$set   = $sets[ $i ] ?? array( 'name' => '', 'pages' => array(), 'children' => 1, 'paths' => array(), 'no_text' => 0, 'label' => '', 'buttons' => array() );
+			$is_new = $i === $count;
+			$n     = $o . '[sets][' . $i . ']';
+			$id    = 'scc-set-' . $i;
+			// Saved buttons back into one row per kind: the first link fills Link button, the second the next row.
+			$rows  = array();
+			$links = 0;
+			foreach ( (array) $set['buttons'] as $pos => $b ) {
+				$slot = (string) ( $b['type'] ?? '' );
+				if ( 'link' === $slot ) {
+					$links++;
+					$slot = 'link' . $links;
+				}
+				if ( in_array( $slot, self::SLOTS, true ) && ! isset( $rows[ $slot ] ) ) {
+					$rows[ $slot ] = array( 'order' => $pos + 1, 'label' => (string) ( $b['label'] ?? '' ), 'url' => (string) ( $b['url'] ?? '' ) );
+				}
+			}
+			?>
+		<fieldset class="sh-box" style="margin-top:16px">
+			<legend class="sh-title"><?php echo esc_html( $is_new ? __( 'Add a set', 'scout-contact' ) : (string) $set['name'] ); ?></legend>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="<?php echo esc_attr( $id ); ?>-name"><?php esc_html_e( 'Name', 'scout-contact' ); ?></label></th>
+					<td><input id="<?php echo esc_attr( $id ); ?>-name" type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[name]" value="<?php echo esc_attr( (string) $set['name'] ); ?>" placeholder="<?php esc_attr_e( 'Bodywork pages', 'scout-contact' ); ?>">
+						<?php if ( $is_new ) : ?><p class="description"><?php esc_html_e( 'Fill this in and save to add a set. Save again for another.', 'scout-contact' ); ?></p><?php endif; ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Pages', 'scout-contact' ); ?></th>
+					<td>
+						<?php if ( $pages ) : ?>
+						<div style="max-height:180px;overflow:auto;border:1px solid var(--sh-border-strong,#D2D2D7);border-radius:8px;padding:8px 12px">
+							<?php foreach ( $pages as $page ) : ?>
+							<label style="display:block;margin:2px 0 2px <?php echo (int) min( $page[1], 4 ) * 18; ?>px"><input type="checkbox" name="<?php echo esc_attr( $n ); ?>[pages][]" value="<?php echo (int) $page[0]; ?>" <?php checked( in_array( $page[0], array_map( 'intval', (array) $set['pages'] ), true ) ); ?>> <?php echo esc_html( '' !== $page[2] ? $page[2] : '#' . $page[0] ); ?></label>
+							<?php endforeach; ?>
+						</div>
+						<?php else : ?>
+						<p class="description"><?php esc_html_e( 'This site has no pages yet. Use addresses below.', 'scout-contact' ); ?></p>
+						<?php endif; ?>
+						<p><label><input type="checkbox" name="<?php echo esc_attr( $n ); ?>[children]" value="1" <?php checked( ! empty( $set['children'] ) ); ?>> <?php esc_html_e( 'Their child pages too', 'scout-contact' ); ?></label></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="<?php echo esc_attr( $id ); ?>-paths"><?php esc_html_e( 'Addresses that start with', 'scout-contact' ); ?></label></th>
+					<td><input id="<?php echo esc_attr( $id ); ?>-paths" type="text" class="regular-text code" name="<?php echo esc_attr( $n ); ?>[paths]" value="<?php echo esc_attr( implode( ', ', (array) $set['paths'] ) ); ?>" placeholder="/bodywork/">
+						<p class="description"><?php esc_html_e( 'Optional. Separate more than one with commas.', 'scout-contact' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Buttons', 'scout-contact' ); ?></th>
+					<td>
+						<table class="widefat striped" role="presentation" style="max-width:760px">
+							<thead><tr><th scope="col"><?php esc_html_e( 'Show', 'scout-contact' ); ?></th><th scope="col"><?php esc_html_e( 'Order', 'scout-contact' ); ?></th><th scope="col"><?php esc_html_e( 'Wording in the sheet', 'scout-contact' ); ?></th><th scope="col"><?php esc_html_e( 'Link or number', 'scout-contact' ); ?></th></tr></thead>
+							<tbody>
+							<?php foreach ( self::SLOTS as $k => $slot ) : $row = $rows[ $slot ] ?? null; $rn = $n . '[buttons][' . $slot . ']'; ?>
+							<tr>
+								<td><label><input type="checkbox" name="<?php echo esc_attr( $rn ); ?>[on]" value="1" <?php checked( null !== $row ); ?>> <?php echo esc_html( $titles[ $slot ] ); ?></label></td>
+								<td><input type="number" min="1" max="99" class="small-text" name="<?php echo esc_attr( $rn ); ?>[order]" value="<?php echo esc_attr( (string) ( $row['order'] ?? '' ) ); ?>" placeholder="<?php echo esc_attr( (string) ( $k + 1 ) ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: button name */ __( 'Order for %s', 'scout-contact' ), $titles[ $slot ] ) ); ?>"></td>
+								<td><input type="text" class="regular-text" name="<?php echo esc_attr( $rn ); ?>[label]" value="<?php echo esc_attr( (string) ( $row['label'] ?? '' ) ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: button name */ __( 'Wording for %s', 'scout-contact' ), $titles[ $slot ] ) ); ?>"<?php echo 0 === strpos( $slot, 'link' ) ? ' placeholder="' . esc_attr__( 'Request a date', 'scout-contact' ) . '"' : ''; ?>></td>
+								<td><input type="text" class="regular-text code" name="<?php echo esc_attr( $rn ); ?>[url]" value="<?php echo esc_attr( (string) ( $row['url'] ?? '' ) ); ?>" placeholder="<?php echo esc_attr( $hints[ $slot ] ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: button name */ __( 'Link for %s', 'scout-contact' ), $titles[ $slot ] ) ); ?>"></td>
+							</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+						<p class="description"><?php esc_html_e( 'Tick none to keep the usual Call, Text and Book. Call and Text also show on the bar itself. With one button, the main button goes straight to it.', 'scout-contact' ); ?></p>
+						<p><label><input type="checkbox" name="<?php echo esc_attr( $n ); ?>[no_text]" value="1" <?php checked( ! empty( $set['no_text'] ) ); ?>> <?php esc_html_e( 'No Text button on these pages', 'scout-contact' ); ?></label></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="<?php echo esc_attr( $id ); ?>-label"><?php esc_html_e( 'Main button', 'scout-contact' ); ?></label></th>
+					<td><input id="<?php echo esc_attr( $id ); ?>-label" type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[label]" value="<?php echo esc_attr( (string) $set['label'] ); ?>" placeholder="<?php echo esc_attr( (string) $s['label'] ); ?>">
+						<p class="description"><?php esc_html_e( 'Blank keeps the usual wording, or the one button’s own wording.', 'scout-contact' ); ?></p></td>
+				</tr>
+				<?php if ( ! $is_new ) : ?>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Remove', 'scout-contact' ); ?></th>
+					<td><label><input type="checkbox" name="<?php echo esc_attr( $n ); ?>[remove]" value="1"> <?php esc_html_e( 'Remove this set when I save', 'scout-contact' ); ?></label></td>
+				</tr>
+				<?php endif; ?>
+			</table>
+		</fieldset>
+			<?php
+		endfor;
+		self::ui_fold_close();
 	}
 
 	public static function render(): void {
@@ -229,6 +415,7 @@ final class Scout_Contact_Admin {
 				</tr>
 			</table>
 			<?php self::ui_fold_close(); ?>
+			<?php self::render_sets( $s, $o ); ?>
 			<?php submit_button( __( 'Save changes', 'scout-contact' ) ); ?>
 		</form>
 		<?php
