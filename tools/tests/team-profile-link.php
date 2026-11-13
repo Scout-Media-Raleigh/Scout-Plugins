@@ -98,14 +98,14 @@ function get_posts( $a ) {
 	return $out;
 }
 
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-front.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-schema.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-changes.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-editor.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-link.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-add.php';
-require '/home/user/Scout-Plugins/scout-team/includes/class-scout-team-byline.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-front.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-schema.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-changes.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-editor.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-link.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-add.php';
+require dirname( __DIR__, 2 ) . '/scout-team/includes/class-scout-team-byline.php';
 $T='Scout_Team';
 // Defaults unchanged.
 $e=$T::empty_profile(); ok(0===$e['link_page'] && ''===$e['link_url'] && 0===$e['no_page'] && array()===$e['licenses'],'new fields default off');

@@ -23,9 +23,9 @@ function has_excerpt() { return false; } function wp_trim_words( $s ) { return $
 function home_url( $p = '' ) { return 'https://example.test' . $p; } function get_bloginfo() { return 'Example School'; } function is_admin() { return false; } function wp_doing_ajax() { return false; }
 function get_posts() { return array(); }
 function wp_list_pluck( $a, $k ) { return array_map( fn( $r ) => $r[ $k ], $a ); }
-require '/home/user/Scout-Plugins/scout-events/includes/class-scout-events.php';
-require '/home/user/Scout-Plugins/scout-events/includes/class-scout-events-schema.php';
-require '/home/user/Scout-Plugins/scout-events/includes/class-scout-events-courses.php';
+require dirname( __DIR__, 2 ) . '/scout-events/includes/class-scout-events.php';
+require dirname( __DIR__, 2 ) . '/scout-events/includes/class-scout-events-schema.php';
+require dirname( __DIR__, 2 ) . '/scout-events/includes/class-scout-events-courses.php';
 $GLOBALS['filters']['scout_events_now'] = fn() => strtotime( '2026-11-13 12:00' );
 $E = 'Scout_Events';
 $GLOBALS['posts'][1] = array( 'type' => 'scout_event', 'status' => 'publish', 'title' => 'Open night', 'slug' => 'open-night' );
