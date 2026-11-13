@@ -1,5 +1,12 @@
 # Scout Chat changelog
 
+## 0.4.0 (2026-11-13)
+
+- **Outside chat widget (Site Standard rule 7).** A site that runs its own chat service can load it from Scout Chat instead of from the theme. Chat, More options: Outside chat widget has "Use an outside chat widget" (off by default), the script address (https only, checked on save and again where it prints), async and defer, script attributes as name=value lines (data-* plus id, crossorigin, referrerpolicy, integrity and charset), an optional settings object as JSON with the name the service reads, the launcher corner (bottom right or bottom left), the clearance on phones (86 px by default) and an optional launcher selector. When it is on, Scout Chat prints that script in the footer in place of its own button; Show the chat on the site and the `scout_chat_show` filter still turn it on and off.
+- **The same "chat is here" signal for an outside widget.** The call bar lifts Scout Chat's own button with `body.scc-on .sc-root` on phones. For an outside widget, Scout Chat adds the body classes `scout-chat-on`, `scout-chat-outside` and `scout-chat-left` or `scout-chat-right`, sets `--scout-chat-clearance` on the page and `window.scoutChatPresence` (`source`, `position`, `clearance`), and with a launcher selector moves that button up by the clearance while the call bar shows, so the two never overlap.
+- **An allowlist for outside scripts.** The `scout_chat_outside_hosts` filter limits which hosts the script may load from (a listed host allows its subdomains). Empty, the default, allows any https host.
+- Sites that never tick the new box see no change.
+
 ## 0.3.7 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

@@ -71,20 +71,29 @@ final class Scout_Team_Front {
 
 	/**
 	 * Profile page switched off: visitors get the theme's "not found" page.
-	 * Someone who can edit the person still sees it, so they can check it, and
-	 * search engines are told not to list it.
+	 * With "No team page" on and a Profile link picked, visitors are sent
+	 * there for good (301) instead. Someone who can edit the person still
+	 * sees it, so they can check it, and search engines are told not to list it.
 	 */
 	public static function guard_profile(): void {
 		if ( ! is_singular( Scout_Team::POST_TYPE ) ) {
 			return;
 		}
 		$id = (int) get_queried_object_id();
-		if ( ! $id || Scout_Team::shows( Scout_Team::profile( $id ), 'bio' ) ) {
+		$p  = $id ? Scout_Team::profile( $id ) : array();
+		if ( ! $id || Scout_Team::page_public( $p ) ) {
 			return;
 		}
 		if ( current_user_can( 'edit_post', $id ) ) {
 			add_filter( 'wp_robots', 'wp_robots_no_robots' );
 			return;
+		}
+		$to = ! empty( $p['no_page'] ) ? Scout_Team::chosen_link( $p ) : '';
+		if ( '' !== $to && untrailingslashit( $to ) !== untrailingslashit( (string) get_permalink( $id ) ) ) {
+			// Picked by someone who can edit the person, so it may be another site (wp_redirect, not wp_safe_redirect).
+			if ( wp_redirect( $to, 301, 'Scout People' ) ) { // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+				exit;
+			}
 		}
 		global $wp_query;
 		$wp_query->set_404();
@@ -109,7 +118,7 @@ final class Scout_Team_Front {
 		$out = array();
 		foreach ( $ids as $id ) {
 			$id = (int) $id;
-			if ( ! Scout_Team::on_team_page( $id ) || ! Scout_Team::shows( Scout_Team::profile( $id ), 'bio' ) ) {
+			if ( ! Scout_Team::on_team_page( $id ) || ! Scout_Team::page_public( Scout_Team::profile( $id ) ) ) {
 				$out[] = $id;
 			}
 		}
@@ -264,6 +273,29 @@ final class Scout_Team_Front {
 					}
 					self::section( __( 'Bar admissions', 'scout-team' ), $items );
 				}
+
+				// Licenses and certifications (any site). Bar admissions above stay the law sites' own list.
+				$items = array();
+				foreach ( $p['licenses'] as $row ) {
+					$sub = array();
+					if ( '' !== $row['issuer'] ) {
+						/* translators: %s: who issued the license. */
+						$sub[] = esc_html( sprintf( __( 'Issued by %s', 'scout-team' ), $row['issuer'] ) );
+					}
+					if ( '' !== $row['number'] ) {
+						/* translators: %s: license number. */
+						$sub[] = esc_html( sprintf( __( 'No. %s', 'scout-team' ), $row['number'] ) );
+					}
+					if ( '' !== $row['url'] ) {
+						$sub[] = '<a href="' . esc_url( $row['url'] ) . '" rel="noopener">' . esc_html__( 'Check the license', 'scout-team' ) . '<span class="screen-reader-text"> ' . esc_html( $row['name'] ) . '</span></a>';
+					}
+					$item = esc_html( $row['name'] );
+					if ( $sub ) {
+						$item .= '<span class="scout-team-sub">' . implode( ' <span aria-hidden="true">&middot;</span> ', $sub ) . '</span>';
+					}
+					$items[] = $item;
+				}
+				self::section( __( 'Licenses and certifications', 'scout-team' ), $items );
 
 				$items = array();
 				foreach ( $p['education'] as $row ) {
@@ -428,7 +460,7 @@ final class Scout_Team_Front {
 		foreach ( $people as $person ) {
 			$p    = Scout_Team::public_profile( Scout_Team::profile( (int) $person->ID ) );
 			$name = get_the_title( $person );
-			$url  = Scout_Team::shows( $p, 'bio' ) ? get_permalink( $person ) : '';
+			$url  = Scout_Team::profile_url( (int) $person->ID );
 			echo '<li class="scout-team-card">';
 			if ( has_post_thumbnail( $person ) ) {
 				self::$rendering = true; // This markup sets its own alt text.
@@ -479,11 +511,9 @@ final class Scout_Team_Front {
 			return $link;
 		}
 		$member = Scout_Team::member_for_user( (int) $author_id );
-		// No profile page to send readers to: keep WordPress's own author link.
-		if ( ! $member || ! Scout_Team::shows( Scout_Team::profile( $member ), 'bio' ) ) {
-			return $link;
-		}
-		return (string) get_permalink( $member );
+		// No profile page or Profile link to send readers to: keep WordPress's own author link.
+		$url = $member ? Scout_Team::profile_url( $member ) : '';
+		return '' !== $url ? $url : $link;
 	}
 
 	/* ---------- Written by ---------- */
@@ -630,7 +660,7 @@ final class Scout_Team_Front {
 		if ( self::rest_trusted() || ! $post instanceof WP_Post ) {
 			return $response;
 		}
-		if ( 'publish' !== $post->post_status || ! Scout_Team::shows( Scout_Team::profile( (int) $post->ID ), 'bio' ) ) {
+		if ( 'publish' !== $post->post_status || ! Scout_Team::page_public( Scout_Team::profile( (int) $post->ID ) ) ) {
 			return new WP_Error( 'rest_post_invalid_id', __( 'Invalid post ID.', 'scout-team' ), array( 'status' => 404 ) );
 		}
 		if ( is_object( $response ) && method_exists( $response, 'get_data' ) && method_exists( $response, 'set_data' ) ) {

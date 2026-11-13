@@ -117,3 +117,10 @@ a.sb-day:focus-visible, .sb-time:focus-visible { outline: 2px solid var(--sb-acc
 	.sb-button { display: block; width: 100%; }
 	.sb-actions { flex-direction: column; }
 }
+
+/* Agreement tick box (0.4.0): the owner's sentence, an optional link, and an inline error. */
+.sb-agree { gap: .3em; }
+.sb-agree .sb-check label { font-weight: 400; }
+.sb-agree-link { margin: 0 0 0 1.7em; font-size: .95em; }
+.sb-agree.is-error .sb-check { padding: .5em .7em; border-left: 3px solid var(--sb-danger); }
+.sb-error { margin: 0 0 0 1.7em; color: var(--sb-danger); font-weight: 600; font-size: .95em; }

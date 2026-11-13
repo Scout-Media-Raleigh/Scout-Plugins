@@ -52,6 +52,7 @@
 .sbk-questions { display: grid; gap: 8px; }
 .sbk-question { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sbk-question input[type="text"] { flex: 1 1 280px; }
+.sbk-question input[type="url"] { flex: 1 1 220px; }
 .sbk-back { margin: 12px 0 0; }
 .sbk-back a { color: var(--sh-accent-text); text-decoration: none; }
 .sbk-delete { margin-top: 16px; }

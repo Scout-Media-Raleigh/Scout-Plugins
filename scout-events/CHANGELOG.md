@@ -91,7 +91,7 @@
 
 ## 0.14.1 (2026-10-23)
 
-- **Easier for themes to restyle.** Rules that reach inside a block now count only their outer class (`.se-facts :where(dt)`, `.se-addcal :where(span)`; 53 rules), so a theme's own `.entry-content dt` or `.se-addcal span` wins without `!important` or a longer selector. Rules that hide something keep their strength. Checked on 11 pages at 1440 and 390 with the Bliss theme: no layout change (theme session, 2026-10-23).
+- **Easier for themes to restyle.** Rules that reach inside a block now count only their outer class (`.se-facts :where(dt)`, `.se-addcal :where(span)`; 53 rules), so a theme's own `.entry-content dt` or `.se-addcal span` wins without `!important` or a longer selector. Rules that hide something keep their strength. Checked on 11 pages at 1440 and 390 with a client theme: no layout change (theme session, 2026-10-23).
 - The vendor form's Yes/No buttons sit next to their words. Field styling had stretched each radio button across the form, and made the choices bold.
 
 ## 0.14.0 (2026-10-23)
@@ -182,7 +182,7 @@
 ## 0.4.1 (2026-10-22)
 
 - **Import keeps one copy when a session changes event.** A row now also matches a session with the same title and the same speaker in any event, so moving a session to its right year on a second run updates it instead of adding a copy.
-- Shortcodes take an event's address word as well as its number: `[scout_speakers event="bliss-boogie-2026"]`, so a page keeps working when moved between sites.
+- Shortcodes take an event's address word as well as its number: `[scout_speakers event="spring-retreat-2026"]`, so a page keeps working when moved between sites.
 
 ## 0.4.0 (2026-10-22)
 

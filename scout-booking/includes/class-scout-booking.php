@@ -19,6 +19,12 @@
  *   cancelled, declined, expired  no longer holding a time.
  *   blocked    time the owner blocked off.
  *
+ * answers holds the intake answers as a list of { q, a }. An agreement
+ * question adds kind "agree", agreed (true or false), at (when it was
+ * ticked, site time) and url (the link shown beside it), so the booking keeps
+ * the exact sentence the client agreed to. reason holds the owner's reason
+ * for a decline, from the list on Settings.
+ *
  * @package Scout_Booking
  */
 
@@ -31,7 +37,7 @@ final class Scout_Booking {
 	const OPTION     = 'scout_booking';
 	const TYPES      = 'scout_booking_types';
 	const DB_OPTION  = 'scout_booking_db';
-	const DB_VERSION = '1';
+	const DB_VERSION = '2';
 	const CRON       = 'scout_booking_hourly';
 
 	/** Statuses that hold a time on the calendar. "pending" only while its hold lasts. */
@@ -72,6 +78,7 @@ final class Scout_Booking {
 				phone varchar(40) NOT NULL DEFAULT '',
 				answers longtext NULL,
 				note text NULL,
+				reason varchar(190) NOT NULL DEFAULT '',
 				price decimal(10,2) NOT NULL DEFAULT 0,
 				due decimal(10,2) NOT NULL DEFAULT 0,
 				paid decimal(10,2) NOT NULL DEFAULT 0,
@@ -123,7 +130,53 @@ final class Scout_Booking {
 			'reminders'    => 1,
 			'hours'        => array(),
 			'feed_token'   => '',
+			// Added 0.4.0. Every default keeps sites as they were.
+			'decline_reasons' => self::default_reasons(),
+			'link_mode'       => 'page',
+			'link_url'        => '',
+			'link_skip'       => array(),
+			'schema'          => 0,
 		);
+	}
+
+	/** The reasons offered when the owner declines a request, before the owner edits the list. */
+	public static function default_reasons(): array {
+		return array(
+			__( 'Not a fit', 'scout-booking' ),
+			__( 'No availability', 'scout-booking' ),
+			__( 'Other', 'scout-booking' ),
+		);
+	}
+
+	/**
+	 * A reasons list from lines of text or an array: plain, no repeats, at
+	 * most 8, each at most 60 characters.
+	 *
+	 * @param string|array $in
+	 * @return string[]
+	 */
+	public static function clean_reasons( $in ): array {
+		$lines = is_array( $in ) ? $in : preg_split( '/\r\n|\r|\n/', (string) $in );
+		$out   = array();
+		foreach ( (array) $lines as $line ) {
+			$line = trim( sanitize_text_field( (string) $line ) );
+			if ( '' === $line ) {
+				continue;
+			}
+			$line = function_exists( 'mb_substr' ) ? mb_substr( $line, 0, 60 ) : substr( $line, 0, 60 );
+			if ( ! in_array( $line, $out, true ) ) {
+				$out[] = $line;
+			}
+			if ( count( $out ) >= 8 ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/** @return string[] the reasons the owner can pick from when declining. */
+	public static function decline_reasons(): array {
+		return self::settings()['decline_reasons'];
 	}
 
 	public static function settings(): array {
@@ -144,6 +197,11 @@ final class Scout_Booking {
 			'reminders'    => ! empty( $s['reminders'] ),
 			'hours'        => self::clean_week( (array) $s['hours'] ),
 			'feed_token'   => preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $s['feed_token'] ) ),
+			'decline_reasons' => self::clean_reasons( $s['decline_reasons'] ),
+			'link_mode'       => in_array( $s['link_mode'], array( 'page', 'url', 'off' ), true ) ? $s['link_mode'] : 'page',
+			'link_url'        => self::clean_link( (string) $s['link_url'] ),
+			'link_skip'       => array_values( array_filter( array_map( static fn( $id ) => substr( (string) preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $id ) ), 0, 20 ), (array) $s['link_skip'] ) ) ),
+			'schema'          => ! empty( $s['schema'] ),
 		);
 		return $out;
 	}
@@ -258,10 +316,14 @@ final class Scout_Booking {
 			if ( '' === $label ) {
 				continue;
 			}
+			$agree       = ! empty( $q['agree'] );
 			$questions[] = array(
 				'label'    => $label,
 				'required' => ! empty( $q['required'] ),
-				'long'     => ! empty( $q['long'] ),
+				'long'     => ! $agree && ! empty( $q['long'] ),
+				// A tick box with the owner's sentence, and an optional link beside it.
+				'agree'    => $agree,
+				'link'     => $agree ? self::clean_link( (string) ( $q['link'] ?? '' ) ) : '',
 			);
 			if ( count( $questions ) >= 8 ) {
 				break;
@@ -285,7 +347,21 @@ final class Scout_Booking {
 			'video'          => self::clean_video( (string) ( $t['video'] ?? '' ) ),
 			'active'         => ! empty( $t['active'] ),
 			'product_id'     => absint( $t['product_id'] ?? 0 ),
+			// Service schema: auto (when it has a price and a note), on, or off. Only when Settings turns schema on.
+			'schema'         => in_array( $t['schema'] ?? '', array( 'auto', 'on', 'off' ), true ) ? $t['schema'] : 'auto',
 		);
+	}
+
+	/** An http or https address, or a path on this site ("/book/"), or ''. */
+	public static function clean_link( string $url ): string {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+		if ( '/' === $url[0] && ( ! isset( $url[1] ) || '/' !== $url[1] ) ) {
+			$url = home_url( $url );
+		}
+		return (string) esc_url_raw( $url, array( 'http', 'https' ) );
 	}
 
 	/** A fixed video room address (Google Meet, Zoom...), https only, or ''. */
@@ -567,6 +643,51 @@ final class Scout_Booking {
 		return trim( $row['first_name'] . ' ' . $row['last_name'] );
 	}
 
+	/**
+	 * One stored answer as a label and a value for the owner's screens, emails
+	 * and the privacy export. An agreement shows the exact sentence and when
+	 * it was ticked.
+	 *
+	 * @return array{0:string,1:string}
+	 */
+	public static function answer_pair( array $a ): array {
+		$q = (string) ( $a['q'] ?? '' );
+		if ( 'agree' !== ( $a['kind'] ?? '' ) ) {
+			return array( $q, (string) ( $a['a'] ?? '' ) );
+		}
+		if ( empty( $a['agreed'] ) ) {
+			return array( $q, __( 'Not ticked', 'scout-booking' ) );
+		}
+		$at   = ! empty( $a['at'] ) ? self::at( (string) $a['at'] ) : null;
+		$when = $at
+			/* translators: 1: date, 2: time. */
+			? sprintf( __( 'Agreed on %1$s at %2$s.', 'scout-booking' ), wp_date( 'F j, Y', $at->getTimestamp() ), wp_date( (string) get_option( 'time_format', 'g:i a' ), $at->getTimestamp() ) )
+			: __( 'Agreed.', 'scout-booking' );
+		if ( ! empty( $a['url'] ) ) {
+			/* translators: %s: the address of the page linked beside the tick box. */
+			$when .= ' ' . sprintf( __( 'Link shown beside it: %s', 'scout-booking' ), (string) $a['url'] );
+		}
+		return array( $q, $when );
+	}
+
+	/**
+	 * Declined requests in the last $days days, counted by the owner's reason
+	 * ('' for a decline without one). Scout CRM shows these beside its
+	 * contacts.
+	 *
+	 * @return array<string,int>
+	 */
+	public static function decline_counts( int $days = 30 ): array {
+		global $wpdb;
+		$cut  = self::now()->modify( '-' . max( 1, $days ) . ' days' )->format( 'Y-m-d H:i:s' );
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT reason, COUNT(*) AS n FROM ' . self::table() . " WHERE status = 'declined' AND updated >= %s GROUP BY reason", $cut ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$out  = array();
+		foreach ( $rows as $r ) {
+			$out[ (string) $r['reason'] ] = (int) $r['n'];
+		}
+		return $out;
+	}
+
 	/* ---------- hourly upkeep ---------- */
 
 	public static function schedule(): void {
@@ -650,6 +771,10 @@ final class Scout_Booking {
 					'value' => self::statuses()[ $r['status'] ] ?? $r['status'],
 				),
 				array(
+					'name'  => __( 'Reason for declining', 'scout-booking' ),
+					'value' => (string) ( $r['reason'] ?? '' ),
+				),
+				array(
 					'name'  => __( 'Name', 'scout-booking' ),
 					'value' => self::client_name( $r ),
 				),
@@ -671,9 +796,10 @@ final class Scout_Booking {
 				),
 			);
 			foreach ( $r['answers'] as $a ) {
-				$fields[] = array(
-					'name'  => (string) ( $a['q'] ?? '' ),
-					'value' => (string) ( $a['a'] ?? '' ),
+				list( $q, $v ) = self::answer_pair( (array) $a );
+				$fields[]      = array(
+					'name'  => $q,
+					'value' => $v,
 				);
 			}
 			$data[] = array(

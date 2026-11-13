@@ -40,6 +40,12 @@ final class Scout_Booking_Front {
 		}
 		add_action( 'template_redirect', array( __CLASS__, 'endpoints' ), 1 );
 		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
+		// Service schema joins Scout Core's one graph (off until Settings, Search engines turns it on).
+		add_filter( 'scout_schema_graph', array( __CLASS__, 'schema_graph' ), 25 );
+		// The site-wide Book link is worked out once and kept until pages or session types change.
+		add_action( 'save_post_page', array( __CLASS__, 'forget_site_link' ) );
+		add_action( 'deleted_post', array( __CLASS__, 'forget_site_link' ) );
+		add_action( 'scout_booking_types_saved', array( __CLASS__, 'forget_site_link' ) );
 	}
 
 	public static function register(): void {
@@ -63,6 +69,174 @@ final class Scout_Booking_Front {
 	public static function has_page(): bool {
 		$id = (int) Scout_Booking::settings()['page_id'];
 		return $id > 0 && 'publish' === get_post_status( $id );
+	}
+
+	const LINK_CACHE = 'scout_booking_site_link';
+
+	/**
+	 * Where Book buttons across the site go, behind scout_booking_url().
+	 *
+	 * Settings, "Book buttons across the site": the booking page (default,
+	 * the same as before 0.4.0), a chosen address, or nothing from Bookings.
+	 * With sessions ticked under "Never send Book buttons to a page that only
+	 * offers these sessions", a booking page that offers only those is passed
+	 * over for the first published page with the booking form that offers
+	 * something else, or '' when there is none.
+	 */
+	public static function site_link(): string {
+		$s = Scout_Booking::settings();
+		if ( 'off' === $s['link_mode'] ) {
+			return '';
+		}
+		if ( 'url' === $s['link_mode'] && '' !== $s['link_url'] ) {
+			return $s['link_url'];
+		}
+		if ( ! $s['link_skip'] ) {
+			return self::booking_url();
+		}
+		$id = get_transient( self::LINK_CACHE );
+		if ( false === $id ) {
+			$id = self::pick_link_page( $s );
+			set_transient( self::LINK_CACHE, (int) $id, DAY_IN_SECONDS );
+		}
+		$id = (int) $id;
+		if ( $id <= 0 || 'publish' !== get_post_status( $id ) ) {
+			return '';
+		}
+		$url = get_permalink( $id );
+		return $url ? (string) $url : '';
+	}
+
+	public static function forget_site_link(): void {
+		delete_transient( self::LINK_CACHE );
+	}
+
+	/** The first published booking page that offers a session outside the skipped list, or 0. */
+	private static function pick_link_page( array $s ): int {
+		$ids = array();
+		if ( $s['page_id'] ) {
+			$ids[] = (int) $s['page_id'];
+		}
+		global $wpdb;
+		$found = (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE %s ORDER BY menu_order ASC, ID ASC LIMIT 50", '%' . $wpdb->esc_like( '[scout_booking' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$ids   = array_values( array_unique( array_merge( $ids, array_map( 'intval', $found ) ) ) );
+		foreach ( $ids as $id ) {
+			if ( 'publish' !== get_post_status( $id ) ) {
+				continue;
+			}
+			$offered = array_keys( self::offered_types( $id ) );
+			if ( array_diff( $offered, $s['link_skip'] ) ) {
+				return $id;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * The public session types a page shows: from each [scout_booking] on it
+	 * (type="", types="", or every type), or every public type on the booking
+	 * page itself when its form comes from the theme. Hidden types never count.
+	 *
+	 * @return array<string,array>
+	 */
+	public static function offered_types( int $post_id ): array {
+		$active  = Scout_Booking::types( true );
+		$content = (string) get_post_field( 'post_content', $post_id );
+		if ( ! $active || ! has_shortcode( $content, 'scout_booking' ) ) {
+			return $post_id === (int) Scout_Booking::settings()['page_id'] ? $active : array();
+		}
+		$keep = array();
+		if ( preg_match_all( '/' . get_shortcode_regex( array( 'scout_booking' ) ) . '/', $content, $m, PREG_SET_ORDER ) ) {
+			foreach ( $m as $sc ) {
+				$atts = (array) shortcode_parse_atts( $sc[3] );
+				$one  = strtolower( trim( (string) ( $atts['type'] ?? '' ) ) );
+				$many = strtolower( trim( (string) ( $atts['types'] ?? '' ) ) );
+				if ( '' !== $one ) {
+					$keep[] = $one;
+				} elseif ( '' !== $many ) {
+					$keep = array_merge( $keep, array_map( 'trim', explode( ',', $many ) ) );
+				} else {
+					return $active;
+				}
+			}
+		}
+		return array_intersect_key( $active, array_flip( $keep ) );
+	}
+
+	/* ---------- Service schema ---------- */
+
+	/** Should this type be described to search engines? Never when hidden. */
+	public static function schema_on( array $type ): bool {
+		if ( empty( $type['active'] ) || '' === $type['name'] || 'off' === $type['schema'] ) {
+			return false;
+		}
+		return 'on' === $type['schema'] || ( $type['price'] > 0 && '' !== trim( $type['note'] ) );
+	}
+
+	/**
+	 * Add a Service node, with its Offer, for each public session type the
+	 * page shows. The provider is the business node already in Scout Core's
+	 * graph (its @id), so the services read as part of the one business.
+	 *
+	 * @param array<string,array> $graph
+	 * @return array<string,array>
+	 */
+	public static function schema_graph( $graph ) {
+		$graph = (array) $graph;
+		if ( ! Scout_Booking::settings()['schema'] || ! is_singular() ) {
+			return $graph;
+		}
+		$id = (int) get_queried_object_id();
+		if ( ! $id ) {
+			return $graph;
+		}
+		$url      = (string) get_permalink( $id );
+		$provider = isset( $graph['business']['@id'] ) ? (string) $graph['business']['@id'] : home_url( '/#business' );
+		foreach ( self::offered_types( $id ) as $type ) {
+			if ( self::schema_on( $type ) ) {
+				$graph[ 'service-' . $type['id'] ] = self::service_node( $type, $url, $provider );
+			}
+		}
+		return $graph;
+	}
+
+	/** One Service node. The length rides on the price ("per 60 minutes"), or in the description without a price. */
+	public static function service_node( array $type, string $url, string $provider ): array {
+		$desc = trim( html_entity_decode( wp_strip_all_tags( $type['note'] ), ENT_QUOTES, 'UTF-8' ) );
+		$node = array(
+			'@type'    => 'Service',
+			'@id'      => $url . '#service-' . $type['id'],
+			'name'     => $type['name'],
+			'url'      => $url,
+			'provider' => array( '@id' => $provider ),
+		);
+		if ( $type['price'] > 0 ) {
+			$currency       = (string) apply_filters( 'scout_booking_currency', function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD' );
+			$price          = number_format( (float) $type['price'], 2, '.', '' );
+			$node['offers'] = array(
+				'@type'              => 'Offer',
+				'price'              => $price,
+				'priceCurrency'      => $currency,
+				'url'                => $url,
+				'priceSpecification' => array(
+					'@type'             => 'UnitPriceSpecification',
+					'price'             => $price,
+					'priceCurrency'     => $currency,
+					'referenceQuantity' => array(
+						'@type'    => 'QuantitativeValue',
+						'value'    => (int) $type['length'],
+						'unitCode' => 'MIN',
+					),
+				),
+			);
+		} else {
+			/* translators: %s: session length, such as "1 hour". */
+			$desc = trim( $desc . ' ' . sprintf( __( 'Length: %s.', 'scout-booking' ), Scout_Booking::length_label( (int) $type['length'] ) ) );
+		}
+		if ( '' !== $desc ) {
+			$node['description'] = $desc;
+		}
+		return $node;
 	}
 
 	public static function manage_url( array $row, array $args = array() ): string {
@@ -219,6 +393,7 @@ final class Scout_Booking_Front {
 		$texts = array(
 			'taken'     => array( 'bad', __( 'That time was just taken or is no longer open. Please pick another.', 'scout-booking' ) ),
 			'missing'   => array( 'bad', __( 'Please fill in every field marked required.', 'scout-booking' ) ),
+			'agree'     => array( 'bad', __( 'Please tick the box to agree before you send this. It is marked below.', 'scout-booking' ) ),
 			'email'     => array( 'bad', __( 'Please check the email address.', 'scout-booking' ) ),
 			'expired'   => array( 'bad', __( 'The form timed out. Please try again.', 'scout-booking' ) ),
 			'booked'    => array( 'good', __( 'You are booked. A confirmation is on its way to your email.', 'scout-booking' ) ),
@@ -440,8 +615,12 @@ final class Scout_Booking_Front {
 		if ( $type['questions'] ) {
 			$html .= '<fieldset class="sb-group"><legend>' . esc_html__( 'A few questions', 'scout-booking' ) . '</legend>';
 			foreach ( $type['questions'] as $i => $q ) {
-				$id    = 'sb-q' . $i;
-				$val   = isset( $old['q'][ $i ] ) ? (string) $old['q'][ $i ] : '';
+				$id  = 'sb-q' . $i;
+				$val = isset( $old['q'][ $i ] ) ? (string) $old['q'][ $i ] : '';
+				if ( ! empty( $q['agree'] ) ) {
+					$html .= self::agree_field( $q, (int) $i, $val, in_array( (int) $i, array_map( 'intval', (array) ( $old['err'] ?? array() ) ), true ) );
+					continue;
+				}
 				$html .= '<p class="sb-field"><label for="' . esc_attr( $id ) . '">' . esc_html( $q['label'] ) . ( $q['required'] ? $req : '' ) . '</label>';
 				$html .= $q['long']
 					? '<textarea id="' . esc_attr( $id ) . '" name="sb[q][' . (int) $i . ']" rows="3"' . ( $q['required'] ? ' required' : '' ) . '>' . esc_textarea( $val ) . '</textarea>'
@@ -477,6 +656,28 @@ final class Scout_Booking_Front {
 		}
 		$html .= '<p><button type="submit" class="sb-button">' . esc_html( $button ) . '</button></p></form>';
 		return $html;
+	}
+
+	/**
+	 * A tick box with the owner's sentence, an optional link beside it, and an
+	 * inline error when a required box came back unticked.
+	 */
+	private static function agree_field( array $q, int $i, string $val, bool $error ): string {
+		$id    = 'sb-q' . $i;
+		$err   = $id . '-err';
+		$html  = '<div class="sb-field sb-agree' . ( $error ? ' is-error' : '' ) . '">';
+		$html .= '<p class="sb-check"><label for="' . esc_attr( $id ) . '"><input type="checkbox" id="' . esc_attr( $id ) . '" name="sb[q][' . $i . ']" value="1"'
+			. checked( '1', $val, false )
+			. ( $q['required'] ? ' required aria-required="true"' : '' )
+			. ( $error ? ' aria-invalid="true" aria-describedby="' . esc_attr( $err ) . '"' : '' )
+			. '> <span>' . esc_html( $q['label'] ) . ( $q['required'] ? ' <span class="sb-req">' . esc_html__( '(required)', 'scout-booking' ) . '</span>' : '' ) . '</span></label></p>';
+		if ( '' !== (string) ( $q['link'] ?? '' ) ) {
+			$html .= '<p class="sb-agree-link"><a href="' . esc_url( $q['link'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Read it first', 'scout-booking' ) . '<span class="screen-reader-text"> ' . esc_html__( '(opens in a new tab)', 'scout-booking' ) . '</span></a></p>';
+		}
+		if ( $error ) {
+			$html .= '<p class="sb-error" id="' . esc_attr( $err ) . '">' . esc_html__( 'This box needs a tick before you can book.', 'scout-booking' ) . '</p>';
+		}
+		return $html . '</div>';
 	}
 
 	/* ---------- after a request ---------- */
@@ -651,12 +852,30 @@ final class Scout_Booking_Front {
 			'optin'      => empty( $in['optin'] ) ? '' : '1',
 			'q'          => array(),
 		);
-		$answers = array();
-		$missing = '' === $typed['first_name'] || '' === $typed['last_name'] || '' === $typed['phone'];
+		$answers  = array();
+		$missing  = '' === $typed['first_name'] || '' === $typed['last_name'] || '' === $typed['phone'];
+		$unticked = array();
 		foreach ( $type['questions'] as $i => $q ) {
-			$a                 = sanitize_textarea_field( (string) ( $in['q'][ $i ] ?? '' ) );
-			$typed['q'][ $i ]  = $a;
-			$answers[]         = array(
+			if ( ! empty( $q['agree'] ) ) {
+				// The record of what the client agreed to: the exact sentence, the time and the link beside it.
+				$yes              = ! empty( $in['q'][ $i ] );
+				$typed['q'][ $i ] = $yes ? '1' : '';
+				$answers[]        = array(
+					'q'      => $q['label'],
+					'a'      => $yes ? __( 'Agreed', 'scout-booking' ) : '',
+					'kind'   => 'agree',
+					'agreed' => $yes,
+					'at'     => $yes ? Scout_Booking::now()->format( 'Y-m-d H:i:s' ) : '',
+					'url'    => (string) ( $q['link'] ?? '' ),
+				);
+				if ( $q['required'] && ! $yes ) {
+					$unticked[] = (int) $i;
+				}
+				continue;
+			}
+			$a                = sanitize_textarea_field( (string) ( $in['q'][ $i ] ?? '' ) );
+			$typed['q'][ $i ] = $a;
+			$answers[]        = array(
 				'q' => $q['label'],
 				'a' => $a,
 			);
@@ -666,7 +885,12 @@ final class Scout_Booking_Front {
 			self::back( $back, 'email', $typed );
 		}
 		if ( $missing ) {
+			$typed['err'] = $unticked;
 			self::back( $back, 'missing', $typed );
+		}
+		if ( $unticked ) {
+			$typed['err'] = $unticked;
+			self::back( $back, 'agree', $typed );
 		}
 		$start = DateTimeImmutable::createFromFormat( 'Y-m-d H:i', $when, wp_timezone() );
 		if ( ! $start || ! Scout_Booking_Slots::is_open( $type, $start ) ) {

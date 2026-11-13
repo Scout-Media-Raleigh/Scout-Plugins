@@ -158,6 +158,19 @@ final class Scout_Team_Editor {
 				<input type="hidden" name="scout_team[attorney]" value="<?php echo esc_attr( (string) $p['attorney'] ); ?>">
 			<?php endif; ?>
 
+			<?php if ( ! $law ) : ?>
+				<?php self::repeater( 'licenses', __( 'Licenses and certifications', 'scout-team' ), __( 'Add a license', 'scout-team' ), array( 'name' => __( 'License or certification', 'scout-team' ), 'number' => __( 'Number (optional)', 'scout-team' ), 'issuer' => __( 'Issued by', 'scout-team' ), 'url' => __( 'Where to check it (optional)', 'scout-team' ), 'source' => __( 'Source', 'scout-team' ) ), $p['licenses'], __( 'Like a state license or a board certification. The link lets visitors check it themselves.', 'scout-team' ) ); ?>
+			<?php else : ?>
+				<?php
+				// Law sites keep their bar admissions screen as it is. Any saved licenses stay.
+				foreach ( $p['licenses'] as $i => $row ) {
+					foreach ( $row as $col => $value ) {
+						echo '<input type="hidden" name="scout_team[licenses][' . esc_attr( (string) $i ) . '][' . esc_attr( $col ) . ']" value="' . esc_attr( $value ) . '">';
+					}
+				}
+				?>
+			<?php endif; ?>
+
 			<?php self::repeater( 'awards', __( 'Awards and honors', 'scout-team' ), __( 'Add an award', 'scout-team' ), array( 'name' => __( 'Award', 'scout-team' ), 'year' => __( 'Year', 'scout-team' ), 'issuer' => __( 'Given by', 'scout-team' ), 'source' => __( 'Source', 'scout-team' ) ), $p['awards'], __( 'Only awards you can prove, with who gave each one.', 'scout-team' ) ); ?>
 
 			<?php self::repeater( 'memberships', __( 'Professional memberships', 'scout-team' ), __( 'Add a membership', 'scout-team' ), array( 'name' => __( 'Group they belong to', 'scout-team' ), 'source' => __( 'Source', 'scout-team' ) ), $p['memberships'] ); ?>
@@ -287,7 +300,44 @@ final class Scout_Team_Editor {
 		?>
 		<div class="sh scout-team-form st-shows">
 			<?php self::shows_fields( $p['shows'] ); ?>
+			<?php self::link_fields( $p ); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Profile link: where bylines, author links and the Person schema send
+	 * people. Their own page (blank) by default, or a page on the site, or a
+	 * typed address. "No team page" sends visitors of /team/<name>/ there too.
+	 *
+	 * @param array $p Profile in the full shape.
+	 */
+	public static function link_fields( array $p ): void {
+		$pages = ! function_exists( 'wp_dropdown_pages' ) ? '' : wp_dropdown_pages(
+			array(
+				'name'              => 'scout_team[link_page]',
+				'id'                => 'st-link-page',
+				'selected'          => (int) $p['link_page'],
+				'show_option_none'  => __( 'Their own team page', 'scout-team' ),
+				'option_none_value' => '0',
+				'echo'              => 0,
+			)
+		);
+		?>
+		<fieldset class="st-group st-link">
+			<legend><?php esc_html_e( 'Profile link', 'scout-team' ); ?></legend>
+			<p class="st-field">
+				<label for="st-link-page"><?php esc_html_e( 'Their name links to', 'scout-team' ); ?></label>
+				<?php echo $pages ? $pages : '<input type="hidden" name="scout_team[link_page]" value="0">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core dropdown markup. ?>
+			</p>
+			<p class="st-field">
+				<label for="st-link-url"><?php esc_html_e( 'Or this address', 'scout-team' ); ?></label>
+				<input id="st-link-url" type="text" name="scout_team[link_url]" value="<?php echo esc_attr( (string) $p['link_url'] ); ?>" placeholder="/about/" aria-describedby="st-link-help">
+			</p>
+			<p class="description" id="st-link-help"><?php esc_html_e( 'Bylines, author links, the team page and the details Google reads use it. A page picked above wins. Blank uses their own team page.', 'scout-team' ); ?></p>
+			<p class="st-check"><label><input type="checkbox" id="st-no-page" name="scout_team[no_page]" value="1" <?php checked( ! empty( $p['no_page'] ) ); ?>> <?php esc_html_e( 'No team page', 'scout-team' ); ?></label></p>
+			<p class="description"><?php esc_html_e( 'Their /team/ page forwards to the link above for good and leaves the sitemap. With no link picked, it shows "page not found".', 'scout-team' ); ?></p>
+		</fieldset>
 		<?php
 	}
 

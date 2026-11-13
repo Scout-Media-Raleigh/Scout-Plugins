@@ -1,5 +1,12 @@
 # Scout Team changelog
 
+## 0.5.0 (2026-11-13)
+
+- **Profile link.** Each person's Shows on box has a Profile link: their own team page (the default), a page on the site, or a typed address (a path like /about/ or a full address). Bylines, author links, the team grid and the Person schema `url` use it. `Scout_Team::profile_url()` returns it, so every caller follows.
+- **No team page.** A per-person switch under Profile link. Visitors who open `/team/<name>/` are sent to the Profile link for good (301); with no link picked, the page answers "not found", like Their own profile page off. Either way the page leaves the sitemap, the site's search, the `/team/` archive and the REST API. People who can edit the person still see it, marked noindex. The People screen tags them "Page forwards". `Scout_Team::page_public()` and `Scout_Team::chosen_link()` are new helpers.
+- **Licenses and certifications, on every site that is not a law site.** A new list on the profile: name, number, issued by, where to check it, and a source, like every credential. Lines with a source show on the profile page and go into the Person schema as `hasCredential` (credentialCategory license) with `recognizedBy` (the issuer) and `identifier` (the number). Law sites keep their bar admissions screen as it is; any licenses saved there are kept.
+- Profiles saved before this release behave exactly as before: the new fields start blank and off.
+
 ## 0.4.3 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

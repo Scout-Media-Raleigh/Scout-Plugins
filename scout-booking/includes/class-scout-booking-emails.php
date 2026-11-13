@@ -215,7 +215,13 @@ final class Scout_Booking_Emails {
 			. __( 'Email', 'scout-booking' ) . ': ' . $row['email'] . "\n"
 			. ( '' !== $row['phone'] ? __( 'Phone', 'scout-booking' ) . ': ' . $row['phone'] . "\n" : '' );
 		foreach ( $row['answers'] as $a ) {
-			$out .= "\n" . (string) ( $a['q'] ?? '' ) . "\n" . ( '' !== (string) ( $a['a'] ?? '' ) ? (string) $a['a'] : '-' ) . "\n";
+			list( $q, $v ) = Scout_Booking::answer_pair( (array) $a );
+			if ( 'agree' === ( $a['kind'] ?? '' ) ) {
+				// The exact sentence the client ticked, and when, as the record of what they agreed to.
+				$out .= "\n" . __( 'Agreement', 'scout-booking' ) . ': "' . $q . '"' . "\n" . $v . "\n";
+				continue;
+			}
+			$out .= "\n" . $q . "\n" . ( '' !== $v ? $v : '-' ) . "\n";
 		}
 		return $out;
 	}

@@ -52,6 +52,8 @@ final class Scout_Booking_Admin {
 		add_menu_page( __( 'Bookings', 'scout-booking' ), __( 'Bookings', 'scout-booking' ) . $badge, self::CAP, self::SLUG, array( __CLASS__, 'render' ), self::icon(), '3.3' );
 		add_submenu_page( self::SLUG, __( 'Bookings', 'scout-booking' ), __( 'Schedule', 'scout-booking' ), self::CAP, self::SLUG, array( __CLASS__, 'render' ) );
 		add_submenu_page( self::SLUG, __( 'Session types', 'scout-booking' ), __( 'Session types', 'scout-booking' ), self::CAP, self::SLUG . '-types', array( 'Scout_Booking_Types_Admin', 'render' ) );
+		/** Other features add their screens here, before Settings (Scout CRM's Contacts on a site without Scout Events). */
+		do_action( 'scout_booking_menu', self::SLUG );
 		add_submenu_page( self::SLUG, __( 'Settings', 'scout-booking' ), __( 'Settings', 'scout-booking' ), self::CAP, self::SLUG . '-settings', array( __CLASS__, 'render_settings' ) );
 	}
 
@@ -125,8 +127,26 @@ final class Scout_Booking_Admin {
 			self::back( 'gone' );
 		}
 		if ( ! $yes ) {
-			$row = Scout_Booking::update( $row['id'], array( 'status' => 'declined' ) );
-			Scout_Booking_Emails::declined( $row );
+			// An optional reason from the owner's list on Settings. It stays on the owner's side, never in the client's email.
+			$reason = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+			$reason = in_array( $reason, Scout_Booking::decline_reasons(), true ) ? $reason : '';
+			$row    = Scout_Booking::update(
+				$row['id'],
+				array(
+					'status' => 'declined',
+					'reason' => $reason,
+				)
+			);
+			if ( $row ) {
+				Scout_Booking_Emails::declined( $row );
+				/**
+				 * The owner declined a request.
+				 *
+				 * @param array  $row    The booking after the change.
+				 * @param string $reason The owner's reason from the list on Settings, or ''.
+				 */
+				do_action( 'scout_booking_declined', $row, $reason );
+			}
 			self::back( 'declined', 'sb-requests' );
 		}
 		if ( $row['due'] > 0 && Scout_Booking::payments_on() ) {
@@ -215,8 +235,14 @@ final class Scout_Booking_Admin {
 				'optin_label'  => sanitize_text_field( (string) ( $in['optin_label'] ?? '' ) ),
 				'reminders'    => empty( $in['reminders'] ) ? 0 : 1,
 				'hours'        => Scout_Booking::clean_week( (array) ( $in['hours'] ?? array() ) ),
+				'decline_reasons' => Scout_Booking::clean_reasons( (string) ( $in['decline_reasons'] ?? '' ) ),
+				'link_mode'       => sanitize_key( (string) ( $in['link_mode'] ?? 'page' ) ),
+				'link_url'        => Scout_Booking::clean_link( (string) ( $in['link_url'] ?? '' ) ),
+				'link_skip'       => array_map( 'sanitize_key', (array) ( $in['link_skip'] ?? array() ) ),
+				'schema'          => empty( $in['schema'] ) ? 0 : 1,
 			)
 		);
+		Scout_Booking_Front::forget_site_link();
 		self::back( 'saved' );
 	}
 
@@ -544,20 +570,40 @@ final class Scout_Booking_Admin {
 		}
 		echo '</p>';
 		if ( $r['answers'] ) {
-			echo '<details class="sbk-answers"><summary>' . esc_html__( 'Intake answers', 'scout-booking' ) . '</summary><dl>';
+			$agreed = array_filter( $r['answers'], static fn( $a ) => 'agree' === ( $a['kind'] ?? '' ) );
+			echo '<details class="sbk-answers"><summary>' . esc_html( $agreed ? __( 'Intake answers and agreement', 'scout-booking' ) : __( 'Intake answers', 'scout-booking' ) ) . '</summary><dl>';
 			foreach ( $r['answers'] as $a ) {
-				echo '<dt>' . esc_html( (string) ( $a['q'] ?? '' ) ) . '</dt><dd>' . ( '' !== (string) ( $a['a'] ?? '' ) ? nl2br( esc_html( (string) $a['a'] ) ) : '<span class="sh-note">' . esc_html__( 'No answer', 'scout-booking' ) . '</span>' ) . '</dd>';
+				list( $q, $v ) = Scout_Booking::answer_pair( (array) $a );
+				if ( 'agree' === ( $a['kind'] ?? '' ) ) {
+					// The exact sentence the client ticked, and when.
+					echo '<dt>' . esc_html__( 'Agreement', 'scout-booking' ) . '</dt><dd><q>' . esc_html( $q ) . '</q><br><span class="sh-note">' . esc_html( $v ) . '</span></dd>';
+					continue;
+				}
+				echo '<dt>' . esc_html( $q ) . '</dt><dd>' . ( '' !== $v ? nl2br( esc_html( $v ) ) : '<span class="sh-note">' . esc_html__( 'No answer', 'scout-booking' ) . '</span>' ) . '</dd>';
 			}
 			echo '</dl></details>';
+		}
+		if ( 'declined' === $status && '' !== (string) ( $r['reason'] ?? '' ) ) {
+			/* translators: %s: the owner's reason for declining. */
+			echo '<p class="sh-note">' . esc_html( sprintf( __( 'Declined: %s', 'scout-booking' ), $r['reason'] ) ) . '</p>';
 		}
 		if ( $r['optin'] ) {
 			echo '<p class="sh-note">' . esc_html__( 'Asked for the newsletter.', 'scout-booking' ) . '</p>';
 		}
 		if ( $deciding ) {
 			echo '<div class="sbk-actions">';
+			$reasons = Scout_Booking::decline_reasons();
 			foreach ( array( 'approve' => __( 'Approve', 'scout-booking' ), 'decline' => __( 'Decline', 'scout-booking' ) ) as $k => $label ) {
 				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="scout_booking_decide"><input type="hidden" name="decision" value="' . esc_attr( $k ) . '"><input type="hidden" name="id" value="' . (int) $r['id'] . '">';
 				wp_nonce_field( 'scout_booking_decide' );
+				if ( 'decline' === $k && $reasons ) {
+					$rid = 'sbk-reason-' . (int) $r['id'];
+					echo '<label class="screen-reader-text" for="' . esc_attr( $rid ) . '">' . esc_html__( 'Reason for declining (optional, only you see it)', 'scout-booking' ) . '</label><select id="' . esc_attr( $rid ) . '" name="reason"><option value="">' . esc_html__( 'Reason (optional)', 'scout-booking' ) . '</option>';
+					foreach ( $reasons as $reason ) {
+						echo '<option value="' . esc_attr( $reason ) . '">' . esc_html( $reason ) . '</option>';
+					}
+					echo '</select> ';
+				}
 				echo '<button type="submit" class="button' . ( 'approve' === $k ? '' : ' sh-quiet' ) . '">' . esc_html( $label ) . '<span class="screen-reader-text"> ' . esc_html( Scout_Booking::client_name( $r ) ) . '</span></button></form>';
 			}
 			echo '</div>';
@@ -763,6 +809,51 @@ final class Scout_Booking_Admin {
 					?>
 				</p>
 				<?php Scout_Booking_Types_Admin::week_fields( 'sb[hours]', $s['hours'], 'sbk-h' ); ?>
+			</section>
+
+			<section class="sh-box">
+				<h2 class="sh-title"><?php esc_html_e( 'Declining a request', 'scout-booking' ); ?></h2>
+				<p class="sbk-field"><label for="sbk-reasons"><?php esc_html_e( 'Reasons to pick from, one per line', 'scout-booking' ); ?></label><textarea id="sbk-reasons" name="sb[decline_reasons]" rows="4" class="regular-text"><?php echo esc_textarea( implode( "\n", $s['decline_reasons'] ) ); ?></textarea><span class="description"><?php esc_html_e( 'Picking one is optional. Only you see it: the client gets the same kind note either way. Empty means no reasons are offered.', 'scout-booking' ); ?></span></p>
+			</section>
+
+			<section class="sh-box" id="sb-link">
+				<h2 class="sh-title"><?php esc_html_e( 'Book buttons across the site', 'scout-booking' ); ?></h2>
+				<p><?php esc_html_e( 'Where Call buttons, Chat and other features send people who want to book. Booking emails always use the booking page above.', 'scout-booking' ); ?></p>
+				<fieldset class="sbk-field">
+					<legend class="screen-reader-text"><?php esc_html_e( 'Where Book buttons go', 'scout-booking' ); ?></legend>
+					<label><input type="radio" name="sb[link_mode]" value="page" <?php checked( 'page', $s['link_mode'] ); ?>> <?php esc_html_e( 'The booking page', 'scout-booking' ); ?></label><br>
+					<label><input type="radio" name="sb[link_mode]" value="url" <?php checked( 'url', $s['link_mode'] ); ?>> <?php esc_html_e( 'This address:', 'scout-booking' ); ?></label>
+					<label class="screen-reader-text" for="sbk-link-url"><?php esc_html_e( 'Address for Book buttons', 'scout-booking' ); ?></label>
+					<input type="url" id="sbk-link-url" name="sb[link_url]" class="regular-text code" value="<?php echo esc_attr( $s['link_url'] ); ?>" placeholder="<?php echo esc_attr( home_url( '/book/' ) ); ?>"><br>
+					<label><input type="radio" name="sb[link_mode]" value="off" <?php checked( 'off', $s['link_mode'] ); ?>> <?php esc_html_e( 'Not from Bookings: each feature uses its own link, such as the Contact page', 'scout-booking' ); ?></label>
+				</fieldset>
+				<?php $sbk_types = Scout_Booking::types(); ?>
+				<?php if ( $sbk_types ) : ?>
+					<fieldset class="sbk-field">
+						<legend><?php esc_html_e( 'Never send Book buttons to a page that only offers these sessions', 'scout-booking' ); ?></legend>
+						<?php foreach ( $sbk_types as $sbk_t ) : ?>
+							<label><input type="checkbox" name="sb[link_skip][]" value="<?php echo esc_attr( $sbk_t['id'] ); ?>" <?php checked( in_array( $sbk_t['id'], $s['link_skip'], true ) ); ?>> <?php echo esc_html( $sbk_t['name'] ); ?></label><br>
+						<?php endforeach; ?>
+						<span class="description"><?php esc_html_e( 'For sessions you only offer by request on their own page. Book buttons then go to the first published booking page that offers something else.', 'scout-booking' ); ?></span>
+					</fieldset>
+				<?php endif; ?>
+				<?php $sbk_link = Scout_Booking_Front::site_link(); ?>
+				<p class="sh-note">
+					<?php
+					echo esc_html(
+						'' !== $sbk_link
+							/* translators: %s: address. */
+							? sprintf( __( 'Book buttons go to %s.', 'scout-booking' ), $sbk_link )
+							: __( 'Book buttons use each feature\'s own link right now.', 'scout-booking' )
+					);
+					?>
+				</p>
+			</section>
+
+			<section class="sh-box">
+				<h2 class="sh-title"><?php esc_html_e( 'Search engines', 'scout-booking' ); ?></h2>
+				<p class="sbk-check"><label><input type="checkbox" name="sb[schema]" value="1" <?php checked( $s['schema'] ); ?>> <?php esc_html_e( 'Describe your sessions to search engines as services you offer.', 'scout-booking' ); ?></label></p>
+				<p class="description"><?php esc_html_e( 'Each session on the booking page gets its name, note, length and price, linked to your business. A session type can opt out, and sessions without a price or a note are left out unless you choose otherwise. Needs Scout Core.', 'scout-booking' ); ?></p>
 			</section>
 
 			<section class="sh-box">

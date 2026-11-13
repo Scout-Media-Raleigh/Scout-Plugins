@@ -33,6 +33,9 @@ final class Scout_Chat {
 		add_action( 'init', array( __CLASS__, 'register_type' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'wp_head', array( __CLASS__, 'presence_style' ), 20 );
+		add_action( 'wp_footer', array( __CLASS__, 'outside_script' ), 20 );
+		add_filter( 'body_class', array( __CLASS__, 'body_class' ) );
 	}
 
 	/** @return array<string, mixed> */
@@ -53,7 +56,199 @@ final class Scout_Chat {
 			'photo_2'   => (string) ( $s['photo_2'] ?? '' ),
 			'ai_url'    => (string) ( $s['ai_url'] ?? '' ),
 			'ai_key'    => (string) ( $s['ai_key'] ?? '' ),
+			// Outside chat widget (0.4.0). Off unless ticked.
+			'outside'            => ! empty( $s['outside'] ),
+			'outside_src'        => (string) ( $s['outside_src'] ?? '' ),
+			'outside_async'      => ! empty( $s['outside_async'] ),
+			'outside_defer'      => ! empty( $s['outside_defer'] ),
+			'outside_attrs'      => (string) ( $s['outside_attrs'] ?? '' ),
+			'outside_config'     => (string) ( $s['outside_config'] ?? '' ),
+			'outside_config_var' => (string) ( $s['outside_config_var'] ?? '' ),
+			'outside_position'   => 'left' === ( $s['outside_position'] ?? '' ) ? 'left' : 'right',
+			'outside_clearance'  => isset( $s['outside_clearance'] ) && '' !== (string) $s['outside_clearance'] ? max( 0, min( 400, (int) $s['outside_clearance'] ) ) : self::CLEARANCE,
+			'outside_selector'   => (string) ( $s['outside_selector'] ?? '' ),
 		);
+	}
+
+	/**
+	 * How far the chat launcher sits above the bottom of a phone screen while
+	 * Scout Call Buttons' bar shows. Scout Chat's own launcher moves up by this
+	 * much (contact.css lifts .sc-root to 86px on body.scc-on); an outside widget
+	 * gets the same default.
+	 */
+	const CLEARANCE = 86;
+
+	/** Attributes an outside script tag may carry besides data-*. */
+	const OUTSIDE_ATTRS = array( 'id', 'crossorigin', 'referrerpolicy', 'integrity', 'charset' );
+
+	/** Is the chat on for the page being viewed (either widget)? */
+	public static function showing(): bool {
+		static $on = null;
+		if ( null === $on ) {
+			$on = self::settings()['enabled'] && ! is_admin() && (bool) apply_filters( 'scout_chat_show', true );
+		}
+		return $on;
+	}
+
+	/** True when an outside chat widget is on, with a usable script address. */
+	public static function outside_on(): bool {
+		$s = self::settings();
+		return $s['outside'] && '' !== self::outside_url( $s['outside_src'] );
+	}
+
+	/**
+	 * A safe outside script address, or '' when it is not one: https only, a
+	 * real host, no user or password, and inside the allowlist when the site
+	 * sets one with the scout_chat_outside_hosts filter.
+	 */
+	public static function outside_url( string $url ): string {
+		$url = trim( $url );
+		if ( '' === $url || strlen( $url ) > 500 || 0 !== strpos( strtolower( $url ), 'https://' ) ) {
+			return '';
+		}
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || 'https' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) ) {
+			return '';
+		}
+		$host = strtolower( (string) $parts['host'] );
+		if ( ! preg_match( '/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/', $host ) ) {
+			return '';
+		}
+		/**
+		 * Filter: the script hosts an outside chat widget may load from, like
+		 * array( 'widget.example.com' ). Empty (the default) allows any https host.
+		 * A listed host also allows its subdomains.
+		 */
+		$allow = array_filter( array_map( 'strtolower', array_map( 'strval', (array) apply_filters( 'scout_chat_outside_hosts', array() ) ) ) );
+		if ( $allow ) {
+			$ok = false;
+			foreach ( $allow as $a ) {
+				$a = ltrim( trim( $a ), '.' );
+				if ( '' !== $a && ( $host === $a || str_ends_with( $host, '.' . $a ) ) ) {
+					$ok = true;
+					break;
+				}
+			}
+			if ( ! $ok ) {
+				return '';
+			}
+		}
+		$clean = esc_url_raw( $url, array( 'https' ) );
+		return $clean === $url ? $clean : '';
+	}
+
+	/**
+	 * The script tag's extra attributes from "name=value" lines. Only data-*
+	 * names (a bare name gets data- added) and a few plain ones (OUTSIDE_ATTRS).
+	 *
+	 * @return array<string, string>
+	 */
+	public static function outside_attrs( string $raw ): array {
+		$out = array();
+		foreach ( preg_split( '/\r\n|\r|\n/', $raw ) as $line ) {
+			$line = trim( $line );
+			if ( '' === $line || false === strpos( $line, '=' ) ) {
+				continue;
+			}
+			list( $name, $value ) = array_map( 'trim', explode( '=', $line, 2 ) );
+			$name  = strtolower( $name );
+			$value = trim( $value, "\"'" );
+			if ( ! in_array( $name, self::OUTSIDE_ATTRS, true ) && 0 !== strpos( $name, 'data-' ) ) {
+				$name = 'data-' . $name;
+			}
+			if ( ! preg_match( '/^(data-[a-z0-9][a-z0-9_.-]{0,60}|' . implode( '|', self::OUTSIDE_ATTRS ) . ')$/', $name ) ) {
+				continue;
+			}
+			$out[ $name ] = mb_substr( sanitize_text_field( $value ), 0, 500 );
+			if ( count( $out ) >= 20 ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/** A safe JavaScript global name for the config, or ''. */
+	public static function outside_var( string $name ): string {
+		$name = trim( $name );
+		$deny = array( 'window', 'document', 'location', 'top', 'parent', 'self', 'frames', 'opener', 'name', 'origin', 'history', 'navigator', 'localStorage', 'sessionStorage', 'cookie', 'eval', 'Function', 'Object', 'Array', 'JSON', 'scoutChatConfig', 'scoutChatPresence' );
+		return preg_match( '/^[A-Za-z_$][A-Za-z0-9_$]{0,60}$/', $name ) && ! in_array( $name, $deny, true ) ? $name : '';
+	}
+
+	/** A safe CSS selector for the outside launcher (ids, classes, tags, attribute tests), or ''. */
+	public static function outside_selector( string $sel ): string {
+		$sel = trim( $sel );
+		return ( strlen( $sel ) <= 200 && preg_match( '/^[A-Za-z0-9_#.\-\[\]="\'\s,>:^$*~()]+$/', $sel ) && false === strpos( $sel, '</' ) && ! preg_match( '/[{};@\\\\]/', $sel ) ) ? $sel : '';
+	}
+
+	/**
+	 * The signal the rest of the page reads: body classes scout-chat-on,
+	 * scout-chat-outside (outside widget) and scout-chat-left or -right.
+	 */
+	public static function body_class( array $classes ): array {
+		if ( self::outside_on() && self::showing() ) {
+			$classes[] = 'scout-chat-on';
+			$classes[] = 'scout-chat-outside';
+			$classes[] = 'scout-chat-' . self::settings()['outside_position'];
+		}
+		return $classes;
+	}
+
+	/**
+	 * For an outside widget: the --scout-chat-clearance number, and on phones
+	 * with the call bar showing (body.scc-on, the same test contact.css uses for
+	 * Scout Chat's own .sc-root), the launcher lifted by that much.
+	 */
+	public static function presence_style(): void {
+		if ( ! self::showing() || ! self::outside_on() ) {
+			return;
+		}
+		$s   = self::settings();
+		$px  = (int) $s['outside_clearance'];
+		$sel = self::outside_selector( $s['outside_selector'] );
+		$css = ':root{--scout-chat-clearance:' . $px . 'px}';
+		if ( '' !== $sel ) {
+			$lift = array();
+			foreach ( explode( ',', $sel ) as $one ) {
+				$lift[] = 'body.scc-on ' . trim( $one );
+			}
+			$css .= '@media (max-width:760px){' . implode( ',', $lift ) . '{bottom:calc(' . $px . 'px + env(safe-area-inset-bottom,0px))!important}}';
+		}
+		echo '<style id="scout-chat-outside-css">' . $css . '</style>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- built from an int and a checked selector.
+	}
+
+	/** The outside widget's script, in the footer, in place of Scout Chat's own. */
+	public static function outside_script(): void {
+		if ( ! self::showing() || ! self::outside_on() ) {
+			return;
+		}
+		$s   = self::settings();
+		$src = self::outside_url( $s['outside_src'] );
+		// Who else on the page needs to know: the corner, the clearance, whether the call bar is on.
+		$presence = array(
+			'source'    => 'outside',
+			'position'  => $s['outside_position'],
+			'clearance' => (int) $s['outside_clearance'],
+		);
+		$inline = 'window.scoutChatPresence=' . wp_json_encode( $presence ) . ';';
+		$var    = self::outside_var( $s['outside_config_var'] );
+		$config = '' !== trim( $s['outside_config'] ) ? json_decode( $s['outside_config'], true ) : null;
+		if ( '' !== $var && is_array( $config ) ) {
+			$inline .= 'window[' . wp_json_encode( $var ) . ']=' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES ) . ';';
+		}
+		wp_print_inline_script_tag( $inline, array( 'id' => 'scout-chat-outside-config' ) );
+		$attrs = array( 'src' => $src );
+		if ( $s['outside_async'] ) {
+			$attrs['async'] = true;
+		}
+		if ( $s['outside_defer'] ) {
+			$attrs['defer'] = true;
+		}
+		foreach ( self::outside_attrs( $s['outside_attrs'] ) as $k => $v ) {
+			if ( ! isset( $attrs[ $k ] ) ) {
+				$attrs[ $k ] = $v;
+			}
+		}
+		wp_print_script_tag( $attrs );
 	}
 
 	/**
@@ -116,8 +311,8 @@ final class Scout_Chat {
 	/** On every public page while the chat is switched on. */
 	public static function assets(): void {
 		$s = self::settings();
-		if ( ! $s['enabled'] || is_admin() || ! (bool) apply_filters( 'scout_chat_show', true ) ) {
-			return;
+		if ( ! self::showing() || self::outside_on() ) {
+			return; // Off, or an outside chat widget takes its place (outside_script).
 		}
 		wp_enqueue_style( 'scout-chat', SCOUT_CHAT_URL . 'assets/chat.css', array(), SCOUT_CHAT_VERSION );
 		wp_enqueue_script( 'scout-chat', SCOUT_CHAT_URL . 'assets/chat.js', array(), SCOUT_CHAT_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );

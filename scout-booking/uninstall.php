@@ -23,3 +23,4 @@ delete_option( 'scout_booking_busy_state' );
 delete_transient( 'scout_booking_busy' );
 delete_transient( 'scout_booking_busy_lock' );
 wp_clear_scheduled_hook( 'scout_booking_busy_refresh' );
+delete_transient( 'scout_booking_site_link' );
