@@ -41,6 +41,7 @@ delete_option( 'scout_hub_report_settings' );
 wp_clear_scheduled_hook( 'scout_hub_report_daily' );
 delete_option( 'scout_brand' );
 delete_metadata( 'user', 0, 'scout_brand_message_dismissed', '', true );
+delete_metadata( 'user', 0, 'scout_hub_show_everything', '', true );
 delete_transient( 'scout_hub_catalog' );
 delete_transient( 'scout_hub_releases' );
 delete_transient( 'scout_updater_scout-build' );

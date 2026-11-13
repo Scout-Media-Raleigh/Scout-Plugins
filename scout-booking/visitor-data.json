@@ -2,7 +2,7 @@
   "plugin": "scout-booking",
   "items": [
     {
-      "what": "Booking details: first and last name, email, phone, the session and time picked, answers to the session's intake questions, whether the newsletter box was ticked, and the price, amount due, amount paid and order number",
+      "what": "Booking details: first and last name, email, phone, the session and time picked, answers to the session's intake questions (for a tick box to agree, the exact sentence, whether it was ticked, when, and the link shown beside it), whether the newsletter box was ticked, the price, amount due, amount paid and order number, and, for a declined request, the reason the owner picked",
       "where": "This website's database, in the bookings table (the Bookings screen)",
       "kept": "Until someone deletes it. The hourly check only changes a booking's status and never deletes it. The WordPress personal data tools export a person's bookings by email address. The eraser deletes unpaid bookings and keeps paid ones as payment records, with the name, email, phone and answers taken out, and deleting the plugin removes the whole table.",
       "shared": "Emailed to the site's own booking notice address (the notice address in Business info unless another is set), with the intake answers"
@@ -12,6 +12,13 @@
       "where": "The owner's private calendar feed, a secret address on this website",
       "kept": "Built fresh each time the feed is read; nothing extra is stored",
       "shared": "Whatever calendar app the owner adds the feed to"
+    },
+    {
+      "what": "Initials (or, if the owner turns it on, the full name) and the time of each booked session of one session type, from the last 30 days and the next 400 days",
+      "where": "A private calendar link for that session type, a secret address on this website",
+      "kept": "Built fresh each time the link is read; nothing extra is stored",
+      "shared": "Whatever calendar app the person given the link adds it to",
+      "when": "only when the owner makes a calendar link for a session type"
     },
     {
       "what": "What the visitor typed in the booking form, when the form has to be sent back to fix a mistake",

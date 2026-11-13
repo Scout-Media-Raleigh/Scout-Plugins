@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Scout Booking
  * Description:       Private sessions booked on the site: session types the owner edits, open times from the working hours, a booking form with short intake questions, requests the owner approves, deposits through the WooCommerce checkout, reschedule and cancel links, and a private calendar feed for the owner's phone. Without WooCommerce every booking is a request.
- * Version:           0.3.1
+ * Version:           0.4.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Scout Media & Consulting
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SCOUT_BOOKING_VERSION', '0.3.1' );
+define( 'SCOUT_BOOKING_VERSION', '0.4.0' );
 define( 'SCOUT_BOOKING_FILE', __FILE__ );
 define( 'SCOUT_BOOKING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -52,17 +52,26 @@ add_action( 'plugins_loaded', array( 'Scout_Booking_Woo', 'boot' ), 20 );
 /*
  * scout_booking_url(): where every "Book" button on the site goes (Call
  * buttons, Chat, Free site check). Defined after the theme loads, so a theme
- * that has its own scout_booking_url() keeps it. Only defined while a booking
- * page is set and published, so those plugins keep their own fallback (such as
+ * that has its own scout_booking_url() keeps it. Only defined while there is
+ * somewhere to send people, so those plugins keep their own fallback (such as
  * the Contact page) until then. Returns '' if the page goes away later.
+ *
+ * By default that is the booking page, exactly as before 0.4.0. Settings,
+ * "Book buttons across the site" can send it to a chosen address, turn it off,
+ * or pass over pages that only offer chosen sessions (Scout_Booking_Front::site_link()).
  */
 add_action(
 	'after_setup_theme',
 	static function () {
-		if ( ! function_exists( 'scout_booking_url' ) && Scout_Booking_Front::has_page() ) {
-			/** The booking page's address, or '' when there is none. */
+		if ( function_exists( 'scout_booking_url' ) ) {
+			return;
+		}
+		$s       = Scout_Booking::settings();
+		$default = 'page' === $s['link_mode'] && ! $s['link_skip'];
+		if ( $default ? Scout_Booking_Front::has_page() : '' !== Scout_Booking_Front::site_link() ) {
+			/** Where Book buttons go, or '' when there is nowhere. */
 			function scout_booking_url(): string {
-				return Scout_Booking_Front::booking_url();
+				return Scout_Booking_Front::site_link();
 			}
 		}
 	},

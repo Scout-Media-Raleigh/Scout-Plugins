@@ -1,5 +1,16 @@
 # Scout Events changelog
 
+## 0.18.0 (2026-11-13)
+
+- **Courses.** A course is a training program that runs over several dates, such as a multi-weekend training: its name, description and photo, level, who it is for, total hours, how people take part (in person, online or both), where, the teachers, price tiers and a registration link that may go to an outside booking site. Each run is a date range, or the events picked as its sessions, whose dates it takes. Add them under **Events, Courses**, pick the page about the course under "Shown on", and put `[scout_course id="7"]` on it for the dates, place, prices, teachers and register button (`show="dates"` for the dates and button only, `title="yes"` for the name as a heading). A run that has ended and a price after its last day leave the page.
+- **Course schema.** The page that shows a course gets a Course node with a CourseInstance per upcoming run, joined to Scout Core's graph (provider is the business, `/#business`), or in the plugin's own small graph without Scout Core: name, description, provider, level, prerequisites, offers per price tier (price, currency, availability, last day, registration link), and on each run the course mode, dates, workload, teachers (a Scout People profile's Person node, a speaker's, or a typed name) and the linked events as sessions. A run gets a location only for a public venue with a full street address; a private address never reaches the markup. A page with two or more courses also gets an ItemList. Off per course with "Show this course on Google", and site-wide with "Show events on Google". This replaces a theme printing its own Course schema (Site Standard rule 7).
+- **Google's event rules for Event schema.** Google lists only events anyone can get a ticket for, and an in-person event needs its full street address. An event now gets no Event schema when it is ticked **Only for members or invited guests** (a new tick under Tickets, off by default; "Only for invited guests or approved applicants" when Scout Members is on), when Scout Members marks it "Only members can come", when its address goes only in the confirmation, or when the Where box has no street, city and state or ZIP code. Before, these events printed Event schema (a private address printed the town only). The event page itself is unchanged. The Ready to share box says whether Google gets the event and why not. `scout_events_google_skip` and `scout_events_members_only` filters adjust it.
+- events.csv takes a `members_only` column (yes, no or members).
+- **People's details need their own permission.** Sign-ups (the door list and its download), Volunteers (the roster and its download), Check in on a ticket page, and the Needs you list and its toolbar count now need `scout_events_manage_people`. Administrators get it on activation and on update (once; running it again changes nothing), so they see no change. An Editor, Author or Contributor still edits events, sessions, speakers, vendors and courses, but no longer sees who signed up. Grant the capability to another role with a role editor if a staff member needs it.
+- **Applications and waitlist offers in To do.** Presenter applications, presenter profile changes, vendor applications, open volunteer spots and waitlist offers now also wait in Scout Build's To do, read from the same rows as Events Home's Needs you, so there is one queue. Each item opens its own screen and needs `scout_events_manage_people`, so with Scout Build 0.18.0 or later staff without it never see it, its count or its email line. Scout Members' rows in Needs you are added once, never twice. Needs you itself looks the same.
+- **Your word for courses (Events, Settings).** A site can call courses Trainings (or any word): the menu item, the course screens and a new `title="label"` heading on `[scout_course]` ("Training: Level 1") use it. Blank, the default, keeps every word as before.
+- **Door helpers (off by default).** Events, Settings has a new box, "Door helpers". Ticked, it creates a Door helper role; a user with it signs in to one screen, Door list: today's events only, names, guests, agreements and "No photos" marks, with Check in and Undo. No emails, no downloads, no waitlist and no other events. Scanning a ticket on the day shows them the Check in button too. Unticking removes the role. Deleting the plugin removes the role and the capability.
+
 ## 0.17.2 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
@@ -91,7 +102,7 @@
 
 ## 0.14.1 (2026-10-23)
 
-- **Easier for themes to restyle.** Rules that reach inside a block now count only their outer class (`.se-facts :where(dt)`, `.se-addcal :where(span)`; 53 rules), so a theme's own `.entry-content dt` or `.se-addcal span` wins without `!important` or a longer selector. Rules that hide something keep their strength. Checked on 11 pages at 1440 and 390 with the Bliss theme: no layout change (theme session, 2026-10-23).
+- **Easier for themes to restyle.** Rules that reach inside a block now count only their outer class (`.se-facts :where(dt)`, `.se-addcal :where(span)`; 53 rules), so a theme's own `.entry-content dt` or `.se-addcal span` wins without `!important` or a longer selector. Rules that hide something keep their strength. Checked on 11 pages at 1440 and 390 with a client theme: no layout change (theme session, 2026-10-23).
 - The vendor form's Yes/No buttons sit next to their words. Field styling had stretched each radio button across the form, and made the choices bold.
 
 ## 0.14.0 (2026-10-23)
@@ -182,7 +193,7 @@
 ## 0.4.1 (2026-10-22)
 
 - **Import keeps one copy when a session changes event.** A row now also matches a session with the same title and the same speaker in any event, so moving a session to its right year on a second run updates it instead of adding a copy.
-- Shortcodes take an event's address word as well as its number: `[scout_speakers event="bliss-boogie-2026"]`, so a page keeps working when moved between sites.
+- Shortcodes take an event's address word as well as its number: `[scout_speakers event="spring-retreat-2026"]`, so a page keeps working when moved between sites.
 
 ## 0.4.0 (2026-10-22)
 

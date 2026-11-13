@@ -2,8 +2,9 @@
 /**
  * The Events hub: its own sidebar item with the Scout bolt, holding the
  * Home (numbers, Needs you, Coming up), the Events, Sessions and Speakers
- * lists, the spreadsheet import, and settings. Anyone who can edit posts sees
- * all of it; only administrators change the settings.
+ * lists, the spreadsheet import, and settings. Anyone who can edit posts edits
+ * events; Sign-ups, Volunteers and Needs you show people's details and need
+ * Scout_Events_People::CAP (administrators); only administrators change the settings.
  *
  * @package Scout_Events
  */
@@ -29,6 +30,8 @@ final class Scout_Events_Admin {
 		add_action( 'admin_bar_menu', array( __CLASS__, 'toolbar' ), 91 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'toolbar_style' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'toolbar_style' ) );
+		// Applications and waitlist offers also wait in Scout Build's To do, read from the same rows.
+		add_filter( 'scout_hub_inbox_items', array( __CLASS__, 'todo_items' ), 20 );
 	}
 
 	/**
@@ -84,6 +87,7 @@ final class Scout_Events_Admin {
 			Scout_Events::SESSION => __( 'Sessions', 'scout-events' ),
 			Scout_Events::SPEAKER => __( 'Speakers', 'scout-events' ),
 			Scout_Events_Vendors::TYPE => __( 'Vendors', 'scout-events' ),
+			Scout_Events_Courses::TYPE => Scout_Events_Courses::label(),
 		);
 		foreach ( $lists as $type => $label ) {
 			$list = 'edit.php?post_type=' . $type;
@@ -91,8 +95,9 @@ final class Scout_Events_Admin {
 			unset( $submenu[ $list ] ); // Its leftover sub-list would otherwise claim the screen.
 			add_submenu_page( self::SLUG, $label, $label, 'edit_posts', $list );
 		}
-		add_submenu_page( self::SLUG, __( 'Sign-ups & check-in', 'scout-events' ), __( 'Sign-ups', 'scout-events' ), 'edit_posts', self::SLUG . '-signups', array( __CLASS__, 'render_signups' ) );
-		add_submenu_page( self::SLUG, __( 'Volunteer shifts', 'scout-events' ), __( 'Volunteers', 'scout-events' ), 'edit_posts', self::SLUG . '-volunteers', array( __CLASS__, 'render_volunteers' ) );
+		// Customers' and volunteers' details: people managers only (administrators), never every editor.
+		add_submenu_page( self::SLUG, __( 'Sign-ups & check-in', 'scout-events' ), __( 'Sign-ups', 'scout-events' ), Scout_Events_People::CAP, self::SLUG . '-signups', array( __CLASS__, 'render_signups' ) );
+		add_submenu_page( self::SLUG, __( 'Volunteer shifts', 'scout-events' ), __( 'Volunteers', 'scout-events' ), Scout_Events_People::CAP, self::SLUG . '-volunteers', array( __CLASS__, 'render_volunteers' ) );
 		add_submenu_page( self::SLUG, __( 'Add from spreadsheet', 'scout-events' ), __( 'Add from spreadsheet', 'scout-events' ), 'edit_posts', self::SLUG . '-import', array( __CLASS__, 'render_import' ) );
 		add_submenu_page( self::SLUG, __( 'Settings', 'scout-events' ), __( 'Settings', 'scout-events' ), 'edit_posts', self::SLUG . '-settings', array( __CLASS__, 'render_settings' ) );
 		// Tickets, members and applications add their screens here, before Add from spreadsheet.
@@ -119,7 +124,8 @@ final class Scout_Events_Admin {
 			return;
 		}
 		$branded = Scout_Admin_UI::branded();
-		$count   = is_admin() || is_admin_bar_showing() ? count( self::needs_you() ) : 0;
+		$people  = Scout_Events_People::can_manage();
+		$count   = $people && ( is_admin() || is_admin_bar_showing() ) ? count( self::needs_you() ) : 0;
 		$title   = ( $branded ? '<span class="se-bar-bolt" aria-hidden="true"></span>' : '<span class="ab-icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>' )
 			. '<span class="se-bar-label">' . esc_html__( 'Events', 'scout-events' ) . '</span>'
 			. ( $count ? ' <span class="se-bar-count" aria-label="' . esc_attr( sprintf( /* translators: %d: number of items. */ _n( '%d thing needs you', '%d things need you', $count, 'scout-events' ), $count ) ) . '">' . (int) $count . '</span>' : '' );
@@ -143,6 +149,9 @@ final class Scout_Events_Admin {
 			'scout-events-session'  => array( __( 'Add session', 'scout-events' ), admin_url( 'post-new.php?post_type=' . Scout_Events::SESSION ) ),
 			'scout-events-speaker'  => array( __( 'Add speaker', 'scout-events' ), admin_url( 'post-new.php?post_type=' . Scout_Events::SPEAKER ) ),
 		);
+		if ( ! $people ) {
+			unset( $items['scout-events-needs'] ); // Needs you is for people managers.
+		}
 		foreach ( $items as $id => $item ) {
 			$bar->add_node(
 				array(
@@ -199,6 +208,9 @@ final class Scout_Events_Admin {
 			'agreements_label' => sanitize_text_field( (string) ( $in['agreements_label'] ?? '' ) ),
 			'address_private'  => ! empty( $in['address_private'] ) ? 1 : 0,
 			'address_note'     => sanitize_text_field( (string) ( $in['address_note'] ?? '' ) ),
+			'door_role'        => ! empty( $in['door_role'] ) ? 1 : 0,
+			'course_label'     => Scout_Events::clean_label( (string) ( $in['course_label'] ?? '' ) ),
+			'course_label_one' => Scout_Events::clean_label( (string) ( $in['course_label_one'] ?? '' ) ),
 		);
 		// The default words are stored as empty, so a site keeps getting them as they improve.
 		if ( Scout_Events::default_address_note() === $new['address_note'] ) {
@@ -218,6 +230,7 @@ final class Scout_Events_Admin {
 			$new['currency'] = $old['currency'];
 		}
 		update_option( Scout_Events::OPTION, $new );
+		Scout_Events_People::sync_role( (bool) $new['door_role'] );
 		self::back( 'saved' );
 	}
 
@@ -410,6 +423,54 @@ final class Scout_Events_Admin {
 		return (array) apply_filters( 'scout_events_needs_you', $items );
 	}
 
+	/**
+	 * The Needs you rows that also belong in Scout Build's To do: presenter and
+	 * vendor applications, presenter profile changes, open volunteer spots and
+	 * waitlist offers. Each such row carries a 'todo' part (id, label, count,
+	 * and optionally cap), so Needs you and To do read the same rows and never
+	 * disagree. Each item needs the people capability, so staff without it
+	 * never see it, its count or its email line (Scout Build 0.18.0 or later).
+	 *
+	 * @param array $items Scout Build's To do items.
+	 */
+	public static function todo_items( $items ): array {
+		return self::to_todo( (array) $items, self::needs_you() );
+	}
+
+	/**
+	 * Turn Needs you rows into To do items, skipping rows without a 'todo'
+	 * part and any id already in the list (Scout Members adds its own rows to
+	 * both lists, so whichever runs second leaves them alone). Pure.
+	 *
+	 * @param array $items To do items so far.
+	 * @param array $rows  Needs you rows.
+	 */
+	public static function to_todo( array $items, array $rows, int $now = 0 ): array {
+		$seen = array_flip( array_map( static fn( $i ) => (string) ( is_array( $i ) ? ( $i['id'] ?? '' ) : '' ), $items ) );
+		foreach ( $rows as $row ) {
+			$todo = is_array( $row ) && isset( $row['todo'] ) && is_array( $row['todo'] ) ? $row['todo'] : null;
+			if ( ! $todo || empty( $todo['id'] ) || empty( $row['url'] ) || isset( $seen[ (string) $todo['id'] ] ) ) {
+				continue;
+			}
+			$count   = max( 1, (int) ( $todo['count'] ?? 1 ) );
+			$items[] = array(
+				'id'      => (string) $todo['id'],
+				'kind'    => 'other',
+				'label'   => (string) ( $todo['label'] ?? '' ),
+				/* translators: %d: how many are waiting */
+				'from'    => sprintf( _n( '%d waiting', '%d waiting', $count, 'scout-events' ), $count ),
+				'preview' => (string) ( $row['text'] ?? '' ),
+				'when'    => $now ? $now : time(),
+				'url'     => (string) $row['url'],
+				'waiting' => true,
+				'count'   => $count,
+				'cap'     => (string) ( $todo['cap'] ?? Scout_Events_People::CAP ),
+			);
+			$seen[ (string) $todo['id'] ] = true;
+		}
+		return $items;
+	}
+
 	public static function render_import(): void {
 		self::render( 'import' );
 	}
@@ -431,6 +492,9 @@ final class Scout_Events_Admin {
 			return;
 		}
 		$view = in_array( $view, array( 'overview', 'import', 'settings', 'signups', 'volunteers' ), true ) ? $view : 'overview';
+		if ( in_array( $view, array( 'signups', 'volunteers' ), true ) && ! Scout_Events_People::can_manage() ) {
+			return;
+		}
 
 		// Each screen gets its own name (its menu label) and one sentence on what it is for.
 		$heads = array(
@@ -472,8 +536,9 @@ final class Scout_Events_Admin {
 		foreach ( $upcoming as $id ) {
 			$sessions += count( Scout_Events::session_ids( $id ) );
 		}
-		$needs = self::needs_you();
-		$next  = $upcoming ? Scout_Events::event( $upcoming[0] ) : null;
+		$people = Scout_Events_People::can_manage();
+		$needs  = $people ? self::needs_you() : array();
+		$next   = $upcoming ? Scout_Events::event( $upcoming[0] ) : null;
 		?>
 		<?php
 		// One status line instead of a row of numbers (DESIGN 2 #5, kit 1.10.0).
@@ -481,7 +546,9 @@ final class Scout_Events_Admin {
 			/* translators: 1: event name, 2: its dates. */
 			? sprintf( __( 'Next up: %1$s, %2$s.', 'scout-events' ), get_the_title( $upcoming[0] ), Scout_Events::dates_label( $next ) )
 			: __( 'No upcoming events yet.', 'scout-events' );
-		if ( $needs ) {
+		if ( ! $people ) {
+			self::ui_status( 'good', $next_line );
+		} elseif ( $needs ) {
 			self::ui_status(
 				'warn',
 				/* translators: %d: number of things that need the person. */
@@ -494,6 +561,7 @@ final class Scout_Events_Admin {
 		}
 		?>
 
+		<?php if ( $people ) : ?>
 		<section class="sh-box" id="se-needs">
 			<h2 class="sh-title"><?php esc_html_e( 'Needs you', 'scout-events' ); ?></h2>
 			<?php if ( $needs ) : ?>
@@ -506,6 +574,7 @@ final class Scout_Events_Admin {
 				<p class="se-allclear"><?php esc_html_e( 'Nothing is waiting on you. Every upcoming event is ready to share.', 'scout-events' ); ?></p>
 			<?php endif; ?>
 		</section>
+		<?php endif; ?>
 
 		<section class="sh-box" id="se-coming-up">
 			<div class="se-box-head">
@@ -580,6 +649,20 @@ final class Scout_Events_Admin {
 					<?php endforeach; ?>
 				</section>
 
+				<section class="sh-box" id="se-course-label">
+					<h2 class="sh-title"><?php esc_html_e( 'Your word for courses', 'scout-events' ); ?></h2>
+					<p><?php esc_html_e( 'The menu, the course screens and a course heading on a page use this word. Leave both blank for Courses.', 'scout-events' ); ?></p>
+					<p class="se-field">
+						<label for="se-set-course-label"><?php esc_html_e( 'More than one, such as Trainings', 'scout-events' ); ?></label>
+						<input type="text" id="se-set-course-label" name="scout_events[course_label]" value="<?php echo esc_attr( $s['course_label'] ); ?>" maxlength="40" class="regular-text" placeholder="<?php esc_attr_e( 'Courses', 'scout-events' ); ?>">
+					</p>
+					<p class="se-field">
+						<label for="se-set-course-label-one"><?php esc_html_e( 'Just one, such as Training', 'scout-events' ); ?></label>
+						<input type="text" id="se-set-course-label-one" name="scout_events[course_label_one]" value="<?php echo esc_attr( $s['course_label_one'] ); ?>" maxlength="40" class="regular-text" placeholder="<?php esc_attr_e( 'Course', 'scout-events' ); ?>" aria-describedby="se-set-course-label-one-help">
+						<span class="sh-note" id="se-set-course-label-one-help"><?php esc_html_e( 'Blank uses the word above without its last s.', 'scout-events' ); ?></span>
+					</p>
+				</section>
+
 				<section class="sh-box" id="se-details">
 					<h2 class="sh-title"><?php esc_html_e( 'Prices & Google', 'scout-events' ); ?></h2>
 					<p class="se-field">
@@ -619,6 +702,15 @@ final class Scout_Events_Admin {
 					</p>
 				</section>
 
+				<section class="sh-box" id="se-door-helpers">
+					<h2 class="sh-title"><?php esc_html_e( 'Door helpers', 'scout-events' ); ?></h2>
+					<p><?php esc_html_e( 'A login for teachers and volunteers at the door. A door helper sees one screen: today’s door list, with names, guests, agreements and photo choices, and a Check in button. No emails, no downloads and no other events.', 'scout-events' ); ?></p>
+					<p class="se-field">
+						<label for="se-set-door-role"><input type="checkbox" id="se-set-door-role" name="scout_events[door_role]" value="1" aria-describedby="se-set-door-role-help" <?php checked( $s['door_role'] ); ?>> <?php esc_html_e( 'Offer a Door helper role', 'scout-events' ); ?></label>
+						<span class="sh-note" id="se-set-door-role-help"><?php esc_html_e( 'Then add a user under Users and choose the Door helper role. Turning this off removes the role, and anyone who had it can no longer open the door list.', 'scout-events' ); ?></span>
+					</p>
+				</section>
+
 				<p class="se-save"><button type="submit" class="button button-primary"><?php esc_html_e( 'Save settings', 'scout-events' ); ?></button></p>
 			</form>
 		<?php endif; ?>
@@ -631,6 +723,7 @@ final class Scout_Events_Admin {
 				<tr><td>[scout_event id="12"]</td><td><?php esc_html_e( 'One event’s details and ticket button. Without an id, the next event.', 'scout-events' ); ?></td></tr>
 				<tr><td>[scout_schedule event="12"]</td><td><?php esc_html_e( 'The schedule, day by day. Add layout="grid" for rooms side by side.', 'scout-events' ); ?></td></tr>
 				<tr><td>[scout_speakers event="12"]</td><td><?php esc_html_e( 'Speaker cards for one event. Without event, every speaker.', 'scout-events' ); ?></td></tr>
+				<tr><td>[scout_course id="7"]</td><td><?php esc_html_e( 'A course’s dates, place, prices, teachers and register button. Add show="dates" for the dates and button only.', 'scout-events' ); ?></td></tr>
 			</table>
 			<p class="sh-note"><?php esc_html_e( 'The event id is the number in the address bar when you edit the event (post=12).', 'scout-events' ); ?></p>
 		<?php self::ui_fold_close(); ?>
@@ -680,7 +773,12 @@ final class Scout_Events_Admin {
 							<?php if ( Scout_Events_RSVP::has_tickets( $id, $e ) ) : ?>
 								<?php $sc = Scout_Events_RSVP::counts( $id ); ?>
 								<?php /* translators: %d: people with a ticket. */ ?>
-								<a href="<?php echo esc_url( self::signups_url( $id ) ); ?>"><?php echo esc_html( sprintf( _n( '%d going', '%d going', $sc['going'], 'scout-events' ), $sc['going'] ) ); ?></a><br>
+								<?php $going = sprintf( _n( '%d going', '%d going', $sc['going'], 'scout-events' ), $sc['going'] ); ?>
+								<?php if ( Scout_Events_People::can_manage() ) : ?>
+									<a href="<?php echo esc_url( self::signups_url( $id ) ); ?>"><?php echo esc_html( $going ); ?></a><br>
+								<?php else : ?>
+									<?php echo esc_html( $going ); ?><br>
+								<?php endif; ?>
 							<?php endif; ?>
 							<?php echo esc_html( Scout_Events::availabilities()[ $e['availability'] ] ); ?>
 							<?php $price = Scout_Events::price_label( $e ); ?>

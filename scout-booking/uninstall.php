@@ -16,6 +16,7 @@ $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'scout_bookings' ); // p
 delete_option( 'scout_booking' );
 delete_option( 'scout_booking_types' );
 delete_option( 'scout_booking_db' );
+delete_option( 'scout_booking_type_feeds' );
 wp_clear_scheduled_hook( 'scout_booking_hourly' );
 // Busy times from the owner's calendar: the private addresses, their notes and the saved busy times.
 delete_option( 'scout_booking_busy_feeds' );
@@ -23,3 +24,4 @@ delete_option( 'scout_booking_busy_state' );
 delete_transient( 'scout_booking_busy' );
 delete_transient( 'scout_booking_busy_lock' );
 wp_clear_scheduled_hook( 'scout_booking_busy_refresh' );
+delete_transient( 'scout_booking_site_link' );

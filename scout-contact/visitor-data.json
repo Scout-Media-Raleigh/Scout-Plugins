@@ -2,7 +2,7 @@
   "plugin": "scout-contact",
   "items": [
     {
-      "what": "Taps on the Call, Text, Book a time and Let's talk buttons (which button was tapped, never who tapped it)",
+      "what": "Taps on the Call, Text, Book a time and Let's talk buttons, and on Email, Directions and link buttons when a button set adds them (which button was tapped, never who tapped it)",
       "where": "Passed to Scout Analytics on the page",
       "kept": "Not kept by this website",
       "shared": "Google Analytics (Google), through Scout Analytics",

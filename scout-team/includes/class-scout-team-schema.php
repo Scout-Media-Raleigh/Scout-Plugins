@@ -48,9 +48,10 @@ final class Scout_Team_Schema {
 			'@id'   => self::person_id( $post_id ),
 			'name'  => html_entity_decode( wp_strip_all_tags( get_the_title( $post_id ) ), ENT_QUOTES, 'UTF-8' ),
 		);
-		// No profile page for visitors: no address to point at.
-		if ( Scout_Team::shows( $p, 'bio' ) ) {
-			$node['url'] = get_permalink( $post_id );
+		// Their Profile link, or their own page. Neither for visitors: no address to point at.
+		$url = Scout_Team::profile_url( $post_id );
+		if ( '' !== $url ) {
+			$node['url'] = $url;
 		}
 		if ( '' !== $p['role'] ) {
 			$node['jobTitle'] = $p['role'];
@@ -127,6 +128,27 @@ final class Scout_Team_Schema {
 				}
 				$credentials[] = $license;
 			}
+		}
+		// Licenses and certifications on any site: who issued it and its number.
+		foreach ( $p['licenses'] as $row ) {
+			$license = array(
+				'@type'              => 'EducationalOccupationalCredential',
+				'name'               => $row['name'],
+				'credentialCategory' => 'license',
+			);
+			if ( '' !== $row['issuer'] ) {
+				$license['recognizedBy'] = array(
+					'@type' => 'Organization',
+					'name'  => $row['issuer'],
+				);
+			}
+			if ( '' !== $row['number'] ) {
+				$license['identifier'] = $row['number'];
+			}
+			if ( '' !== $row['url'] ) {
+				$license['url'] = $row['url'];
+			}
+			$credentials[] = $license;
 		}
 		if ( $credentials ) {
 			$node['hasCredential'] = $credentials;

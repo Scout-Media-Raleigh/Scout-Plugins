@@ -56,6 +56,34 @@ Each person has six switches, stored in the profile as `shows`:
 Existing profiles keep exactly what they had: profile page and team page on,
 byline on when a login is linked, the rest off.
 
+## Profile link and No team page
+
+The Shows on box also has a **Profile link**: where a person's name sends
+readers. Blank (the default) is their own page at `/team/<name>/`. It can be a
+page on the site (live pages only) or a typed address, either a path like
+`/about/` or a full `https://` address. A page picked wins over a typed
+address. Stored in the profile as `link_page` and `link_url`.
+
+Bylines, `the_author_posts_link()`, author links for a linked login, the team
+grid and the Person schema `url` all use it, through
+`Scout_Team::profile_url( $post_id )`. The Person `@id` stays on their own
+page address, so it never changes.
+
+**No team page** (`no_page`) stops their own page being public, for someone
+whose About page already covers them:
+
+- visitors who open `/team/<name>/` are sent to the Profile link with a 301;
+  with no link picked, they get "page not found", the same as Their own
+  profile page off;
+- the page leaves the sitemap, the site's search, the `/team/` archive and the
+  REST API;
+- people who can edit the person still see it, marked noindex;
+- the People screen tags them "Page forwards".
+
+`Scout_Team::page_public( $profile )` says whether the page is open to
+visitors; `Scout_Team::chosen_link( $profile )` gives the picked address or
+''. Existing profiles have neither set and behave exactly as before.
+
 ## Business card box
 
 The **Business card** box on the edit screen (under Profile) holds what a
@@ -95,8 +123,8 @@ from the Cards screen (`&card=1`) starts with A business card switched on.
 
 ## Sources on credentials
 
-Every line of bar admissions, education, awards and professional memberships
-has a **Source**: where someone could check it, like a website or a
+Every line of bar admissions, licenses, education, awards and professional
+memberships has a **Source**: where someone could check it, like a website or a
 document. The profile page and the Person schema show only lines with a
 source. The source itself is never printed.
 
@@ -127,6 +155,7 @@ plain words.
 | Education: school, degree, year, source | Profile | `alumniOf`, `hasCredential` (degree) |
 | Bar admissions: state or court, year, number, profile link, source | Profile, law sites and attorneys only | `hasCredential` (license, `validIn`), link added to `sameAs` |
 | Awards: name, year, given by, source | Profile | `award` |
+| Licenses and certifications: name, number, issued by, where to check it, source | Profile, sites that are not law sites (law sites keep Bar admissions) | `hasCredential` (license, `recognizedBy` the issuer, `identifier` the number, `url`) |
 | Professional memberships: name, source | Profile | `memberOf` |
 | Military service: branch, years | Profile, grid, preview card | none (schema.org has no property for it) |
 | Languages | Profile | `knowsLanguage` |
@@ -136,6 +165,7 @@ plain words.
 | Writes posts as (a WordPress login) | Author links on posts | Post `author` |
 | Picked in "Written by" on a post | Author name and link on that post | Post `author` |
 | Groups | Team page (Team group) | none |
+| Profile link, No team page | Bylines, author links, team grid | `url` is the Profile link, else their page; left out when neither |
 | Shows on | See above | `url` left out when the profile page is off |
 
 The profile page also gets a `ProfilePage` node with the Person as its

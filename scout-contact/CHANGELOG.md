@@ -1,5 +1,14 @@
 # Scout Call Buttons changelog
 
+## 0.3.0 (2026-11-13)
+
+- **Button sets: different buttons on some pages.** A site that keeps two kinds of service apart can give each part of the site its own buttons. Call buttons has a new closed box, Button sets. Each set has a name, the pages it covers (tick pages, with their child pages if you like) and/or addresses that start with a path such as `/bodywork/`, and its buttons: Call, Text, Book, Email, Directions and up to two link buttons with their own wording. Each button can take its own link, so Book on one set can go to an outside booking site. A set can also leave Text off. A page uses the first set that matches; every other page keeps the usual buttons.
+- **One button goes straight there.** When a set has a single button, the main button links to it with that button's wording and no sheet opens.
+- **Same bar, same spot.** The bar's markup, classes and place on the page are unchanged, so themes need nothing. The choice is made on the server from the page address, so page caches keep working and no script is added.
+- **New filter `scout_contact_button_set`** picks the set for edge cases (return a set, a saved set's name, or null for the usual buttons).
+- **New tap events** `contact_email`, `contact_directions` and `contact_link` for the new buttons.
+- No sets saved means the bar prints exactly what 0.2.1 printed.
+
 ## 0.2.1 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       Scout Forms Guard
- * Description:       In-house spam protection for Gravity Forms: a hidden honeypot, a time trap, and a signed token. Also refuses files sent to File Upload fields set to Hidden and list answers that carry hidden code (two reported Gravity Forms security flaws), and names the upload fields for you to fix. No reCAPTCHA, no Akismet, no third-party calls.
- * Version:           0.3.7
+ * Description:       In-house spam protection for Gravity Forms: a hidden honeypot, a time trap, and a signed token. Also refuses files sent to File Upload fields set to Hidden and list answers that carry hidden code (two reported Gravity Forms security flaws), and names the upload fields for you to fix. A per-form switch sends a form's notification and keeps no entry. No reCAPTCHA, no Akismet, no third-party calls.
+ * Version:           0.4.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Requires Plugins:  gravityforms
@@ -34,6 +34,10 @@ add_action(
 // registered before plugins_loaded fires.
 require_once __DIR__ . '/includes/class-scout-forms-guard-uploads.php';
 Scout_Forms_Guard_Uploads::boot();
+
+// "Send only, keep no entry", a per-form switch (off by default).
+require_once __DIR__ . '/includes/class-scout-forms-guard-send-only.php';
+Scout_Forms_Guard_Send_Only::boot();
 
 final class Scout_Forms_Guard {
 

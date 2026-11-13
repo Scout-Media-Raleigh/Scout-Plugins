@@ -323,7 +323,8 @@ final class Scout_Hub_Brand {
 	/* ---------------------------------------------------------------- menu */
 
 	public static function hide_menus(): void {
-		if ( self::is_operator() ) {
+		// "Show everything" on a person's profile brings every menu back for them (Scout_Hub_Owner_View).
+		if ( self::is_operator() || ( class_exists( 'Scout_Hub_Owner_View' ) && Scout_Hub_Owner_View::shows_everything() ) ) {
 			return;
 		}
 		foreach ( (array) self::settings()['hide_menus'] as $slug ) {

@@ -1,5 +1,10 @@
 # Scout Writing changelog
 
+## 0.2.0 (2026-11-13)
+
+- **The welcome can be a card on Scout Home.** On a site where Scout Build opens Home first after login (the setup file's `dashboard.land_on_home`, Scout Build 0.18.0), people who land there get the writing welcome as a Home card, headed "Your next prompt." (Home already says hello), with the same prompt, Write this one, Pick a different prompt, Keep writing and progress. It shows in one place only: on Home for them, so the WordPress Dashboard leaves it out. It uses Scout Build's new `scout_hub_home_cards` filter.
+- Every other site, and every site with an older Scout Build, shows the welcome on the WordPress Dashboard exactly as before.
+
 ## 0.1.10 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

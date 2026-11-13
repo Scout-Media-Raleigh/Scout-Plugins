@@ -1,5 +1,12 @@
 # Scout CRM Sync changelog
 
+## 0.2.0 (2026-11-13)
+
+- **Bookings join your contacts.** With Scout Booking 0.4.0 or later, everyone who books or requests a session is added or updated in FluentCRM with the tag Booking request and Session: (session name), and Booked a session once it is booked. When you decline a request with a reason, the person gets that reason as a tag, such as Not a fit. Only the name, email and phone are copied; intake answers stay with the booking. New people come in as transactional, as before.
+- **Declined requests on Contacts.** The Contacts screen shows how many requests were declined as not a fit in the last 30 days, with a count for each reason.
+- **Contacts on a booking-only site.** Without Scout Events, the Contacts screen sits under Bookings instead. With Scout Events it stays under Events, one screen in one place.
+- **Bring them in** also adds the people from bookings made before.
+
 ## 0.1.6 (2026-11-05)
 
 - **Customer list is now Contacts**, in the Events menu and on the screen, to match where people go (your FluentCRM contacts). The page address is unchanged. It opens with a status line and an Open the contacts button instead of a Status box, the labels it adds are tags, and the done message is a sentence.

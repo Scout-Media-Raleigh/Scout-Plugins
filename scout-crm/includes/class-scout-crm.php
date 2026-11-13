@@ -2,12 +2,18 @@
 /**
  * One customer record per person, in FluentCRM.
  *
- * Listens to Scout Events and Scout Members and adds or updates the person in
- * FluentCRM, with tags for what they did, the event and its region:
+ * Listens to Scout Events, Scout Members and Scout Booking and adds or
+ * updates the person in FluentCRM, with tags for what they did, the event and
+ * its region:
  *
  *   Attendee · Waitlist · Volunteer · Vendor · Presenter · Ticket buyer
  *   Member applicant · Member · Plan: Club Member
  *   Event: Midwest Prepper Camp 2027 · Region: Midwest · Ticket: Weekend pass
+ *   Booking request · Booked a session · Session: (session name)
+ *   and, for a declined request, the owner's reason (Not a fit, No availability...)
+ *
+ * From a booking only the name, email and phone go to FluentCRM, never the
+ * intake answers: those stay with the booking.
  *
  * New people come in as "transactional": FluentCRM can send them receipts
  * and event notes, and they join marketing emails only when they subscribe.
@@ -33,6 +39,9 @@ final class Scout_CRM {
 		add_action( 'scout_events_person', array( __CLASS__, 'person' ) );
 		add_action( 'scout_events_ticket_bought', array( __CLASS__, 'ticket' ), 10, 4 );
 		add_action( 'scout_members_status_changed', array( __CLASS__, 'member' ), 10, 3 );
+		add_action( 'scout_booking_created', array( __CLASS__, 'booking' ), 10, 2 );
+		add_action( 'scout_booking_status', array( __CLASS__, 'booking_status' ), 10, 2 );
+		add_action( 'scout_booking_declined', array( __CLASS__, 'booking_declined' ), 10, 2 );
 	}
 
 	public static function ready(): bool {
@@ -117,6 +126,58 @@ final class Scout_CRM {
 			// They stay in the list, without the Member tag.
 			self::save( $person, array(), 'member-' . $new, array( $member, $applied ) );
 		}
+	}
+
+	/* ---------- Scout Booking ---------- */
+
+	/** The person on a booking: name, email and phone only, never the intake answers. */
+	private static function booking_person( array $row ): array {
+		return array(
+			'email' => (string) ( $row['email'] ?? '' ),
+			'first' => (string) ( $row['first_name'] ?? '' ),
+			'last'  => (string) ( $row['last_name'] ?? '' ),
+			'phone' => (string) ( $row['phone'] ?? '' ),
+		);
+	}
+
+	/** "Session: (name)" for a booking, or nothing. */
+	private static function session_tags( array $row ): array {
+		$name = trim( (string) ( $row['type_name'] ?? '' ) );
+		/* translators: %s: session type name. */
+		return '' !== $name ? array( sprintf( __( 'Session: %s', 'scout-crm' ), $name ) ) : array();
+	}
+
+	/** A booking or request made on the site (scout_booking_created). */
+	public static function booking( $row, $type = null ): void {
+		$row = (array) $row;
+		if ( 'blocked' === ( $row['status'] ?? '' ) ) {
+			return;
+		}
+		$tags = array_merge( array( __( 'Booking request', 'scout-crm' ) ), self::session_tags( $row ) );
+		if ( 'confirmed' === ( $row['status'] ?? '' ) ) {
+			$tags[] = __( 'Booked a session', 'scout-crm' );
+		}
+		self::save( self::booking_person( $row ), $tags, 'booking-created' );
+	}
+
+	/** A booking changed status (scout_booking_status). Booked adds a tag; declines are tagged by booking_declined(). */
+	public static function booking_status( $row, $status ): void {
+		$row = (array) $row;
+		if ( 'confirmed' !== (string) $status ) {
+			return;
+		}
+		self::save( self::booking_person( $row ), array_merge( array( __( 'Booked a session', 'scout-crm' ) ), self::session_tags( $row ) ), 'booking-confirmed' );
+	}
+
+	/** The owner declined a request (scout_booking_declined): the reason becomes a tag. */
+	public static function booking_declined( $row, $reason = '' ): void {
+		$row    = (array) $row;
+		$reason = trim( sanitize_text_field( (string) $reason ) );
+		$tags   = array( __( 'Booking request', 'scout-crm' ) );
+		if ( '' !== $reason ) {
+			$tags[] = $reason;
+		}
+		self::save( self::booking_person( $row ), $tags, 'booking-declined' );
 	}
 
 	/* ---------- tags from an event ---------- */

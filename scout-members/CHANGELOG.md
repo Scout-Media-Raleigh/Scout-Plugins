@@ -1,5 +1,9 @@
 # Scout Members changelog
 
+## 0.6.0 (2026-11-13)
+
+- **Membership work in To do.** With Scout Build, membership applications, member invitations to read, and memberships that renew within 14 days or are past due wait in Scout, To do, each linking to its own Members screen. Each item needs `list_users`, the Members screens' capability, so with Scout Build 0.18.0 or later staff who cannot open Members never see it, its count, Today on Home or the To do emails. The applications and invitations rows are the same ones Events Needs you shows, and when Scout Events is on each is added once. Members Home and Events Needs you look the same as before (renewals there still look 30 days ahead).
+
 ## 0.5.2 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

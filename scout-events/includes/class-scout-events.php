@@ -58,6 +58,10 @@ final class Scout_Events {
 				'agreements_label' => '',
 				'address_private'  => 0,
 				'address_note'     => '',
+				'door_role'        => 0,
+				// Added 0.18.0: the site's own word for courses, such as "Trainings". Blank keeps "Courses".
+				'course_label'     => '',
+				'course_label_one' => '',
 			)
 		);
 		foreach ( array( 'event_slug', 'speaker_slug', 'session_slug' ) as $key ) {
@@ -65,17 +69,26 @@ final class Scout_Events {
 		}
 		$s['currency'] = preg_match( '/^[A-Z]{3}$/', (string) $s['currency'] ) ? $s['currency'] : 'USD';
 		$s['schema']   = ! empty( $s['schema'] ) ? 1 : 0;
+		$s['door_role'] = ! empty( $s['door_role'] ) ? 1 : 0;
 		$s['agreements_url']   = esc_url_raw( (string) $s['agreements_url'], array( 'http', 'https' ) );
 		$s['agreements_label'] = sanitize_text_field( (string) $s['agreements_label'] );
 		if ( '' === $s['agreements_label'] ) {
 			$s['agreements_label'] = __( 'Community Agreements', 'scout-events' );
 		}
+		$s['course_label']     = self::clean_label( (string) $s['course_label'] );
+		$s['course_label_one'] = self::clean_label( (string) $s['course_label_one'] );
 		$s['address_private'] = ! empty( $s['address_private'] ) ? 1 : 0;
 		$s['address_note']    = sanitize_text_field( (string) $s['address_note'] );
 		if ( '' === $s['address_note'] ) {
 			$s['address_note'] = self::default_address_note();
 		}
 		return $s;
+	}
+
+	/** A short plain label: no tags, at most 40 characters. */
+	public static function clean_label( string $label ): string {
+		$label = trim( sanitize_text_field( $label ) );
+		return function_exists( 'mb_substr' ) ? mb_substr( $label, 0, 40 ) : substr( $label, 0, 40 );
 	}
 
 	/** The line under the venue when the address goes out with the ticket. */
@@ -284,6 +297,8 @@ final class Scout_Events {
 			'schema_type'  => 'Event',
 			// '' follows the site default under Settings; 'yes' or 'no' is this event's own choice.
 			'address_private' => '',
+			// Only for members, invited guests or approved applicants: no Event schema (Google lists only events anyone can buy).
+			'members_only' => 0,
 		);
 	}
 
@@ -331,6 +346,7 @@ final class Scout_Events {
 		$out['waiver']       = mb_substr( str_replace( "\r\n", "\n", sanitize_textarea_field( (string) ( $in['waiver'] ?? '' ) ) ), 0, 20000 );
 		$out['photo_ask']    = empty( $in['photo_ask'] ) ? 0 : 1;
 		$out['address_private'] = self::yes_no( $in['address_private'] ?? '' );
+		$out['members_only']    = ( 'yes' === self::yes_no( $in['members_only'] ?? '' ) || 'members' === strtolower( trim( (string) ( $in['members_only'] ?? '' ) ) ) ) ? 1 : 0;
 
 		// An end before the start is a typo; drop it rather than publish it.
 		if ( '' !== $out['end_date'] && '' !== $out['start_date'] && $out['end_date'] < $out['start_date'] ) {
@@ -532,6 +548,51 @@ final class Scout_Events {
 		}
 		$row = $seen[ $code ];
 		return $row && (int) $row['event_id'] === $post_id && 'going' === $row['status'];
+	}
+
+	/** True when the street, the city and the state or ZIP code are all filled in. */
+	public static function full_address( array $a ): bool {
+		return '' !== trim( (string) ( $a['street'] ?? '' ) ) && '' !== trim( (string) ( $a['city'] ?? '' ) )
+			&& ( '' !== trim( (string) ( $a['region'] ?? '' ) ) || '' !== trim( (string) ( $a['postal'] ?? '' ) ) );
+	}
+
+	/**
+	 * Only for members, invited guests or approved applicants: the event's own
+	 * tick, or Scout Members' "Only members can come" box when that plugin is on.
+	 */
+	public static function members_only( int $post_id, ?array $e = null ): bool {
+		$e  = $e ?? self::event( $post_id );
+		$on = ! empty( $e['members_only'] );
+		if ( ! $on && class_exists( 'Scout_Members' ) && method_exists( 'Scout_Members', 'is_members_only' ) ) {
+			$on = (bool) Scout_Members::is_members_only( $post_id );
+		}
+		return (bool) apply_filters( 'scout_events_members_only', $on, $post_id, $e );
+	}
+
+	/**
+	 * Why Google gets no Event schema for this event, or '' when it does.
+	 * Google lists only events anyone can buy a ticket for, with a start date,
+	 * and an in-person event needs a full street address on the page.
+	 *
+	 *   'start'    no start date
+	 *   'members'  members, invited guests or approved applicants only
+	 *   'private'  in person with the address only in the confirmation
+	 *   'address'  in person without a full street address
+	 */
+	public static function google_skip( int $post_id, ?array $e = null ): string {
+		$e = $e ?? self::event( $post_id );
+		if ( '' === $e['start_date'] ) {
+			$why = 'start';
+		} elseif ( self::members_only( $post_id, $e ) ) {
+			$why = 'members';
+		} elseif ( 'online' !== $e['mode'] && self::address_private( $post_id, $e ) ) {
+			$why = 'private';
+		} elseif ( 'online' !== $e['mode'] && ! self::full_address( $e ) ) {
+			$why = 'address';
+		} else {
+			$why = '';
+		}
+		return (string) apply_filters( 'scout_events_google_skip', $why, $post_id, $e );
 	}
 
 	/** The event with the street and ZIP code taken out, for anything public. */

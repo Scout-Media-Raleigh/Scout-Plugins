@@ -235,11 +235,19 @@ final class Scout_Hub_Admin {
 			$rows[] = array( 'label' => __( 'New reviews', 'scout-build' ), 'count' => (int) Scout_Reviews_Google_Sync::new_count(), 'url' => admin_url( 'admin.php?page=scout-reviews-inbox' ), 'note' => __( 'Reviews that arrived since you last looked. Pick the ones to show.', 'scout-build' ) );
 		}
 		/**
-		 * Filters the Inbox rows, so a plugin can add its own queue.
+		 * Filters the Inbox rows, so a plugin can add its own queue. A row may name
+		 * the capability its screen needs as 'cap'; people without it never see the
+		 * row or its count. Without 'cap' a row needs edit_posts, as before.
 		 *
-		 * @param array $rows Rows of label, count, url, note.
+		 * @param array $rows Rows of label, count, url, note, cap.
 		 */
-		return (array) apply_filters( 'scout_hub_inbox', $rows );
+		$rows = (array) apply_filters( 'scout_hub_inbox', $rows );
+		return array_values(
+			array_filter(
+				$rows,
+				static fn( $row ) => ! is_array( $row ) || ! class_exists( 'Scout_Hub_Inbox' ) || Scout_Hub_Inbox::can( (string) ( $row['cap'] ?? '' ) )
+			)
+		);
 	}
 
 	/** The Inbox total, for the sidebar bubble and the nav hint. */
@@ -541,6 +549,8 @@ final class Scout_Hub_Admin {
 			sprintf( __( '%1$s is ready for AI search on %2$d of %3$d checks.', 'scout-build' ), $site, $ready, count( $ai ) ),
 			'<a class="button sh-quiet" href="' . esc_url( self::url( 'health' ) ) . '">' . esc_html__( 'See the full report', 'scout-build' ) . ' &rsaquo;</a>'
 		);
+		// Cards other plugins add to Home (scout_hub_home_cards), such as the next writing prompt.
+		Scout_Hub_Owner_View::render_cards();
 		?>
 
 
@@ -596,20 +606,32 @@ final class Scout_Hub_Admin {
 		} elseif ( class_exists( 'Scout_Core_Admin' ) && class_exists( 'Scout_Hours_Admin' ) ) {
 			$do[] = array( admin_url( 'admin.php?page=scout&tab=business' ), __( 'Business info', 'scout-build' ), __( 'Name, phone, address and profiles, typed once.', 'scout-build' ) );
 		}
+		// The setup file's shortcuts and the scout_hub_home_shortcuts filter add to the list.
+		$do = Scout_Hub_Owner_View::shortcuts(
+			array_map(
+				static fn( $row ) => array( 'url' => $row[0], 'label' => $row[1], 'note' => $row[2] ),
+				$do
+			)
+		);
 		?>
+		<?php if ( $do ) : ?>
 		<section class="sh-box sh-ov-do">
 			<h2 class="sh-title"><?php esc_html_e( 'Things you can do here', 'scout-build' ); ?></h2>
 			<ul class="sh-rows">
-				<?php foreach ( $do as list( $url, $title, $text ) ) : ?>
+				<?php foreach ( $do as $row ) : ?>
 					<li class="sh-row">
 						<div>
-							<p class="sh-row-name"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $title ); ?> &rsaquo;</a></p>
-							<p class="sh-row-sub"><?php echo esc_html( $text ); ?></p>
+							<p class="sh-row-name"><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['label'] ); ?> &rsaquo;</a></p>
+							<?php if ( '' !== $row['note'] ) : ?>
+								<p class="sh-row-sub"><?php echo esc_html( $row['note'] ); ?></p>
+							<?php endif; ?>
 						</div>
 					</li>
 				<?php endforeach; ?>
 			</ul>
 		</section>
+		<?php endif; ?>
+		<?php Scout_Hub_Owner_View::render_links(); ?>
 		<?php if ( $operator ) : ?>
 			<p class="sh-ov-ops">
 				<span class="sh-label"><?php echo esc_html( method_exists( 'Scout_Admin_UI', 'label' ) ? Scout_Admin_UI::label( 'build' ) : __( 'Scout tools', 'scout-build' ) ); ?></span>

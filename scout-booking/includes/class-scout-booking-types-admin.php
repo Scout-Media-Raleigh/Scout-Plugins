@@ -4,8 +4,10 @@
  *
  * Each type: name, name on receipts, length, price, what is paid to book
  * (the full price, a deposit, or nothing online), buffer after, hours, "by
- * request only", short intake questions, a note shown before booking, and an
- * optional video call link for the booked email and calendar invite.
+ * request only", short intake questions (short text, longer answer, or a tick
+ * box to agree to a sentence the owner writes, with an optional link), a note
+ * shown before booking, an optional video call link for the booked email and
+ * calendar invite, and whether search engines get a Service description.
  * Saving a type keeps its WooCommerce product in step (Scout_Booking_Woo).
  *
  * @package Scout_Booking
@@ -47,10 +49,13 @@ final class Scout_Booking_Types_Admin {
 		}
 		$questions = array();
 		foreach ( (array) ( $in['questions'] ?? array() ) as $q ) {
+			$kind        = sanitize_key( (string) ( $q['kind'] ?? ( empty( $q['long'] ) ? 'short' : 'long' ) ) );
 			$questions[] = array(
 				'label'    => (string) ( $q['label'] ?? '' ),
 				'required' => ! empty( $q['required'] ),
-				'long'     => ! empty( $q['long'] ),
+				'long'     => 'long' === $kind,
+				'agree'    => 'agree' === $kind,
+				'link'     => (string) ( $q['link'] ?? '' ),
 			);
 		}
 		$type = Scout_Booking::clean_type(
@@ -71,6 +76,7 @@ final class Scout_Booking_Types_Admin {
 				'video'          => (string) ( $in['video'] ?? '' ),
 				'active'         => ! empty( $in['active'] ),
 				'product_id'     => $old ? $old['product_id'] : 0,
+				'schema'         => sanitize_key( (string) ( $in['schema'] ?? 'auto' ) ),
 			)
 		);
 		$types[ $type['id'] ] = $type;
@@ -259,18 +265,59 @@ final class Scout_Booking_Types_Admin {
 			<section class="sh-box">
 				<h2 class="sh-title"><?php esc_html_e( 'Questions before booking', 'scout-booking' ); ?></h2>
 				<p><?php esc_html_e( 'Short questions, such as how they heard about you. Keep health questions in your health intake form.', 'scout-booking' ); ?></p>
+				<p class="description"><?php esc_html_e( 'A tick box to agree: write the sentence the client agrees to, such as "I have read what to expect and agree to it." Make it required to stop a booking until it is ticked. The booking keeps the exact sentence and when it was ticked.', 'scout-booking' ); ?></p>
 				<div class="sbk-questions">
 					<?php for ( $i = 0; $i < self::QUESTIONS; $i++ ) : ?>
-						<?php $q = $t['questions'][ $i ] ?? array( 'label' => '', 'required' => false, 'long' => false ); ?>
+						<?php
+						$q    = wp_parse_args(
+							$t['questions'][ $i ] ?? array(),
+							array(
+								'label'    => '',
+								'required' => false,
+								'long'     => false,
+								'agree'    => false,
+								'link'     => '',
+							)
+						);
+						$kind = $q['agree'] ? 'agree' : ( $q['long'] ? 'long' : 'short' );
+						$qn   = $f( 'questions' ) . '[' . $i . ']';
+						?>
 						<div class="sbk-question">
 							<label class="screen-reader-text" for="sbt-q<?php echo (int) $i; ?>"><?php /* translators: %d: question number. */ echo esc_html( sprintf( __( 'Question %d', 'scout-booking' ), $i + 1 ) ); ?></label>
-							<input type="text" id="sbt-q<?php echo (int) $i; ?>" name="<?php echo esc_attr( $f( 'questions' ) . '[' . $i . '][label]' ); ?>" value="<?php echo esc_attr( $q['label'] ); ?>" placeholder="<?php /* translators: %d: question number. */ echo esc_attr( sprintf( __( 'Question %d', 'scout-booking' ), $i + 1 ) ); ?>">
-							<label><input type="checkbox" name="<?php echo esc_attr( $f( 'questions' ) . '[' . $i . '][required]' ); ?>" value="1" <?php checked( $q['required'] ); ?>> <?php esc_html_e( 'Required', 'scout-booking' ); ?></label>
-							<label><input type="checkbox" name="<?php echo esc_attr( $f( 'questions' ) . '[' . $i . '][long]' ); ?>" value="1" <?php checked( $q['long'] ); ?>> <?php esc_html_e( 'Longer answer', 'scout-booking' ); ?></label>
+							<input type="text" id="sbt-q<?php echo (int) $i; ?>" name="<?php echo esc_attr( $qn . '[label]' ); ?>" value="<?php echo esc_attr( $q['label'] ); ?>" placeholder="<?php /* translators: %d: question number. */ echo esc_attr( sprintf( __( 'Question %d', 'scout-booking' ), $i + 1 ) ); ?>">
+							<label class="screen-reader-text" for="sbt-q<?php echo (int) $i; ?>-kind"><?php /* translators: %d: question number. */ echo esc_html( sprintf( __( 'Answer type for question %d', 'scout-booking' ), $i + 1 ) ); ?></label>
+							<select id="sbt-q<?php echo (int) $i; ?>-kind" name="<?php echo esc_attr( $qn . '[kind]' ); ?>">
+								<option value="short" <?php selected( 'short', $kind ); ?>><?php esc_html_e( 'Short answer', 'scout-booking' ); ?></option>
+								<option value="long" <?php selected( 'long', $kind ); ?>><?php esc_html_e( 'Longer answer', 'scout-booking' ); ?></option>
+								<option value="agree" <?php selected( 'agree', $kind ); ?>><?php esc_html_e( 'Tick box to agree', 'scout-booking' ); ?></option>
+							</select>
+							<label><input type="checkbox" name="<?php echo esc_attr( $qn . '[required]' ); ?>" value="1" <?php checked( $q['required'] ); ?>> <?php esc_html_e( 'Required', 'scout-booking' ); ?></label>
+							<label class="screen-reader-text" for="sbt-q<?php echo (int) $i; ?>-link"><?php /* translators: %d: question number. */ echo esc_html( sprintf( __( 'Link beside question %d (tick box only)', 'scout-booking' ), $i + 1 ) ); ?></label>
+							<input type="url" id="sbt-q<?php echo (int) $i; ?>-link" name="<?php echo esc_attr( $qn . '[link]' ); ?>" value="<?php echo esc_attr( $q['link'] ); ?>" class="code" placeholder="<?php esc_attr_e( 'Link for a tick box (optional)', 'scout-booking' ); ?>">
 						</div>
 					<?php endfor; ?>
 				</div>
-				<p class="description"><?php esc_html_e( 'Leave a row empty to skip it.', 'scout-booking' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Leave a row empty to skip it. The link, such as your "what to expect" page, shows only beside a tick box.', 'scout-booking' ); ?></p>
+			</section>
+
+			<section class="sh-box">
+				<h2 class="sh-title"><?php esc_html_e( 'Search engines', 'scout-booking' ); ?></h2>
+				<p class="sbk-field"><label for="sbt-schema"><?php esc_html_e( 'Describe this session to search engines', 'scout-booking' ); ?></label>
+					<select id="sbt-schema" name="<?php echo esc_attr( $f( 'schema' ) ); ?>">
+						<option value="auto" <?php selected( 'auto', $t['schema'] ); ?>><?php esc_html_e( 'When it has a price and a note', 'scout-booking' ); ?></option>
+						<option value="on" <?php selected( 'on', $t['schema'] ); ?>><?php esc_html_e( 'Yes', 'scout-booking' ); ?></option>
+						<option value="off" <?php selected( 'off', $t['schema'] ); ?>><?php esc_html_e( 'No', 'scout-booking' ); ?></option>
+					</select>
+					<span class="description">
+						<?php
+						echo esc_html(
+							Scout_Booking::settings()['schema']
+								? __( 'Adds the name, note, length and price to the page that shows this session, so search engines read it as a service you offer. Sessions that are off the booking page are never described.', 'scout-booking' )
+								: __( 'Search engine descriptions are off for the whole site. Turn them on under Settings, Search engines.', 'scout-booking' )
+						);
+						?>
+					</span>
+				</p>
 			</section>
 
 			<p><button type="submit" class="button button-primary"><?php esc_html_e( 'Save session type', 'scout-booking' ); ?></button></p>

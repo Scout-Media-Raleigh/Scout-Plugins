@@ -1,5 +1,12 @@
 # Scout Forms Guard — Changelog
 
+## 0.4.0 (2026-11-13)
+
+- **Send only, keep no entry (a per-form switch, off by default).** For a sensitive form, such as a concern report that only one person should read. Turn it on in the form's Settings, "Keep no entry". The form's notification still goes out (sent right away, never queued for later), then the entry, its uploaded files and its notes are deleted from the site, so nobody reads it in the dashboard. Entries marked as spam are deleted too.
+- **A send-only form stays out of the nightly form test**, which mails a form's real addresses: it is taken out of the test's list, and if a test reaches it anyway its emails are not sent. A To do item that names the form is left out.
+- **No message check on a send-only form.** The link and spam-pitch check would send a real report to Spam, where no email goes out. The honeypot, time trap and token still run.
+- Forms without the switch work exactly as before.
+
 ## 0.3.7 (2026-11-09)
 
 - **Refuses List answers that carry hidden code.** Gravity Forms 3.1.2 and earlier has a reported critical flaw (CVE-2026-103039, rated 9.8): a List field headed for a Post Custom Field is handed to PHP's unserialize, which can run code on the site if another plugin or theme supplies a way to use it. Forms Guard now checks every List field before Gravity Forms saves anything, and refuses a submission whose answer is serialized PHP (an object, a class or an array in PHP's storage format). Nobody types that into a List field, so real visitors lose nothing. A refusal adds to the monthly blocked count. The real fix is to update Gravity Forms (3.2.2 is out), and this keeps a site safe until it has. Turn it off with the `scout_forms_guard_block_serialized` filter.

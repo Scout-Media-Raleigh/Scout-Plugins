@@ -1175,9 +1175,36 @@ function scout_writing_next( int $user_id ): ?array {
 	return null;
 }
 
-/** The welcome's styles on the dashboard: the Scout admin kit for its tokens, then writing-room.css. */
+/**
+ * Does Scout Home show the writing welcome for this person? Yes when Scout Build
+ * opens Home first for them after login (its "land_on_home" setting), so the
+ * welcome lives in one place: Home for them, the WordPress Dashboard for everyone else.
+ */
+function scout_writing_on_home(): bool {
+	return class_exists( 'Scout_Hub_Owner_View' ) && method_exists( 'Scout_Hub_Owner_View', 'home_first' ) && Scout_Hub_Owner_View::home_first();
+}
+
+/** Is this the screen where the welcome shows: Scout Home, or the WordPress Dashboard? */
+function scout_writing_welcome_here( string $hook = '' ): bool {
+	if ( ! current_user_can( 'edit_posts' ) || ! scout_writing_has_prompts() ) {
+		return false;
+	}
+	if ( scout_writing_on_home() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reading the screen address only.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return in_array( $page, array( 'site-build-features', 'site-build' ), true ) && 'overview' === $tab;
+	}
+	if ( '' !== $hook ) {
+		return 'index.php' === $hook;
+	}
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	return $screen && 'dashboard' === $screen->id;
+}
+
+/** The welcome's styles: the Scout admin kit for its tokens, then writing-room.css. */
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
-	if ( 'index.php' !== $hook || ! current_user_can( 'edit_posts' ) || ! scout_writing_has_prompts() ) {
+	if ( ! scout_writing_welcome_here( (string) $hook ) ) {
 		return;
 	}
 	$base = plugins_url( 'assets/', SCOUT_WRITING_FILE );
@@ -1190,14 +1217,11 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 } );
 
 /**
- * The writing welcome on the dashboard: a full-width panel at the very top, above every box
- * (Joy, 2026-11-03: "this should be better and bigger... she can't use or won't if it's too small").
+ * The writing welcome: one suggested prompt and progress.
+ *
+ * @param bool $home True on Scout Home, where the page already says hello.
  */
-add_action( 'admin_notices', function () {
-	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-	if ( ! $screen || 'dashboard' !== $screen->id || ! current_user_can( 'edit_posts' ) || ! scout_writing_has_prompts() ) {
-		return;
-	}
+function scout_writing_welcome( bool $home = false ): void {
 	$user    = wp_get_current_user();
 	$first   = trim( (string) $user->first_name ) ?: trim( (string) strtok( (string) $user->display_name, ' ' ) );
 	$user_id = (int) $user->ID;
@@ -1213,10 +1237,14 @@ add_action( 'admin_notices', function () {
 	$next = scout_writing_next( $user_id );
 	$pct  = $total ? max( 2, round( 100 * $done / $total ) ) : 0;
 	?>
-	<section class="sh sw-welcome" aria-labelledby="sw-welcome-h"><div class="sw-wgrid">
+	<section class="sh sw-welcome<?php echo $home ? ' sw-home' : ''; ?>" aria-labelledby="sw-welcome-h"><div class="sw-wgrid">
 		<div>
 			<p class="k">✦ <?php echo esc_html( scout_writing_copy( 'dashboard_kicker' ) ); ?></p>
-			<h2 id="sw-welcome-h"><?php echo esc_html( $first ? 'Welcome back, ' . $first . '.' : 'Welcome back.' ); ?> Here's your <em>next</em> prompt.</h2>
+			<?php if ( $home ) : ?>
+				<h2 id="sw-welcome-h">Your <em>next</em> prompt.</h2>
+			<?php else : ?>
+				<h2 id="sw-welcome-h"><?php echo esc_html( $first ? 'Welcome back, ' . $first . '.' : 'Welcome back.' ); ?> Here's your <em>next</em> prompt.</h2>
+			<?php endif; ?>
 			<p class="lead">One prompt a week is plenty. Write a little or a lot, or talk it into a voice memo. It saves as you go, and we shape it with you.</p>
 			<?php if ( $next ) : ?>
 				<p class="prompt"><?php echo esc_html( $next['q'] ); ?></p>
@@ -1246,6 +1274,35 @@ add_action( 'admin_notices', function () {
 		</aside>
 	</div></section>
 	<?php
+}
+
+/**
+ * On the WordPress Dashboard: a full-width panel at the very top, above every box
+ * (Joy, 2026-11-03: "this should be better and bigger... she can't use or won't if it's too small").
+ */
+add_action( 'admin_notices', function () {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || 'dashboard' !== $screen->id || scout_writing_on_home() || ! current_user_can( 'edit_posts' ) || ! scout_writing_has_prompts() ) {
+		return;
+	}
+	scout_writing_welcome();
+} );
+
+/** On Scout Home: a card after Today, for people who open Home first (Scout Build 0.18.0+). */
+add_filter( 'scout_hub_home_cards', function ( $cards ) {
+	if ( ! scout_writing_on_home() || ! scout_writing_has_prompts() ) {
+		return $cards;
+	}
+	$cards   = (array) $cards;
+	$cards[] = array(
+		'id'       => 'writing',
+		'priority' => 30,
+		'cap'      => 'edit_posts',
+		'render'   => static function () {
+			scout_writing_welcome( true );
+		},
+	);
+	return $cards;
 } );
 
 /* ------------------------------------------------------------------ Scout's view: All writing */

@@ -18,11 +18,36 @@ site turns on; this plugin never sees card details.
 bolt (a plain calendar icon on partner sites with `SCOUT_HUB_BRAND` false), so
 it reads as Scout's and sits apart from the site's Build settings. Under it:
 **Home** (the numbers, a **Needs you** list of everything waiting on a
-person, and Coming up), **All events**, **Sessions**, **Speakers**, **Add from spreadsheet**
+person, and Coming up), **All events**, **Sessions**, **Speakers**, **Vendors**, **Courses**, **Add from spreadsheet**
 and **Settings**. Other Scout features add their screens to this menu on the
 `scout_events_menu` action and their items to Needs you with the
 `scout_events_needs_you` filter. Anyone who can edit posts can manage events;
 only administrators change settings.
+
+**Needs you and Scout Build's To do are one queue.** Presenter applications,
+presenter profile changes, vendor applications, open volunteer spots (events in
+the next two weeks) and waitlist offers (someone waits and a place is open) also
+show in To do, built from the same Needs you rows, so the two never disagree.
+Each To do item opens the exact screen and needs `scout_events_manage_people`,
+so staff without it never see it or its count (Scout Build 0.18.0 or later). A
+Needs you row joins To do when it carries a `todo` part: `id`, `label`,
+`count` and, optionally, `cap`.
+
+### Permissions
+
+| What | Who |
+|---|---|
+| Events, sessions, speakers, vendors, courses, Home and Add from spreadsheet | Anyone who can edit posts, as before |
+| **Sign-ups** (the door list, its download, Check in, waitlist), **Volunteers** (the roster and its download), **Needs you** on Home and its toolbar count, Check in on a ticket page | `scout_events_manage_people`, which administrators get on activation and on update (option `scout_events_caps` records that it ran; re-running changes nothing) |
+| **Door list** (today's events only) | The optional Door helper role (`scout_door_helper`, capability `scout_events_door`) |
+| Settings | Administrators (`manage_options`) |
+
+**Door helpers** are off by default. Tick **Offer a Door helper role** under Events, Settings,
+then add a user with that role. A door helper signs in to one screen, Door list: today's events
+with sign-ups, names, guests, agreements and "No photos" marks, Find by name, and Check in or
+Undo. They see no emails, downloads, waitlist or other events, and nothing else in the
+dashboard. Scanning a ticket on the day of the event shows them the Check in button. Unticking
+the box removes the role. Deleting the plugin removes the role and the capability from every role.
 
 ## The content
 
@@ -31,12 +56,14 @@ only administrators change settings.
 | Event | Dates and times, status, how people attend, venue and address or online link, whether the address goes only in the confirmation, ticket link and button words, availability, price range, sales dates, minimum age, capacity, What to know lines, schema type. Title, description, excerpt and photo are the post's own. | `/event/name/` |
 | Session | Event, day, start and end, room or tent, track, kind (class, keynote, performance, activity, break), seats, speakers. | `/session/name/` |
 | Speaker | What they do, short bio, website, social links. Photo is the featured image; full bio is the editor. | `/speaker/name/` |
+| Course | Level, who it is for, total hours, how people take part, venue and address (or private), runs (date ranges or linked events), price tiers, registration link, teachers, the page that shows it, and whether Google gets it. Name, description, excerpt and photo are the post's own. | None: shown on a page with `[scout_course]` |
 
 Address words can be changed under Settings on the Events screen. None of the
 types has an archive, so a site's own /events/ page is never taken over.
 
 Every event shows a **Ready to share** checklist (start date and time, place,
-description, photo, ticket link while on sale, price for Google). The Events
+description, photo, ticket link while on sale, price for Google), and a line
+saying whether Google gets the event and, if not, why. The Events
 overview lists what each upcoming and draft event still needs.
 
 ## Showing events
@@ -52,6 +79,7 @@ overview lists what each upcoming and draft event still needs.
 - `[scout_schedule event="12"]` the schedule by day and time;
   `layout="grid"` puts rooms side by side and scrolls sideways on phones.
 - `[scout_speakers event="12"]` speaker cards; without `event`, every speaker.
+- `[scout_course id="7"]` one course's dates, prices and register button (see Courses, below).
 - `scout_events_upcoming()`, `scout_event_data( $id )` and
   `scout_events_schedule_html( $id )` for themes and other Scout features.
 
@@ -104,8 +132,9 @@ choice. Off by default.
   comes with your ticket." under them (editable under Settings), and no
   street, ZIP code or map link. Cards already show only the venue. The Google
   Calendar link and the public .ics file carry the venue and city.
-- **Event schema:** the Place keeps its name and an address with the town,
-  state and country, without `streetAddress` or `postalCode`.
+- **Event schema:** none for an in-person event (0.18.0). Google needs the
+  full street address on the page for an event listing, so the event stays
+  off Google's event listings and the address never reaches the markup.
 - **With the ticket:** the sign-up email, the paid ticket email, the ticket
   page (with a Directions link) and the .ics file attached to both emails
   carry the full address. On the event page, a ticket holder's own link
@@ -114,6 +143,59 @@ choice. Off by default.
   it; a waitlist place, a refunded ticket or another event's code does not.
 - `scout_event_data()` is public data: it leaves out the street and ZIP code
   for these events and sets `address_private` to true.
+
+## Courses
+
+A course is a training program that runs over several dates (a
+multi-weekend training, a certification, a class series), with price tiers
+and a registration link that may go to an outside booking site. Add it under
+**Events, Courses**.
+
+**Why a course is its own record, not a kind of event.** An event is one
+dated gathering with sign-ups, tickets, a calendar file and a place on the
+events calendar. A course is a program that runs one or more times and
+sells places by price tier. Keeping it apart means a course never lands on
+the events calendar or in the ticket flows by accident, while each run can
+still point at events that are its sessions.
+
+- **Runs.** One row for each time the course runs, from its first day to
+  its last. Or leave the dates empty and pick the events that are its
+  sessions: the run takes the first start and last end of those events.
+  Runs that have ended stay saved and leave the page and the schema.
+- **Where.** In person, online, or both. Tick **Keep the address private**
+  and the page shows the venue and city with the same line events use, and
+  Google gets no place. A course with no venue of its own uses the place of
+  a linked event when that event's full address is public.
+- **Prices.** One row per tier (name, price, last day, on sale, not on sale
+  yet or sold out). A tier leaves the page and the schema after its last
+  day. The register button shows while a tier is on sale.
+- **Taught by.** Tick Scout People profiles (when Scout People is on) or
+  speakers, or type names.
+- **Shown on.** The page about the course. Google reads the course on that
+  page, and on any page that carries `[scout_course]` for it.
+
+Show it on a page:
+
+- `[scout_course id="7"]` the dates, place, level, who it is for, prices,
+  teachers and the register button. `course="its-address-word"` works too,
+  and without either it shows the first course picked for that page.
+- `show="dates"` for the dates and button only; `title="yes"` puts the
+  course name above as an H2 (for a page with several courses);
+  `title="label"` puts the site's word and the name there ("Training: Level 1").
+- Filters: `scout_events_course_rows` (rows of the panel),
+  `scout_events_course_button` (the button or its stand-in),
+  `scout_events_course_schema` ( $node, $course_id, $page_id ).
+
+The register button carries `data-scout-track="course_register_click"`.
+
+Course names follow Google's course rules: no prices or sale words in the
+name. Google shows courses as a group once a site has three or more.
+
+**Your word for courses** (Events, Settings). A site can call them Trainings,
+Classes or Programs: the menu item, the course list and edit screens, and the
+`title="label"` heading use it. One field for more than one, one for just one
+(blank takes the first word without its last s). Both blank, the default,
+keeps every word exactly as before: Courses.
 
 ## Speaker photos
 
@@ -381,11 +463,25 @@ nothing. Notes list rows that could not be matched or read.
   start and end, eventStatus, eventAttendanceMode, Place with PostalAddress or
   VirtualLocation, Offer or AggregateOffer (price, currency, availability,
   sales dates), organizer, performers from the sessions, typicalAgeRange and
-  capacity. No node without a start date. An event with its address only in
-  the confirmation leaves out streetAddress and postalCode.
+  capacity.
+- Google's event rules decide whether an event gets a node. None for an
+  event with no start date; one ticked **Only for members or invited
+  guests** (under Tickets) or marked "Only members can come" by Scout
+  Members, since Google lists only events anyone can get a ticket for; one
+  in person with its address only in the confirmation; or one in person
+  without a street, city and state or ZIP code. The page itself still shows.
+  The Ready to share box says which. `scout_events_google_skip` ( $why,
+  $id, $event ) and `scout_events_members_only` ( $on, $id, $event ) adjust it.
+- Pages that show a course: a Course node (name, description, provider,
+  educationalLevel, coursePrerequisites, offers per price tier with category,
+  price, currency, availability, priceValidUntil and validThrough) with a
+  CourseInstance per upcoming run (courseMode, startDate, endDate,
+  courseWorkload, instructor, subEvent for linked events, and location only
+  for a public venue with a full street address). Two or more courses on a
+  page add an ItemList.
 - Speaker pages: a Person node with jobTitle, description, image and sameAs.
 - With Scout Core active the nodes join its graph (`scout_schema_graph`) and
-  the organizer points at `/#business`. Without it the plugin prints its own
+  the organizer, and a course's provider, point at `/#business`. Without it the plugin prints its own
   small graph.
 - Off under Settings, or with the `scout_events_schema` filter, when a theme
   prints its own. Adjust nodes with `scout_events_event_schema` and
@@ -422,8 +518,8 @@ from `scout-setup.json` (Scout Build needs an `events` section first).
   `scout_session`, `scout_speaker`) fill themselves in through `the_content`.
   The theme's single templates print the title as the H1 and call
   `the_content()`. A theme that places the pieces itself turns that off with
-  `scout_events_auto_content`. Lists, schedules, speakers and directories
-  print where their shortcodes sit, with H2 and H3 headings. The stylesheet
+  `scout_events_auto_content`. Lists, schedules, speakers, directories and
+  courses print where their shortcodes sit, with H2 and H3 headings. The stylesheet
   loads only on pages that show events.
 - **Images:** each event's and speaker's featured image. A speaker with no
   photo shows their initials.

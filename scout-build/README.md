@@ -23,7 +23,7 @@ screen or feature, is in `../docs/dashboard-map.md`.
 | Item | Who | What it holds |
 |---|---|---|
 | **Home** | everyone, the first screen | Is the site all right, what needs you, what Scout is doing, the things a client does here, and one line to ask for more. Clients also find **Site history** here (what Scout has done on the site, with Approve). |
-| **To do** (key `inbox`) | everyone | One list of everything waiting on a person, newest first, with filter chips: chat questions, new reviews, change requests and their status, site check requests, booking requests. Plugins add items with `scout_hub_inbox_items` (or a count row with `scout_hub_inbox`). Each person picks Inbox emails: never, once a day, or every new item. |
+| **To do** (key `inbox`) | everyone | One list of everything waiting on a person, newest first, with filter chips: chat questions, new reviews, change requests and their status, site check requests, booking requests. Plugins add items with `scout_hub_inbox_items` (or a count row with `scout_hub_inbox`), each with the capability its screen needs (see Permissions). Each person picks Inbox emails: never, once a day, or every new item. |
 | **Reports** | owner, operator | Reserved and empty. Recon's numbers are never shown in WordPress (Joy, 2026-11-05). Empty groups never show to clients. |
 | **Business** | everyone | Facts typed once: Business info, Hours, Team, Case results, a companion plugin's own types. |
 | **Site features** | owner, operator | What visitors see and use: Call buttons, Chat, Reviews and Review settings, Cards & links, Newsletter, Redirects, Free site check. |
@@ -38,6 +38,38 @@ sidebar sections and only appear on sites that have them.
 The shared admin kit (`tools/admin-kit/`) files every Scout screen into these
 groups by its slug, and `tools/tests/admin-kit-groups.php` fails when a screen
 drifts from the map. A screen never moves its address; only where it is filed.
+
+## Permissions: who sees what in To do (0.18.0+)
+
+Every To do item carries the capability its own screen needs, and the To do list, the count on
+the sidebar bubble and the All chip, Today on Home and the To do emails leave out what the reader
+cannot open. A staff login never sees a booking request's name, email or note.
+
+| Item | Capability |
+|---|---|
+| Change requests, chat questions, new reviews, site check requests | `edit_posts` (the To do screen's own, as before) |
+| Booking requests | the Bookings screen's own (`Scout_Booking_Admin::CAP`, `list_users`) |
+| A plugin's item or count row without `cap` | `edit_posts`, as before |
+
+A plugin passes the capability with the item:
+
+```php
+add_filter( 'scout_hub_inbox_items', function ( $items ) {
+	$items[] = array(
+		'id'    => 'myplugin-12',
+		'kind'  => 'other',
+		'label' => 'New application',
+		'from'  => 'A name',
+		'url'   => admin_url( 'admin.php?page=myplugin' ),
+		'cap'   => 'list_users', // The capability the item's own screen needs.
+	);
+	return $items;
+} );
+```
+
+Count rows from `scout_hub_inbox` take the same `cap` key. Items on Today (`scout_hub_today`)
+already had `cap` and still default to `edit_posts`. The email digest switches to each recipient
+before it builds the list, so each email only lists what that person can open.
 
 ## Settings in `wp-config.php`
 
@@ -124,6 +156,54 @@ The email goes to the address typed in the box's Settings, else Business info's
 email (Scout Core), in the site's branded card through Scout Email, with replies
 to the team address. On white-label sites (`SCOUT_HUB_BRAND` false) it never
 names Scout, and the draft warns about any line that does.
+
+## The owner's view: a simpler menu, Home cards and landing on Home (0.18.0+)
+
+All of it is off until the theme's `scout-setup.json` has a `dashboard` section,
+so a site without one looks exactly as before. Code: `includes/class-scout-hub-owner-view.php`.
+
+```json
+"dashboard": {
+  "simple": {
+    "hide_groups":  [ "search", "policies", "health" ],
+    "hide_screens": [ "scout-redirects", "scout-contact", "scout-newsletter", "scout-reviews-settings" ],
+    "hide_menus":   [ "edit-comments.php", "tools.php", "options-general.php>options-privacy.php" ]
+  },
+  "land_on_home": true,
+  "shortcuts": [ { "label": "Add an event", "url": "post-new.php?post_type=scout_event", "note": "A new date on the calendar." } ],
+  "links": [ { "label": "Your booking calendar", "url": "https://booking.example.com/", "note": "Your other booking site." } ]
+}
+```
+
+| Key | Default | What it does |
+|---|---|---|
+| `simple.hide_groups` | none | Scout groups (keys from `docs/dashboard-map.md`) hidden from everyone who is not an operator. `overview` (Home) and `inbox` (To do) never hide. |
+| `simple.hide_screens` | none | Scout screens by sidebar slug, in any section, Plus sections too. A plain slug (`scout-contact`) also hides its tabs; one with `&` or `?` matches only itself. |
+| `simple.hide_menus` | none | WordPress menus: a top-level slug (`tools.php`), or `parent.php>child.php` for one item. Same as `brand.hide_menus`, without turning the white-label layer on. |
+| `simple.on` | true | `false` turns the simple view off and keeps the lists. |
+| `land_on_home` | false | People who are not operators open Scout Home after login instead of the WordPress Dashboard. A login that asked for a particular screen still goes there. Off by default: the dashboard map makes Home the first screen of the Scout menu, not the landing screen for every site. |
+| `shortcuts` | none | Extra lines for "Things you can do here": `label`, `url` (a screen inside wp-admin, such as `post-new.php?post_type=x` or `admin.php?page=y`) and `note`. At most eight. |
+| `links` | none | A "Your other tools" card on Home: `label`, `url` (https only) and `note`. Each opens in a new tab. At most eight. No links, no card. |
+
+**Hiding is never a lock.** Each screen keeps its address and checks the
+person's rights itself, and the screen being viewed stays in the menu, so a
+bookmark or a link in an email still opens it. Operators (`SCOUT_HUB_OPERATORS`)
+always see everything. Each other person can tick **Show everything in the
+menu** under Users, Profile (shown only on sites that hide something), which
+brings back every group, screen and menu for them, the `brand.hide_menus` list
+included.
+
+**Today while the simple view is on.** Failed health checks ("Fix: ..."), "Let
+Google see the site again", and any item a plugin adds with `'technical' => true`,
+show on operators' Today only.
+
+**For other features.** `scout_hub_home_cards` adds a card to Home, after
+Today and the status line: `id`, `render` (a callable that prints a `.sh-box`
+section), `priority` (lower first, default 50) and `cap` (default `edit_posts`).
+Scout Writing 0.2.0 uses it for the next prompt on sites that land on Home.
+`scout_hub_home_shortcuts` adjusts "Things you can do here": rows of `url`,
+`label` and `note`. `Scout_Hub_Owner_View::home_first()` says whether the person
+looking opens Home first.
 
 ## White-label for the WordPress admin (Scout Brand)
 
@@ -298,7 +378,8 @@ Scout Build has no visitor-facing output. It reads these from the theme:
   the site has said yes to, read by Site status; see above), `form_test.forms`
   (forms the nightly form test suggests; it never switches the test on), and the sections it fills into other
   plugins (`business`, `team`, `reviews`, `chat`, `hours`, `analytics`,
-  `cards`). Most fill blanks only. In `reviews`, `totals` (each platform's
+  `cards`, `contact`, `booking`, `events`), and `dashboard` (the owner's view,
+  read live; see above). Most fill blanks only. In `reviews`, `totals` (each platform's
   rating, count and link, with the `checked` date) replace the saved totals
   when that date is newer than the last check, and `items` (single reviews)
   are only ever added, never edited or removed. `google_place_id` fills
@@ -310,7 +391,30 @@ Scout Build has no visitor-facing output. It reads these from the theme:
   DESIGN.md, which each plugin reads itself. Values already saved on a site
   stay, and Fill from theme names any look keys a theme still carries. The `brand` section dresses the login screen and the admin: `logo`,
   `logo_width`, `color`, `background`, `text`, `message`, `hide_menus`, `off`.
-  Format: `includes/class-scout-hub-setup.php`. `approved_plugins` takes
+  Format: `includes/class-scout-hub-setup.php`.
+
+  **Fill keys added in 0.18.0.** Each fills blanks and untouched defaults only,
+  through the plugin's own cleaning, and an older plugin skips what it does not know:
+
+  | Section and key | Fills | Needs |
+  |---|---|---|
+  | `contact.sets` | Call bar button sets, only while the site has none: `name`, `pages` (page IDs or page paths), `children`, `paths`, `no_text`, `label`, `buttons` (`type`, `label`, `url`). Same shape as the Button sets box. | Scout Call Buttons 0.3.0 |
+  | `chat.outside`, `outside_src`, `outside_async`, `outside_defer`, `outside_attrs`, `outside_config`, `outside_config_var`, `outside_position`, `outside_clearance`, `outside_selector` | The outside chat widget, with Chat's own checks. `outside` turns on only with a script address that passes. | Scout Chat 0.4.0 |
+  | `team[].link`, `link_page`, `no_page`, `licenses` | Profile link (a path or full address, or `link_page` as a page path), No team page, and licenses (rows of `name`, `number`, `issuer`, `url`, `source`). | Scout Team 0.5.0 |
+  | `booking.decline_reasons` | The decline reasons, while they are the starting list. A list or lines of text. | Scout Booking 0.4.0 |
+  | `booking.link_mode`, `link_url`, `link_skip` | Book buttons across the site: `url` (with `link_url`) or `off`, while it is still the booking page; `link_skip` names session types by id or name. | Scout Booking 0.4.0 |
+  | `booking.schema` | The Service schema switch, when `true` and it is off. | Scout Booking 0.4.0 |
+  | `booking.types.<id or name>.schema`, `.questions` | A session type's schema choice (`on` or `off`) while it is `auto`, and its questions while it has none: `label`, `required`, `kind` (`short`, `long` or `agree`, the tick box to agree) and `link`. | Scout Booking 0.4.0 |
+  | `events.door_role` | The Door helper role, when `true` and it is off. | Scout Events 0.18.0 |
+  | `events.members_only` | Event slugs to tick "Only for members or invited guests". | Scout Events 0.18.0 |
+  | `events.courses` | Courses, each added once by `name` and never edited from the file after that: `description`, `photo`, `page` (a page path), and the course fields (`level`, `prereq`, `mode`, `hours`, the place, `register_url`, `register_label`, `teacher_names`, `schema`, `instances`, `tiers`). | Scout Events 0.18.0 |
+
+  The booking and events sections also run again when a session type or event
+  they name appears. The booking keys "Book buttons across the site" and the
+  Service schema switch are operator settings on the Bookings screen; the setup
+  file is written by the web team, so it may set them.
+
+  `approved_plugins` takes
   plugin folder names or objects, one per dated entry in `docs/decisions.md`:
 
   ```json

@@ -390,7 +390,7 @@ final class Scout_Booking_Woo {
 		}
 	}
 
-	/** Discount codes used on an order, as "FIRST" or "FIRST, KAI". */
+	/** Discount codes used on an order, as "FIRST" or "FIRST, SPRING". */
 	public static function coupons( int $order_id ): string {
 		$order = $order_id ? wc_get_order( $order_id ) : null;
 		return $order ? strtoupper( implode( ', ', $order->get_coupon_codes() ) ) : '';

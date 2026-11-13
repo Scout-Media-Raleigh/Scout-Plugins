@@ -10,9 +10,68 @@ Design: Scout features DESIGN.md 5.9 (screen 4b).
 - **Hidden on** `card`, `links`, `review` and `book` pages by default, since those carry their own buttons.
 - **Text:** turn it off for landlines. Only promise a reply time the client will keep.
 - **Booking:** opens the booking link. Times are not shown inline, because the calendars we use do not share open times with other sites.
-- **Tracking:** with Scout Analytics on, taps send `contact_call`, `contact_text`, `contact_book`, `contact_open`.
+- **Tracking:** with Scout Analytics on, taps send `contact_call`, `contact_text`, `contact_book`, `contact_open`, and from button sets `contact_email`, `contact_directions` and `contact_link`.
   In Tag Manager, widen the click trigger regex to `^(card|links|contact)_`.
-- **Filter:** `scout_contact_active` (bool) turns the bar on or off for the current page.
+- **Button sets (0.3.0, optional):** different buttons on some pages. See below.
+- **Filters:** `scout_contact_active` (bool) turns the bar on or off for the current page.
+  `scout_contact_button_set` picks the button set for the current page (see below).
+
+## Button sets
+
+Some sites keep two kinds of service apart and want different buttons in each part. Button
+sets do that. They live in the closed **Button sets** box at the bottom of Call buttons. With
+no sets saved, every page shows the usual Call, Text and Let's talk, exactly as before.
+
+Each set has:
+
+- **Name.** For you. Visitors never see it.
+- **Pages.** Tick pages, and tick "Their child pages too" to cover the pages under them.
+- **Addresses that start with.** One or more paths, such as `/bodywork/`. A path matches whole
+  parts of the address, so `/body/` matches `/body/` and `/body/neck/`, never `/bodywork/`.
+- **Buttons.** Tick any of Call, Text, Book, Email, Directions and two link buttons, and number
+  them for their order in the sheet. Each one can take its own wording and its own link (a
+  number for Call and Text, an address for Email, a web address for the rest). Blank links use
+  the site's: the numbers and booking link on this screen, the email and address in Business
+  info. A link button needs its own wording and link. Tick none to keep the usual buttons.
+- **No Text button on these pages.** Leaves Text off, even with the usual buttons.
+- **Main button.** Optional wording for the main button on these pages.
+
+How the bar uses a set:
+
+- A page uses the **first set that matches**, top to bottom. Pages no set matches keep the
+  usual buttons.
+- Call and Text in a set show on the bar itself, as they do now. Every button in the set shows
+  in the sheet, in its order.
+- A set with **one button** turns the main button into a direct link to it, with that button's
+  wording, and no sheet opens.
+- The **Hide on** list still wins: a hidden page shows no bar.
+- The choice is made on the server from the page address, so a page cache keeps working and
+  no script is needed.
+
+Example:
+
+| Set | Matches | Buttons | What visitors see on a phone |
+|---|---|---|---|
+| Bodywork pages | Addresses that start with `/bodywork/` | Book, link `https://outside-booking.example/`, order 1. Text, order 2 | Text on the bar, and Let's talk opens Book a time (to the outside booking site) and Send a text |
+| Request pages | The Request page and its child pages | A link button "Request" to `/request/` | One Request button that goes straight to the request page |
+
+Every other page keeps Call, Text and Let's talk with the site-wide booking link.
+
+### Picking a set in code
+
+```php
+add_filter( 'scout_contact_button_set', function ( $set, $sets, $context ) {
+	// $context['page_id'] is the page shown (0 when not a single page), $context['path'] its address.
+	if ( is_singular( 'event' ) ) {
+		return 'Request pages'; // A saved set's name, a set array, or null for the usual buttons.
+	}
+	return $set;
+}, 10, 3 );
+```
+
+A set array has `name`, `pages` (IDs), `children` (0 or 1), `paths`, `no_text` (0 or 1),
+`label` and `buttons`: a list of `type` (`call`, `text`, `book`, `email`, `directions`,
+`link`), `label` and `url`.
 
 ## What this feature needs from the theme
 
@@ -53,7 +112,10 @@ Design: Scout features DESIGN.md 5.9 (screen 4b).
   `<body <?php body_class(); ?>>` and pins nothing of its own to the bottom of
   the screen. The cookie notice and the chat button move up to clear the bar.
 - **Facts:** the phone from Business info (`scout_core_business()`) and the
-  booking link from `scout_booking_url()`. The theme types neither.
+  booking link from `scout_booking_url()`. Button sets also read the email and
+  address in Business info. The theme types none of them.
+- **Button sets:** nothing. The bar keeps the same markup, classes and spot on
+  every page. A theme or plugin may pick a set with `scout_contact_button_set`.
 - **scout-setup.json:** nothing. The sheet's photos are picked on the Call
   buttons screen.
 
@@ -62,7 +124,7 @@ Design: Scout features DESIGN.md 5.9 (screen 4b).
 
 | What | Where it is kept | How long | Shared with |
 |---|---|---|---|
-| Taps on the Call, Text, Book a time and Let's talk buttons (which button was tapped, never who tapped it) (only when Scout Analytics is on) | Passed to Scout Analytics on the page | Not kept by this website | Google Analytics (Google), through Scout Analytics |
+| Taps on the Call, Text, Book a time and Let's talk buttons, and on Email, Directions and link buttons when a button set adds them (which button was tapped, never who tapped it) (only when Scout Analytics is on) | Passed to Scout Analytics on the page | Not kept by this website | Google Analytics (Google), through Scout Analytics |
 
 The call bar stores nothing and sets no cookies. Call and Text open the visitor's own phone app.
 

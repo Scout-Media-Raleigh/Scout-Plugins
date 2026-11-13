@@ -12,9 +12,15 @@
  * small graph on those pages. Turn schema off under Events, Settings, or
  * with the scout_events_schema filter, when a theme prints its own.
  *
- * No node is printed for an event without a start date, since Google
- * requires one. An event with "Address only in the confirmation" gets a
- * Place with its name, town and state, without the street or ZIP code.
+ * Google's event rules decide whether an event gets a node at all
+ * (Scout_Events::google_skip()): it needs a start date, it must be open to
+ * anyone (no members-only, invitation-only or apply-first events), and an
+ * in-person event needs a full street address on the page. So an event with
+ * "Address only in the confirmation" gets no node, and its address never
+ * reaches the markup.
+ *
+ * Courses (Scout_Events_Courses) add a Course node, with a CourseInstance per
+ * run, on each page that shows them.
  *
  * @package Scout_Events
  */
@@ -70,7 +76,8 @@ final class Scout_Events_Schema {
 	public static function event( int $post_id ): array {
 		$e     = Scout_Events::event( $post_id );
 		$start = Scout_Events::start( $e );
-		if ( ! $start ) {
+		// Google's event rules: a start date, open to anyone, and a full street address for an in-person event.
+		if ( ! $start || '' !== Scout_Events::google_skip( $post_id, $e ) ) {
 			return array();
 		}
 		$url  = get_permalink( $post_id );
@@ -116,7 +123,7 @@ final class Scout_Events_Schema {
 				)
 			);
 			if ( Scout_Events::address_private( $post_id, $e ) ) {
-				// Address only in the confirmation: Google gets the town, never the street or ZIP code.
+				// Never the street or ZIP code of a private address, even if a filter lets the event through.
 				unset( $addr['streetAddress'], $addr['postalCode'] );
 			}
 			if ( count( $addr ) > 1 ) {
@@ -243,15 +250,18 @@ final class Scout_Events_Schema {
 		if ( ! self::enabled() ) {
 			return array();
 		}
-		$id = (int) get_queried_object_id();
+		$id    = (int) get_queried_object_id();
+		$nodes = array();
 		if ( is_singular( Scout_Events::EVENT ) && 'publish' === get_post_status( $id ) ) {
 			$node = self::event( $id );
-			return $node ? array( 'scout_event_' . $id => $node ) : array();
+			if ( $node ) {
+				$nodes[ 'scout_event_' . $id ] = $node;
+			}
+		} elseif ( is_singular( Scout_Events::SPEAKER ) && 'publish' === get_post_status( $id ) ) {
+			$nodes[ 'person_' . $id ] = self::person( $id );
 		}
-		if ( is_singular( Scout_Events::SPEAKER ) && 'publish' === get_post_status( $id ) ) {
-			return array( 'person_' . $id => self::person( $id ) );
-		}
-		return array();
+		// Courses on the page: picked under "Shown on", or placed with [scout_course].
+		return $nodes + Scout_Events_Courses::page_nodes();
 	}
 
 	/**

@@ -32,6 +32,9 @@
 .sbk-actions { display: flex; gap: 8px; margin-top: 8px; }
 .sbk-actions form { margin: 0; }
 .sbk-more form { margin-top: 8px; }
+.sbk-feeds li { padding: 12px 0; border-top: 1px solid var(--sh-border); }
+.sbk-feeds li:first-child { border-top: 0; }
+.sbk-feeds p { margin: 0 0 6px; }
 @media (max-width: 600px) { .sbk-item { grid-template-columns: minmax(0, 1fr); } }
 
 .sbk-form .sbk-field, .sbk-settings .sbk-field, .sbk-typeform .sbk-field { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; border: 0; padding: 0; }
@@ -52,6 +55,7 @@
 .sbk-questions { display: grid; gap: 8px; }
 .sbk-question { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sbk-question input[type="text"] { flex: 1 1 280px; }
+.sbk-question input[type="url"] { flex: 1 1 220px; }
 .sbk-back { margin: 12px 0 0; }
 .sbk-back a { color: var(--sh-accent-text); text-decoration: none; }
 .sbk-delete { margin-top: 16px; }

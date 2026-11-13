@@ -290,6 +290,8 @@ final class Scout_Team {
 			'education'   => array( 'school', 'degree', 'year', 'source' ),
 			'awards'      => array( 'name', 'year', 'issuer', 'source' ),
 			'memberships' => array( 'name', 'source' ),
+			// Any license or certification, on every kind of site (0.5.0). Law sites keep bar admissions for attorneys.
+			'licenses'    => array( 'name', 'number', 'issuer', 'url', 'source' ),
 		);
 	}
 
@@ -337,7 +339,12 @@ final class Scout_Team {
 			'bar'             => array(),
 			'education'       => array(),
 			'awards'          => array(),
+			'licenses'        => array(),
 			'shows'           => self::default_shows(),
+			// Profile link (0.5.0): blank uses their own page at /team/<name>/.
+			'link_page'       => 0,
+			'link_url'        => '',
+			'no_page'         => 0,
 		);
 	}
 
@@ -622,7 +629,7 @@ final class Scout_Team {
 				)
 			);
 			foreach ( $ids as $id ) {
-				if ( ! self::shows( self::profile( (int) $id ), 'bio' ) ) {
+				if ( ! self::page_public( self::profile( (int) $id ) ) ) {
 					$hidden[] = (int) $id;
 				}
 			}
@@ -652,6 +659,9 @@ final class Scout_Team {
 		$out['military_branch'] = array_key_exists( $branch, self::branches() ) ? $branch : '';
 		$out['military_years']  = sanitize_text_field( (string) ( $in['military_years'] ?? '' ) );
 		$out['languages']       = sanitize_text_field( (string) ( $in['languages'] ?? '' ) );
+		$out['link_page']       = absint( $in['link_page'] ?? 0 );
+		$out['link_url']        = self::clean_link( (string) ( $in['link_url'] ?? '' ) );
+		$out['no_page']         = ! empty( $in['no_page'] ) ? 1 : 0;
 
 		// Shows on: the editor always sends the list (a hidden field marks it), so an
 		// unticked box means off. Without the list, keep the defaults.
@@ -707,6 +717,57 @@ final class Scout_Team {
 			$out[ $group ] = array_slice( $rows, 0, 30 );
 		}
 		return $out;
+	}
+
+	/**
+	 * A profile link typed by hand: a full http(s) address, or a path on this
+	 * site like /about/. Anything else is dropped.
+	 *
+	 * @param string $raw Typed address.
+	 */
+	public static function clean_link( string $raw ): string {
+		$raw = trim( $raw );
+		if ( '' === $raw ) {
+			return '';
+		}
+		if ( '/' === $raw[0] && ( ! isset( $raw[1] ) || '/' !== $raw[1] ) ) {
+			return preg_match( '#^/[A-Za-z0-9/_.~%+\-]*(\?[^\s<>"]*)?(\#[^\s<>"]*)?$#', $raw ) ? $raw : '';
+		}
+		if ( ! preg_match( '#^https?://[^\s<>"]+$#i', $raw ) ) {
+			return '';
+		}
+		return esc_url_raw( $raw, array( 'https', 'http' ) );
+	}
+
+	/**
+	 * The address someone picked for this person under Profile link: a page on
+	 * the site (live only), else a typed address. '' when nothing is picked.
+	 *
+	 * @param array $p Profile in the full shape.
+	 */
+	public static function chosen_link( array $p ): string {
+		$page = (int) ( $p['link_page'] ?? 0 );
+		if ( $page > 0 ) {
+			$post = get_post( $page );
+			if ( $post && 'publish' === $post->post_status && self::POST_TYPE !== $post->post_type ) {
+				return (string) get_permalink( $post );
+			}
+		}
+		$url = (string) ( $p['link_url'] ?? '' );
+		if ( '' === $url ) {
+			return '';
+		}
+		return '/' === $url[0] ? home_url( $url ) : $url;
+	}
+
+	/**
+	 * Is their own page at /team/<name>/ open to visitors? Off when "Their own
+	 * profile page" is off, or "No team page" is on.
+	 *
+	 * @param array $p Profile in the full shape.
+	 */
+	public static function page_public( array $p ): bool {
+		return self::shows( $p, 'bio' ) && empty( $p['no_page'] );
 	}
 
 	/** Digits and phone punctuation only. */
@@ -873,12 +934,19 @@ final class Scout_Team {
 	}
 
 	/**
-	 * A person's profile page address, or '' when their page is off.
+	 * Where bylines, author links, the team grid and the Person schema send
+	 * people: the Profile link when one is picked, else their own page, or ''
+	 * when their page is off and nothing is picked.
 	 *
 	 * @param int $member Person post ID.
 	 */
 	public static function profile_url( int $member ): string {
-		return self::shows( self::profile( $member ), 'bio' ) ? (string) get_permalink( $member ) : '';
+		$p      = self::profile( $member );
+		$chosen = self::chosen_link( $p );
+		if ( '' !== $chosen ) {
+			return $chosen;
+		}
+		return self::page_public( $p ) ? (string) get_permalink( $member ) : '';
 	}
 
 	/**

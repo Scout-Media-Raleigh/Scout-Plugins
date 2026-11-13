@@ -68,6 +68,38 @@ final class Scout_Chat_Admin {
 		add_action( 'save_post_' . Scout_Chat::CPT, array( __CLASS__, 'save_answered' ) );
 		add_filter( 'parent_file', array( __CLASS__, 'highlight' ) );
 		add_filter( 'display_post_states', array( __CLASS__, 'states' ), 10, 2 );
+		add_filter( 'scout_admin_nav_group', array( __CLASS__, 'nav_group' ), 10, 2 );
+		add_filter( 'scout_admin_looking_for', array( __CLASS__, 'looking_for' ), 10, 2 );
+	}
+
+	/**
+	 * Site features ends with a "Looking for" line to Chat while it files under
+	 * Scout tools, for operators (the only ones who can open it there).
+	 *
+	 * @param mixed  $lines The group's lines.
+	 * @param string $key   The group key.
+	 */
+	public static function looking_for( $lines, $key = '' ): array {
+		$lines = (array) $lines;
+		if ( 'website' === $key && Scout_Chat::outside_on() ) {
+			$lines[] = array( self::SLUG, __( "Looking for chat settings? They're in", 'scout-chat' ), true );
+		}
+		return $lines;
+	}
+
+	/**
+	 * With an outside chat widget on, the Chat screen is an integration setting,
+	 * so it files under Scout tools (operators only) instead of Site features.
+	 * Chat messages stay in To do. The screen keeps its address.
+	 *
+	 * @param string $group The group the admin kit picked.
+	 * @param string $slug  The screen's sidebar slug.
+	 */
+	public static function nav_group( $group, $slug = '' ): string {
+		if ( self::SLUG === strtok( (string) $slug, '&' ) && Scout_Chat::outside_on() ) {
+			return 'build';
+		}
+		return (string) $group;
 	}
 
 	public static function parent(): string {
@@ -233,6 +265,41 @@ final class Scout_Chat_Admin {
 		if ( ! empty( $in['ai_key_clear'] ) ) {
 			$key = '';
 		}
+		// Outside chat widget: https only, checked again where it prints.
+		$src_in = trim( (string) ( $in['outside_src'] ?? '' ) );
+		$src    = Scout_Chat::outside_url( $src_in );
+		if ( '' !== $src_in && '' === $src ) {
+			add_settings_error( Scout_Chat::OPTION, 'outside_src', __( 'The outside chat script address must be a full https:// address from an allowed host. It was not saved.', 'scout-chat' ) );
+		}
+		$outside = ! empty( $in['outside'] ) && '' !== $src;
+		if ( ! empty( $in['outside'] ) && '' === $src ) {
+			add_settings_error( Scout_Chat::OPTION, 'outside', __( 'The outside chat widget stays off until it has a script address.', 'scout-chat' ) );
+		}
+		$config = trim( (string) ( $in['outside_config'] ?? '' ) );
+		if ( '' !== $config ) {
+			$decoded = strlen( $config ) <= 4000 ? json_decode( $config, true ) : null;
+			if ( ! is_array( $decoded ) ) {
+				add_settings_error( Scout_Chat::OPTION, 'outside_config', __( 'The outside chat settings must be a small JSON object, like {"color": "#0A78C2"}. They were not saved.', 'scout-chat' ) );
+				$config = '';
+			} else {
+				$config = (string) wp_json_encode( $decoded, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+			}
+		}
+		$var_in = trim( (string) ( $in['outside_config_var'] ?? '' ) );
+		$var    = Scout_Chat::outside_var( $var_in );
+		if ( '' !== $var_in && '' === $var ) {
+			add_settings_error( Scout_Chat::OPTION, 'outside_config_var', __( 'The settings name must be one plain word of letters, numbers or _, like chatSettings. It was not saved.', 'scout-chat' ) );
+		}
+		$attrs = array();
+		foreach ( Scout_Chat::outside_attrs( (string) ( $in['outside_attrs'] ?? '' ) ) as $k => $v ) {
+			$attrs[] = $k . '=' . $v;
+		}
+		$sel_in = trim( (string) ( $in['outside_selector'] ?? '' ) );
+		$sel    = Scout_Chat::outside_selector( $sel_in );
+		if ( '' !== $sel_in && '' === $sel ) {
+			add_settings_error( Scout_Chat::OPTION, 'outside_selector', __( 'The launcher selector can use ids, classes and tag names only. It was not saved.', 'scout-chat' ) );
+		}
+		$clear = trim( (string) ( $in['outside_clearance'] ?? '' ) );
 		return array(
 			'enabled'   => ! empty( $in['enabled'] ) ? 1 : 0,
 			'name'      => sanitize_text_field( (string) ( $in['name'] ?? '' ) ),
@@ -248,6 +315,16 @@ final class Scout_Chat_Admin {
 			'photo_2'   => esc_url_raw( (string) ( $in['photo_2'] ?? '' ) ),
 			'ai_url'    => $url,
 			'ai_key'    => sanitize_text_field( $key ),
+			'outside'            => $outside ? 1 : 0,
+			'outside_src'        => $src,
+			'outside_async'      => ! empty( $in['outside_async'] ) ? 1 : 0,
+			'outside_defer'      => ! empty( $in['outside_defer'] ) ? 1 : 0,
+			'outside_attrs'      => implode( "\n", $attrs ),
+			'outside_config'     => $config,
+			'outside_config_var' => $var,
+			'outside_position'   => 'left' === ( $in['outside_position'] ?? '' ) ? 'left' : 'right',
+			'outside_clearance'  => '' === $clear ? Scout_Chat::CLEARANCE : max( 0, min( 400, absint( $clear ) ) ),
+			'outside_selector'   => $sel,
 		);
 	}
 
@@ -275,7 +352,7 @@ final class Scout_Chat_Admin {
 				/* translators: %d: number of chat questions waiting for an answer. */
 				? sprintf( _n( 'On. %d question is waiting.', 'On. %d questions are waiting.', $n, 'scout-chat' ), $n )
 				: __( 'On.', 'scout-chat' );
-			$detail = __( 'Visitors see the chat button on every page.', 'scout-chat' );
+			$detail = Scout_Chat::outside_on() ? __( 'Visitors see the outside chat widget on every page.', 'scout-chat' ) : __( 'Visitors see the chat button on every page.', 'scout-chat' );
 		} else {
 			$headline = $n
 				/* translators: %d: number of chat questions waiting for an answer. */
@@ -330,6 +407,31 @@ final class Scout_Chat_Admin {
 							self::branded() ? __( 'The key Scout\'s server gives this site, or SCOUT_CHAT_AI_KEY in wp-config.php.', 'scout-chat' ) : __( 'The key your web team\'s server gives this site, or SCOUT_CHAT_AI_KEY in wp-config.php.', 'scout-chat' )
 						);
 					}
+					?>
+				</table>
+			<?php self::ui_fold_close(); ?>
+			<?php self::ui_fold_open( __( 'More options: Outside chat widget', 'scout-chat' ) ); ?>
+				<?php $out = Scout_Chat::outside_on(); ?>
+				<p class="sh-status<?php echo $out ? '' : ' is-off'; ?>"><span class="sh-dot" aria-hidden="true"></span><strong><?php echo esc_html( $out ? __( 'On.', 'scout-chat' ) : __( 'Off.', 'scout-chat' ) ); ?></strong> <span><?php echo esc_html( $out ? __( 'The site loads the outside chat in place of this chat.', 'scout-chat' ) : __( 'The site uses this chat.', 'scout-chat' ) ); ?></span></p>
+				<p><?php esc_html_e( 'For a site that runs its own chat service. This chat loads that service\'s script in the footer instead of its own button, so the theme never has to. Show the chat on the site still turns it on and off.', 'scout-chat' ); ?></p>
+				<table class="form-table" role="presentation">
+					<?php
+					self::row( __( 'Use an outside chat widget', 'scout-chat' ), '<label><input type="checkbox" name="' . esc_attr( $o ) . '[outside]" value="1" ' . checked( $s['outside'], true, false ) . '> ' . esc_html__( 'Load the outside chat in place of this chat', 'scout-chat' ) . '</label>' );
+					self::row( __( 'Script address', 'scout-chat' ), self::text( 'outside_src', $s['outside_src'], 'https://', 'url' ), __( 'The script link the chat service gives you. Must start with https://.', 'scout-chat' ) );
+					self::row(
+						__( 'How it loads', 'scout-chat' ),
+						'<label><input type="checkbox" name="' . esc_attr( $o ) . '[outside_async]" value="1" ' . checked( $s['outside_async'], true, false ) . '> async</label> &nbsp; <label><input type="checkbox" name="' . esc_attr( $o ) . '[outside_defer]" value="1" ' . checked( $s['outside_defer'], true, false ) . '> defer</label>',
+						__( 'Tick what the chat service\'s snippet shows. Most use async.', 'scout-chat' )
+					);
+					self::row( __( 'Script attributes', 'scout-chat' ), '<textarea class="large-text code" rows="3" name="' . esc_attr( $o ) . '[outside_attrs]" placeholder="data-widget-id=abc123">' . esc_textarea( $s['outside_attrs'] ) . '</textarea>', __( 'Optional. One per line, as name=value. Names become data- attributes; id, crossorigin, referrerpolicy, integrity and charset are kept as they are.', 'scout-chat' ) );
+					self::row( __( 'Settings (JSON)', 'scout-chat' ), self::text( 'outside_config_var', $s['outside_config_var'], 'chatSettings' ) . '<br><textarea class="large-text code" rows="4" name="' . esc_attr( $o ) . '[outside_config]" placeholder="{&quot;color&quot;: &quot;#0A78C2&quot;}">' . esc_textarea( $s['outside_config'] ) . '</textarea>', __( 'Optional. Some services read their settings from a named object on the page before the script loads. Put that name first, then the settings.', 'scout-chat' ) );
+					self::row(
+						__( 'Launcher corner', 'scout-chat' ),
+						'<select name="' . esc_attr( $o ) . '[outside_position]"><option value="right"' . selected( $s['outside_position'], 'right', false ) . '>' . esc_html__( 'Bottom right', 'scout-chat' ) . '</option><option value="left"' . selected( $s['outside_position'], 'left', false ) . '>' . esc_html__( 'Bottom left', 'scout-chat' ) . '</option></select>',
+						__( 'Where the chat service puts its button. Set the same corner in the chat service.', 'scout-chat' )
+					);
+					self::row( __( 'Clearance on phones', 'scout-chat' ), '<input type="number" class="small-text" min="0" max="400" name="' . esc_attr( $o ) . '[outside_clearance]" value="' . esc_attr( (string) $s['outside_clearance'] ) . '"> px', __( 'How far the chat button moves up while the call bar shows. 86 clears the bar.', 'scout-chat' ) );
+					self::row( __( 'Launcher selector', 'scout-chat' ), self::text( 'outside_selector', $s['outside_selector'], '#chat-widget-container' ), __( 'Optional. The CSS id or class of the chat service\'s button, so it can move above the call bar. Blank: the button stays where the service puts it.', 'scout-chat' ) );
 					?>
 				</table>
 			<?php self::ui_fold_close(); ?>

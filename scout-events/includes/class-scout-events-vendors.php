@@ -517,6 +517,7 @@ final class Scout_Events_Vendors {
 				'text'   => sprintf( _n( '%d vendor application to review.', '%d vendor applications to review.', count( $pending ), 'scout-events' ), count( $pending ) ),
 				'url'    => admin_url( 'edit.php?post_type=' . self::TYPE . '&post_status=pending' ),
 				'action' => __( 'Review vendors', 'scout-events' ),
+				'todo'   => array( 'id' => 'events-vendor-applications', 'label' => __( 'Vendor applications', 'scout-events' ), 'count' => count( $pending ) ),
 			);
 		}
 		return $items;

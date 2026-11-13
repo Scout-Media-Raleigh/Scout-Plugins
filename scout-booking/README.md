@@ -17,10 +17,22 @@ and Events), and the Scout menu bar on every screen:
 |---|---|
 | Schedule | Requests to approve, the schedule by day or week, paid and unpaid, client details and intake answers, blocked time, the phone calendar link. |
 | Session types | The sessions people can book, one plain form each. |
-| Settings | Booking page, owner email, cancellation window, notice and how far ahead, checkout hold, pay window, booking hours, newsletter box, busy times from your calendar. |
+| Settings | Booking page, owner email, cancellation window, notice and how far ahead, checkout hold, pay window, booking hours, reasons for declining, where Book buttons across the site go, search engines, newsletter box, busy times from your calendar. |
 
 Bookings hold clients' personal details, so every screen needs the
 `list_users` capability (administrators), the same rule as Scout Members.
+
+### Permissions
+
+- **Every Bookings screen** needs `list_users` (administrators).
+- **Booking requests in To do** carry the same capability (`'cap' => 'list_users'` on each
+  item, Scout Build 0.18.0+), so the To do list, its count, Today on Home and To do emails
+  show a request's name, email and note only to people who can open Bookings.
+- **Two boxes on Settings are the web team's:** "Book buttons across the site" and the
+  Search engines switch (Service schema). Only an operator can change them (Scout Build's
+  operator check; `manage_options` on a site without Scout Build). An owner who is not an
+  operator sees them greyed out with "Your web team sets this." and saving Settings keeps
+  their values as they were. Each session type's own schema choice is unchanged.
 
 ## Session types
 
@@ -33,11 +45,29 @@ Bookings hold clients' personal details, so every screen needs the
 | Paid to book it | The full price, a deposit of a set amount (the rest at the session), or nothing online. |
 | By request only | The client sends a request; the owner approves or declines; approval emails a pay link. For sessions where the owner talks with a client first. |
 | Days and hours | The business hours (below), or the type's own days and hours. |
-| Questions | Up to six short questions, each required or not, short or long answer. Keep health questions out; this form is not built to hold health records. |
+| Questions | Up to six questions, each required or not: a short answer, a longer answer, or a tick box to agree (below). Keep health questions out; this form is not built to hold health records. |
+| Search engines | Describe this session to search engines: when it has a price and a note (default), yes, or no. Only counts once Settings, Search engines is on. |
 | Note | A line or two shown before booking and in the client's emails. |
 | Video call link | Optional. A fixed room (Google Meet, Zoom), https only. It goes in the booked, moved and reminder emails, and in the calendar invite as the location and link. Meet links are not made for you; that needs a Google sign-in. |
 
 The plugin ships with no session types and no prices. The owner enters them.
+
+Questions belong to one session type, so a question meant only for some
+sessions (couples sessions, say) goes on those types and no others.
+
+### A tick box to agree
+
+A question can be a tick box beside a sentence the owner writes, such as "I
+have read what to expect and agree to it.", with an optional link beside it
+(a "what to expect" page; a path like `/what-to-expect/` works). Made
+required, the booking is refused until it is ticked: the form comes back with
+a note at the top and the box marked, with "This box needs a tick before you
+can book." under it. The booking keeps the exact sentence, whether it was
+ticked, the time it was ticked and the link shown, in its answers. The
+Schedule shows it under "Intake answers and agreement", and the owner's
+emails (new request, booked, moved, cancelled) print it as
+`Agreement: "the sentence"` with "Agreed on November 13, 2026 at 2:05 pm."
+under it. The privacy export lists it too.
 
 ## Working hours and open times
 
@@ -167,13 +197,33 @@ owner writes their own.
 
 ## Owner view
 
-- Requests to approve, with intake answers and Approve / Decline.
+- Requests to approve, with intake answers and Approve / Decline. Decline
+  offers an optional reason from the list on Settings ("Not a fit", "No
+  availability", "Other" until the owner edits it). The reason is kept with
+  the booking, shown on its row and passed to other features; the client's
+  email is the same kind note either way.
 - The schedule by day or week: time, session, status, client name, email and
   phone, paid and unpaid ("Deposit paid: $50.00 of $200.00. $150.00 due at
   the session."), coupon codes, the order link, intake answers, and Cancel.
 - Block time: a day, a range of days, or hours on a day, with a note.
 - The phone calendar link (a private calendar feed): subscribe to it in a phone calendar; it refreshes
   about hourly. "Make a new address" retires the old one.
+- **Calendar links for one session type** (a closed box under the phone
+  calendar link). For someone who runs only one kind of session: "Make a
+  calendar link" gives that type its own secret address. It carries only that
+  type's booked (confirmed) sessions, never requests, holds, blocked time or
+  other types, and each one reads "Session name · J. S.": the session, the
+  time and the client's initials. No email, phone, answers, notes or money.
+  "Show clients' full names in these links instead of initials" (off by
+  default) swaps initials for names. "Make a new link" retires the old one and
+  "Turn this link off" removes it. No type has a link until one is made. The
+  tokens live in their own option (`scout_booking_type_feeds`, not loaded on
+  every page).
+- **Declines, last 30 days.** Under Requests to approve, one line counts the
+  requests declined in the last 30 days by reason ("Declined in the last 30
+  days as not a fit: 3, as other: 1."). With Scout CRM on, it links to
+  Contacts, where the full count lives, for people who can open it. Nothing
+  shows when nothing was declined.
 - A count of requests on the sidebar item and in the Scout menu, and a line in
   Scout Events' "Needs you" list.
 
@@ -205,6 +255,15 @@ requests unpaid after the pay window, and sends reminders.
   record of what the person agreed to.
 - `scout_booking_created` ( `$row`, `$type` ) after a booking or request is made.
 - `scout_booking_status` ( `$row`, `$status` ) after any status change.
+- `scout_booking_declined` ( `$row`, `$reason` ) after the owner declines a
+  request, with the reason picked ('' for none). `scout_booking_status` still
+  fires first with `declined`. Scout CRM tags the person by the reason.
+- `scout_booking_menu` ( `$parent` ) while the Bookings menu is built, before
+  Settings (Scout CRM adds Contacts here on a site without Scout Events).
+- `Scout_Booking::decline_counts( $days )` returns declined requests in the
+  last `$days` days by reason.
+- `scout_booking_currency` filters the currency in Service schema (default the
+  shop's currency, else USD).
 - `scout_booking_types_saved` after session types change.
 - `scout_booking_now` filters the clock (tests).
 
@@ -225,12 +284,31 @@ requests unpaid after the pay window, and sends reminders.
   `assets/scout-booking.css` loads only on that page.
 - **Booking link for other features:** once a booking page is published,
   Scout Booking defines `scout_booking_url()`, unless the theme already
-  defines its own. Call buttons, Chat and Site Check read it.
+  defines its own. Call buttons, Chat and Site Check read it. Settings, "Book
+  buttons across the site" changes where it points: the booking page
+  (default, the same as before), a chosen address, or nothing from Bookings
+  (each feature uses its own link, such as Contact). Sessions ticked under
+  "Never send Book buttons to a page that only offers these sessions" make it
+  pass over a page that offers only those (a by-request page, for example)
+  for the first published page with the booking form that offers something
+  else. Booking emails always link to the booking page.
+- **Search engines:** with Settings, Search engines on (off by default) and
+  Scout Core active, each public session type a page shows gets a `Service`
+  node in Core's one schema graph (through `scout_schema_graph`): name, the
+  note as the description, the page address, `provider` pointing at the
+  business node's `@id`, and, with a price, an `Offer` whose
+  `UnitPriceSpecification` carries the length in minutes. Without a price the
+  length goes in the description. Sessions off the booking page are never
+  described. The page is read from its `[scout_booking]` shortcodes, or the
+  booking page itself shows every public session.
 - **scout-setup.json:** nothing.
 
 ## Data
 
 - Table `{prefix}scout_bookings`: one row per booking, request or blocked time.
+  `reason` (added in 0.4.0, database version 2) holds the decline reason.
+- Transient `scout_booking_site_link` remembers which page Book buttons use
+  when sessions are passed over; it clears when a page or session type is saved.
 - Options `scout_booking` (settings and the feed token), `scout_booking_types`,
   `scout_booking_db`, and, not autoloaded, `scout_booking_busy_feeds` (the
   private calendar addresses) and `scout_booking_busy_state` (when each was
@@ -254,8 +332,9 @@ requests unpaid after the pay window, and sends reminders.
 
 | What | Where it is kept | How long | Shared with |
 |---|---|---|---|
-| Booking details: first and last name, email, phone, the session and time picked, answers to the session's intake questions, whether the newsletter box was ticked, and the price, amount due, amount paid and order number | This website's database, in the bookings table (the Bookings screen) | Until someone deletes it. The hourly check only changes a booking's status and never deletes it. The WordPress personal data tools export a person's bookings by email address. The eraser deletes unpaid bookings and keeps paid ones as payment records, with the name, email, phone and answers taken out, and deleting the plugin removes the whole table. | Emailed to the site's own booking notice address (the notice address in Business info unless another is set), with the intake answers |
+| Booking details: first and last name, email, phone, the session and time picked, answers to the session's intake questions (for a tick box to agree, the exact sentence, whether it was ticked, when, and the link shown beside it), whether the newsletter box was ticked, the price, amount due, amount paid and order number, and, for a declined request, the reason the owner picked | This website's database, in the bookings table (the Bookings screen) | Until someone deletes it. The hourly check only changes a booking's status and never deletes it. The WordPress personal data tools export a person's bookings by email address. The eraser deletes unpaid bookings and keeps paid ones as payment records, with the name, email, phone and answers taken out, and deleting the plugin removes the whole table. | Emailed to the site's own booking notice address (the notice address in Business info unless another is set), with the intake answers |
 | Name, email and phone of each booking from the last 30 days and the next 400 days | The owner's private calendar feed, a secret address on this website | Built fresh each time the feed is read; nothing extra is stored | Whatever calendar app the owner adds the feed to |
+| Initials (or, if the owner turns it on, the full name) and the time of each booked session of one session type, from the last 30 days and the next 400 days (only when the owner makes a calendar link for a session type) | A private calendar link for that session type, a secret address on this website | Built fresh each time the link is read; nothing extra is stored | Whatever calendar app the person given the link adds it to |
 | What the visitor typed in the booking form, when the form has to be sent back to fix a mistake (only when the form is sent back with a problem, such as a missing field) | A temporary record in this website's database | 10 minutes | Nobody |
 | Email, first name, the page the form was on, the exact words beside the newsletter box, and the session type (only when the visitor ticks the newsletter box and Scout Newsletter is on) | Handed to the Scout Newsletter plugin. This plugin keeps no separate copy beyond the booking itself. | Not kept separately by this plugin | Scout Newsletter, which sends it to the newsletter service set there |
 | Name, email, phone, the appointment time and the booking's code (only when WooCommerce is on and the session takes a payment online) | WooCommerce's cart, checkout and order records on this website | As long as WooCommerce keeps the order. This plugin never deletes orders. | Nobody |

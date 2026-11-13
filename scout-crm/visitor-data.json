@@ -21,6 +21,13 @@
       "kept": "Until someone deletes it",
       "shared": "",
       "when": "only when FluentCRM is installed and active"
+    },
+    {
+      "what": "Email, first and last name and phone number of people who book or request a session, tagged as a booking request, a booked session, the session's name and, for a declined request, the reason the owner picked. Intake answers are never copied.",
+      "where": "The FluentCRM contact list in this website's database",
+      "kept": "Until someone deletes it",
+      "shared": "",
+      "when": "only when FluentCRM and Scout Booking are installed and active"
     }
   ],
   "cookies": [],

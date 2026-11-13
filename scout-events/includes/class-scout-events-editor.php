@@ -167,6 +167,19 @@ final class Scout_Events_Editor {
 					</p>
 					<?php self::field( 'number', $n, 'signup_guests', __( 'Guests each person may bring', 'scout-events' ), (string) $e['signup_guests'], '', __( '0 for none, up to 9.', 'scout-events' ) ); ?>
 				</div>
+				<?php $with_members = class_exists( 'Scout_Members' ); ?>
+				<p class="se-field se-wide">
+					<label for="se-members-only"><input type="checkbox" id="se-members-only" name="scout_event[members_only]" value="1" aria-describedby="se-members-only-help" <?php checked( (bool) $e['members_only'] ); ?>> <?php echo esc_html( $with_members ? __( 'Only for invited guests or approved applicants', 'scout-events' ) : __( 'Only for members or invited guests', 'scout-events' ) ); ?></label>
+					<span class="se-help" id="se-members-only-help">
+						<?php
+						esc_html_e( 'Google lists only events anyone can get a ticket for, so this event is left out of Google\'s event listings. The event page still shows.', 'scout-events' );
+						if ( $with_members ) {
+							echo ' ';
+							esc_html_e( 'For members-only events, use the Members only box. It does the same for Google.', 'scout-events' );
+						}
+						?>
+					</span>
+				</p>
 			</fieldset>
 
 			<?php $set = Scout_Events::settings(); ?>
@@ -227,7 +240,21 @@ final class Scout_Events_Editor {
 				esc_html( $c[1] ? __( '(done)', 'scout-events' ) : __( '(still needed)', 'scout-events' ) )
 			);
 		}
-		echo '</ul><p class="se-note">' . esc_html__( 'Updates when you save.', 'scout-events' ) . '</p>';
+		echo '</ul>';
+		$reasons = array(
+			'start'   => __( 'Google: not listed yet. It needs a start date.', 'scout-events' ),
+			'members' => __( 'Google: not listed, because the event is not open to everyone.', 'scout-events' ),
+			'private' => __( 'Google: not listed, because the address goes only in the confirmation. Google needs the full street address on the page.', 'scout-events' ),
+			'address' => __( 'Google: not listed until the Where box has the street, city and state or ZIP code.', 'scout-events' ),
+		);
+		if ( ! Scout_Events_Schema::enabled() ) {
+			$google = __( 'Google: event schema is off under Events, Settings.', 'scout-events' );
+		} else {
+			$why    = Scout_Events::google_skip( (int) $post->ID );
+			$google = $reasons[ $why ] ?? ( '' === $why ? __( 'Google: listed as an event.', 'scout-events' ) : __( 'Google: not listed.', 'scout-events' ) );
+		}
+		echo '<p class="se-note">' . esc_html( $google ) . '</p>';
+		echo '<p class="se-note">' . esc_html__( 'Updates when you save.', 'scout-events' ) . '</p>';
 	}
 
 	public static function render_schedule_box( $post ): void {

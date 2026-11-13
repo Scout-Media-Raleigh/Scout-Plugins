@@ -687,6 +687,8 @@ final class Scout_Events_Presenters {
 					'text'   => sprintf( _n( '%d new presenter application to review.', '%d new presenter applications to review.', count( $apps ), 'scout-events' ), count( $apps ) ),
 					'url'    => admin_url( 'edit.php?post_type=' . Scout_Events::SPEAKER . '&post_status=pending' ),
 					'action' => __( 'Review applications', 'scout-events' ),
+					// The same row goes to Scout Build's To do (Scout_Events_Admin::todo_items()).
+					'todo'   => array( 'id' => 'events-presenter-applications', 'label' => __( 'Presenter applications', 'scout-events' ), 'count' => count( $apps ) ),
 				)
 			);
 		}
@@ -707,6 +709,7 @@ final class Scout_Events_Presenters {
 					'text'   => sprintf( __( '%s updated their profile. Approve or discard the changes.', 'scout-events' ), get_the_title( $id ) ),
 					'url'    => (string) get_edit_post_link( $id, 'raw' ),
 					'action' => __( 'Review changes', 'scout-events' ),
+					'todo'   => array( 'id' => 'events-presenter-changes-' . (int) $id, 'label' => __( 'Presenter profile changes', 'scout-events' ), 'count' => 1 ),
 				)
 			);
 		}

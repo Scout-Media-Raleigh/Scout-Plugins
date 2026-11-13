@@ -32,6 +32,13 @@
       "kept": "Not kept by this website",
       "shared": "Google Analytics (Google), through Scout Analytics",
       "when": "only when Scout Analytics is on"
+    },
+    {
+      "what": "Whatever the outside chat service collects: usually the messages typed into it, the page address, and the visitor's browser and device details",
+      "where": "On the outside chat service's own servers. This website does not store it.",
+      "kept": "As the outside chat service's own policy says",
+      "shared": "The outside chat service set on the Chat screen",
+      "when": "only when Use an outside chat widget is on, in place of this chat"
     }
   ],
   "cookies": [
@@ -46,5 +53,5 @@
       "lasts": "Until the browser tab is closed"
     }
   ],
-  "notes": "Nothing is collected while the chat is switched off on the Chat screen. The chat sends no cookies with its messages."
+  "notes": "Nothing is collected while the chat is switched off on the Chat screen. The chat sends no cookies with its messages. With an outside chat widget on, that service may set its own cookies; list them from the service's own docs in the site's cookie notice and privacy policy."
 }

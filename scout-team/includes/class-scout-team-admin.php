@@ -421,8 +421,10 @@ final class Scout_Team_Admin {
 
 		// Where they show.
 		$tags = array();
-		if ( Scout_Team::shows( $p, 'bio' ) ) {
+		if ( Scout_Team::page_public( $p ) ) {
 			$tags[] = __( 'Bio', 'scout-team' );
+		} elseif ( ! empty( $p['no_page'] ) && '' !== Scout_Team::chosen_link( $p ) ) {
+			$tags[] = __( 'Page forwards', 'scout-team' );
 		}
 		if ( $r['team'] ) {
 			$tags[] = __( 'Team page', 'scout-team' );

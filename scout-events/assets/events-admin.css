@@ -5,6 +5,7 @@
 .post-type-scout_session,
 .post-type-scout_speaker,
 .post-type-scout_vendor,
+.post-type-scout_course,
 .se-admin {
 	/* The kit's tokens on Scout screens (.sh); the fallbacks are the same values for WordPress's own edit screens. */
 	--se-text: var(--sh-text, #1D1D1F);
@@ -32,6 +33,7 @@
 .post-type-scout_session .postbox .hndle,
 .post-type-scout_speaker .postbox .hndle { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .se-top { margin-top: 20px; }
+.post-type-scout_course .se-top > .se-form { padding: 16px 18px 4px; background: #fff; border: 1px solid var(--se-line); border-radius: 16px; }
 .se-top .postbox { margin-bottom: 8px; }
 .se-editor-head { margin: 22px 0 8px; padding: 0; font-size: 15px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
 .se-editor-head span { font-size: 13px; font-weight: 400; color: var(--se-text-2); }
@@ -156,3 +158,6 @@
 
 /* The main column decides, not the window (admin kit 1.10.0). */
 @container shmain (max-width: 860px) { .se-admin-cols { grid-template-columns: minmax(0, 1fr); } }
+.se-course-row { margin: 0 0 6px; padding: 12px 0 0; border-top: 1px solid var(--se-line, rgba(0,0,0,.08)); }
+.se-course-row:first-of-type { border-top: 0; padding-top: 0; }
+.se-form select[multiple] { min-height: 96px; }

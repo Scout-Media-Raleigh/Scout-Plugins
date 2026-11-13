@@ -56,6 +56,7 @@ final class Scout_Contact {
 			'book_note' => '',
 			'photos'    => array(),
 			'hide_on'   => 'card, links, review, book',
+			'sets'      => array(),
 		);
 	}
 
@@ -105,8 +106,15 @@ final class Scout_Contact {
 			return $active;
 		}
 		$s      = self::settings();
-		$a      = self::actions();
-		$active = ! is_admin() && ! empty( $s['enabled'] ) && ( '' !== $a['call'] || '' !== $a['book'] );
+		$active = ! is_admin() && ! empty( $s['enabled'] );
+		if ( $active ) {
+			if ( null === self::current_set() ) {
+				$a      = self::actions();
+				$active = '' !== $a['call'] || '' !== $a['book'];
+			} else {
+				$active = (bool) self::view()['options'];
+			}
+		}
 		if ( $active ) {
 			$path  = trim( (string) wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ), '/' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$first = strtolower( explode( '/', $path )[0] ?? '' );
@@ -118,6 +126,299 @@ final class Scout_Contact {
 		/** Filter: turn the bar off (or on) for the current page. */
 		$active = (bool) apply_filters( 'scout_contact_active', $active );
 		return $active;
+	}
+
+	/* ------------------------------------------------------------------
+	 * Button sets (0.3.0). A set swaps the bar's buttons on some pages:
+	 * the pages it names (and their child pages) and/or the addresses that
+	 * start with a path such as /bodywork/. The first set that matches wins;
+	 * pages with no match keep the default buttons. Decided on the server
+	 * from the address alone, so a page cache keeps working.
+	 * ------------------------------------------------------------------ */
+
+	/** The kinds of button a set can hold, in the order the screen lists them. */
+	const TYPES = array( 'call', 'text', 'book', 'email', 'directions', 'link' );
+
+	/** Most buttons one set can hold. */
+	const MAX_BUTTONS = 8;
+
+	/** "/Bodywork" or "https://site/bodywork/x" becomes "/bodywork/" or "/bodywork/x/". */
+	public static function clean_path( string $path ): string {
+		$path = trim( $path );
+		if ( '' === $path ) {
+			return '';
+		}
+		if ( preg_match( '#^https?://#i', $path ) ) {
+			$path = (string) parse_url( $path, PHP_URL_PATH ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+		}
+		$path = strtolower( (string) preg_replace( '#[^A-Za-z0-9/_.~%-]#', '', $path ) );
+		$path = trim( $path, '/' );
+		return '' === $path ? '/' : '/' . $path . '/';
+	}
+
+	/** One button's own link, cleaned for its kind ('' means "use the site's"). */
+	public static function clean_link( string $type, string $url ): string {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+		if ( 'call' === $type || 'text' === $type ) {
+			$url = (string) preg_replace( '/^(tel|sms):/i', '', $url );
+			return '' === self::dial( $url ) ? '' : sanitize_text_field( $url );
+		}
+		if ( 'email' === $type ) {
+			return (string) sanitize_email( (string) preg_replace( '/^mailto:/i', '', $url ) );
+		}
+		return (string) esc_url_raw( $url, array( 'http', 'https' ) );
+	}
+
+	/**
+	 * A set in its stored shape, or null when it holds nothing at all. Also
+	 * cleans a set handed over by the scout_contact_button_set filter.
+	 *
+	 * @param mixed $set Raw set.
+	 */
+	public static function clean_set( $set ): ?array {
+		if ( ! is_array( $set ) ) {
+			return null;
+		}
+		$paths = $set['paths'] ?? array();
+		if ( is_string( $paths ) ) {
+			$paths = preg_split( '/[\s,]+/', $paths );
+		}
+		$buttons = array();
+		foreach ( (array) ( $set['buttons'] ?? array() ) as $b ) {
+			if ( is_string( $b ) ) {
+				$b = array( 'type' => $b );
+			}
+			if ( ! is_array( $b ) ) {
+				continue;
+			}
+			$type = strtolower( preg_replace( '/[^a-z]/i', '', (string) ( $b['type'] ?? '' ) ) );
+			if ( ! in_array( $type, self::TYPES, true ) ) {
+				continue;
+			}
+			$label = sanitize_text_field( (string) ( $b['label'] ?? '' ) );
+			$url   = self::clean_link( $type, (string) ( $b['url'] ?? '' ) );
+			if ( 'link' === $type && ( '' === $label || '' === $url ) ) {
+				continue; // A custom button needs its own wording and link.
+			}
+			$buttons[] = array(
+				'type'  => $type,
+				'label' => $label,
+				'url'   => $url,
+			);
+		}
+		$out = array(
+			'name'     => sanitize_text_field( (string) ( $set['name'] ?? '' ) ),
+			'pages'    => array_values( array_unique( array_filter( array_map( 'absint', (array) ( $set['pages'] ?? array() ) ) ) ) ),
+			'children' => ! empty( $set['children'] ) ? 1 : 0,
+			'paths'    => array_values( array_unique( array_filter( array_map( array( __CLASS__, 'clean_path' ), array_map( 'strval', (array) $paths ) ) ) ) ),
+			'no_text'  => ! empty( $set['no_text'] ) ? 1 : 0,
+			'label'    => sanitize_text_field( (string) ( $set['label'] ?? '' ) ),
+			'buttons'  => array_slice( $buttons, 0, self::MAX_BUTTONS ),
+		);
+		if ( '' === $out['name'] && ! $out['pages'] && ! $out['paths'] && ! $out['buttons'] ) {
+			return null;
+		}
+		return $out;
+	}
+
+	/**
+	 * The first set that matches a page, or null for the default buttons.
+	 *
+	 * @param array  $sets      Stored sets, in order.
+	 * @param int    $page_id   The page being shown (0 when it is not a single page or post).
+	 * @param int[]  $ancestors Its parent pages.
+	 * @param string $path      The address path, e.g. "/bodywork/deep-tissue/".
+	 */
+	public static function match_set( array $sets, int $page_id, array $ancestors, string $path ): ?array {
+		$path = self::clean_path( '' === $path ? '/' : $path );
+		foreach ( $sets as $set ) {
+			if ( ! is_array( $set ) ) {
+				continue;
+			}
+			$pages = array_map( 'intval', (array) ( $set['pages'] ?? array() ) );
+			if ( $page_id && $pages ) {
+				if ( in_array( $page_id, $pages, true ) ) {
+					return $set;
+				}
+				if ( ! empty( $set['children'] ) && array_intersect( array_map( 'intval', $ancestors ), $pages ) ) {
+					return $set;
+				}
+			}
+			foreach ( (array) ( $set['paths'] ?? array() ) as $prefix ) {
+				$prefix = (string) $prefix;
+				if ( '' !== $prefix && 0 === strpos( $path, $prefix ) ) {
+					return $set;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** The set for the page being viewed, or null for the default buttons. */
+	public static function current_set(): ?array {
+		static $done = false, $set = null;
+		if ( $done ) {
+			return $set;
+		}
+		$done    = true;
+		$sets    = array_values( array_filter( (array) ( self::saved()['sets'] ?? array() ), 'is_array' ) );
+		$page_id = 0;
+		$parents = array();
+		if ( function_exists( 'is_singular' ) && is_singular() ) {
+			$page_id = (int) get_queried_object_id();
+			$parents = $page_id ? array_map( 'intval', (array) get_post_ancestors( $page_id ) ) : array();
+		}
+		$path = (string) wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$pick = $sets ? self::match_set( $sets, $page_id, $parents, $path ) : null;
+		/**
+		 * Filter: pick the button set for the current page.
+		 *
+		 * Return a set (same shape as a saved one), a saved set's name, or null
+		 * for the default buttons.
+		 *
+		 * @param array|null $pick    The first saved set that matched, or null.
+		 * @param array      $sets    Every saved set, in order.
+		 * @param array      $context page_id (0 when not a single page) and path.
+		 */
+		$pick = apply_filters( 'scout_contact_button_set', $pick, $sets, array( 'page_id' => $page_id, 'path' => self::clean_path( '' === $path ? '/' : $path ) ) );
+		if ( is_string( $pick ) && '' !== trim( $pick ) ) {
+			$name = strtolower( trim( $pick ) );
+			$pick = null;
+			foreach ( $sets as $one ) {
+				if ( strtolower( (string) ( $one['name'] ?? '' ) ) === $name ) {
+					$pick = $one;
+					break;
+				}
+			}
+		}
+		$set = is_array( $pick ) ? self::clean_set( $pick ) : null;
+		return $set;
+	}
+
+	/** The Maps search for the address in Business info ('' without one). */
+	public static function directions_url(): string {
+		$biz = array();
+		if ( function_exists( 'scout_core_business' ) ) {
+			$biz = (array) scout_core_business();
+		} elseif ( class_exists( 'Scout_Core_Business' ) ) {
+			$biz = (array) Scout_Core_Business::get();
+		}
+		$lat = trim( (string) ( $biz['latitude'] ?? '' ) );
+		$lng = trim( (string) ( $biz['longitude'] ?? '' ) );
+		$parts = array_filter( array_map( static fn( $k ) => trim( (string) ( $biz[ $k ] ?? '' ) ), array( 'street', 'city', 'region', 'postal' ) ) );
+		if ( '' === trim( (string) ( $biz['street'] ?? '' ) ) ) {
+			if ( is_numeric( $lat ) && is_numeric( $lng ) ) {
+				return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $lat . ',' . $lng );
+			}
+			return ''; // A city alone is not somewhere to drive to.
+		}
+		$name = trim( (string) ( $biz['name'] ?? '' ) );
+		return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( trim( ( '' !== $name ? $name . ', ' : '' ) . implode( ', ', $parts ) ) );
+	}
+
+	/** The email address in Business info ('' without one). */
+	public static function business_email(): string {
+		$biz = array();
+		if ( function_exists( 'scout_core_business' ) ) {
+			$biz = (array) scout_core_business();
+		} elseif ( class_exists( 'Scout_Core_Business' ) ) {
+			$biz = (array) Scout_Core_Business::get();
+		}
+		return trim( (string) ( $biz['email'] ?? '' ) );
+	}
+
+	/**
+	 * One set button as a sheet option: key, link, title, note, track event.
+	 * Null when the button has nowhere to go.
+	 */
+	public static function option( array $b, array $s, bool $no_text = false ): ?array {
+		$type  = (string) ( $b['type'] ?? '' );
+		$label = trim( (string) ( $b['label'] ?? '' ) );
+		$url   = trim( (string) ( $b['url'] ?? '' ) );
+		switch ( $type ) {
+			case 'call':
+				$shown = '' !== $url ? $url : (string) $s['phone'];
+				$num   = self::dial( $shown );
+				return '' === $num ? null : array( 'call', 'tel:' . $num, '' !== $label ? $label : __( 'Call us now', 'scout-contact' ), $shown, 'contact_call', $num );
+			case 'text':
+				if ( $no_text || ( '' === $url && ! empty( $s['text_off'] ) ) ) {
+					return null;
+				}
+				$num = self::dial( '' !== $url ? $url : ( '' !== trim( (string) $s['text'] ) ? (string) $s['text'] : (string) $s['phone'] ) );
+				return '' === $num ? null : array( 'text', 'sms:' . $num, '' !== $label ? $label : __( 'Send a text', 'scout-contact' ), '' !== trim( (string) $s['text_note'] ) ? (string) $s['text_note'] : __( 'Opens a message on your phone.', 'scout-contact' ), 'contact_text', $num );
+			case 'book':
+				$link = esc_url_raw( '' !== $url ? $url : (string) $s['book_url'] );
+				return '' === $link ? null : array( 'book', $link, '' !== $label ? $label : __( 'Book a time', 'scout-contact' ), '' !== trim( (string) $s['book_note'] ) ? (string) $s['book_note'] : __( 'Pick a time that works for you.', 'scout-contact' ), 'contact_book', '' );
+			case 'email':
+				$mail = '' !== $url ? $url : self::business_email();
+				return '' === $mail ? null : array( 'email', 'mailto:' . $mail, '' !== $label ? $label : __( 'Send an email', 'scout-contact' ), $mail, 'contact_email', '' );
+			case 'directions':
+				$link = esc_url_raw( '' !== $url ? $url : self::directions_url() );
+				return '' === $link ? null : array( 'directions', $link, '' !== $label ? $label : __( 'Get directions', 'scout-contact' ), __( 'Opens a map.', 'scout-contact' ), 'contact_directions', '' );
+			case 'link':
+				$link = esc_url_raw( $url );
+				return ( '' === $link || '' === $label ) ? null : array( 'link', $link, $label, '', 'contact_link', '' );
+		}
+		return null;
+	}
+
+	/**
+	 * What the bar shows on this page: the Call and Text numbers for the bar,
+	 * the main button's wording, the sheet's options, and whether the main
+	 * button links straight to a single option instead of opening the sheet.
+	 */
+	public static function view(): array {
+		$s   = self::settings();
+		$set = self::current_set();
+		if ( null === $set ) {
+			$a       = self::actions();
+			$options = array();
+			if ( '' !== $a['call'] ) {
+				$options[] = array( 'call', 'tel:' . $a['call'], __( 'Call us now', 'scout-contact' ), (string) $s['phone'], 'contact_call', $a['call'] );
+			}
+			if ( '' !== $a['text'] ) {
+				$options[] = array( 'text', 'sms:' . $a['text'], __( 'Send a text', 'scout-contact' ), '' !== trim( (string) $s['text_note'] ) ? (string) $s['text_note'] : __( 'Opens a message on your phone.', 'scout-contact' ), 'contact_text', $a['text'] );
+			}
+			if ( '' !== $a['book'] ) {
+				$options[] = array( 'book', $a['book'], __( 'Book a time', 'scout-contact' ), '' !== trim( (string) $s['book_note'] ) ? (string) $s['book_note'] : __( 'Pick a time that works for you.', 'scout-contact' ), 'contact_book', '' );
+			}
+			return array(
+				'call'    => $a['call'],
+				'text'    => $a['text'],
+				'label'   => (string) $s['label'],
+				'options' => $options,
+				'direct'  => false,
+			);
+		}
+		$buttons = $set['buttons'] ? $set['buttons'] : array( array( 'type' => 'call' ), array( 'type' => 'text' ), array( 'type' => 'book' ) );
+		$options = array();
+		$call    = '';
+		$text    = '';
+		foreach ( $buttons as $b ) {
+			$opt = self::option( (array) $b, $s, ! empty( $set['no_text'] ) );
+			if ( null === $opt ) {
+				continue;
+			}
+			if ( 'call' === $opt[0] && '' === $call ) {
+				$call = $opt[5];
+			}
+			if ( 'text' === $opt[0] && '' === $text ) {
+				$text = $opt[5];
+			}
+			$options[] = $opt;
+		}
+		$direct = 1 === count( $options );
+		$label  = '' !== $set['label'] ? $set['label'] : ( $direct ? $options[0][2] : (string) $s['label'] );
+		return array(
+			'call'    => $call,
+			'text'    => $text,
+			'label'   => $label,
+			'options' => $options,
+			'direct'  => $direct,
+		);
 	}
 
 	public static function body_class( array $classes ): array {
@@ -260,35 +561,38 @@ final class Scout_Contact {
 		return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths[ $name ] . '</svg>';
 	}
 
+	/** A sheet or main-button link, escaped for its kind. */
+	private static function href( string $link ): string {
+		return preg_match( '/^(tel|sms):/', $link ) ? esc_attr( $link ) : esc_url( $link );
+	}
+
 	public static function render(): void {
 		if ( ! self::active() ) {
 			return;
 		}
-		$s = self::settings();
-		$a = self::actions();
-
-		$options = array();
-		if ( '' !== $a['call'] ) {
-			$options[] = array( 'call', $a['call'] ? 'tel:' . $a['call'] : '', __( 'Call us now', 'scout-contact' ), (string) $s['phone'] );
-		}
-		if ( '' !== $a['text'] ) {
-			$options[] = array( 'text', 'sms:' . $a['text'], __( 'Send a text', 'scout-contact' ), '' !== trim( (string) $s['text_note'] ) ? (string) $s['text_note'] : __( 'Opens a message on your phone.', 'scout-contact' ) );
-		}
-		if ( '' !== $a['book'] ) {
-			$options[] = array( 'book', $a['book'], __( 'Book a time', 'scout-contact' ), '' !== trim( (string) $s['book_note'] ) ? (string) $s['book_note'] : __( 'Pick a time that works for you.', 'scout-contact' ) );
-		}
-		$photos = array_slice( array_filter( array_map( 'absint', (array) $s['photos'] ) ), 0, 3 );
+		$s       = self::settings();
+		$v       = self::view();
+		$options = $v['options'];
+		$photos  = array_slice( array_filter( array_map( 'absint', (array) $s['photos'] ) ), 0, 3 );
 		?>
 <div class="scc" data-scc>
 	<nav class="scc-bar" aria-label="<?php esc_attr_e( 'Contact', 'scout-contact' ); ?>">
-		<?php if ( '' !== $a['call'] ) : ?>
-		<a class="scc-btn" href="<?php echo esc_attr( 'tel:' . $a['call'] ); ?>" data-scout-track="contact_call" data-scout-label="Call bar"><?php echo self::icon( 'call' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'Call', 'scout-contact' ); ?></span></a>
+		<?php if ( '' !== $v['call'] ) : ?>
+		<a class="scc-btn" href="<?php echo esc_attr( 'tel:' . $v['call'] ); ?>" data-scout-track="contact_call" data-scout-label="Call bar"><?php echo self::icon( 'call' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'Call', 'scout-contact' ); ?></span></a>
 		<?php endif; ?>
-		<?php if ( '' !== $a['text'] ) : ?>
-		<a class="scc-btn" href="<?php echo esc_attr( 'sms:' . $a['text'] ); ?>" data-scout-track="contact_text" data-scout-label="Call bar"><?php echo self::icon( 'text' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'Text', 'scout-contact' ); ?></span></a>
+		<?php if ( '' !== $v['text'] ) : ?>
+		<a class="scc-btn" href="<?php echo esc_attr( 'sms:' . $v['text'] ); ?>" data-scout-track="contact_text" data-scout-label="Call bar"><?php echo self::icon( 'text' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'Text', 'scout-contact' ); ?></span></a>
 		<?php endif; ?>
-		<button class="scc-main" type="button" aria-haspopup="dialog" aria-controls="scc-sheet" data-scc-open><?php echo esc_html( (string) $s['label'] ); ?></button>
+		<?php
+		// One option: the main button goes straight to it, with no sheet to open.
+		if ( $v['direct'] ) {
+			echo '<a class="scc-main" href="' . self::href( $options[0][1] ) . '" data-scout-track="' . esc_attr( $options[0][4] ) . '" data-scout-label="Call bar">' . esc_html( $v['label'] ) . "</a>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+		} else {
+			echo '<button class="scc-main" type="button" aria-haspopup="dialog" aria-controls="scc-sheet" data-scc-open>' . esc_html( $v['label'] ) . "</button>\n";
+		}
+		?>
 	</nav>
+<?php if ( ! $v['direct'] ) : ?>
 	<dialog id="scc-sheet" class="scc-sheet" aria-labelledby="scc-title">
 		<div class="scc-grab" aria-hidden="true"></div>
 		<div class="scc-head">
@@ -305,13 +609,14 @@ final class Scout_Contact {
 		</div>
 		<ol class="scc-opts">
 			<?php foreach ( $options as $i => $opt ) : ?>
-			<li><a class="scc-opt<?php echo 'book' === $opt[0] ? ' is-book' : ''; ?>" href="<?php echo 'book' === $opt[0] ? esc_url( $opt[1] ) : esc_attr( $opt[1] ); ?>" data-scout-track="contact_<?php echo esc_attr( $opt[0] ); ?>" data-scout-label="Lets talk sheet">
+			<li><a class="scc-opt<?php echo 'book' === $opt[0] ? ' is-book' : ''; ?>" href="<?php echo self::href( $opt[1] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-scout-track="<?php echo esc_attr( $opt[4] ); ?>" data-scout-label="Lets talk sheet">
 				<span class="scc-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $i + 1 ) ); ?></span>
-				<span class="scc-txt"><strong><?php echo esc_html( $opt[2] ); ?></strong><span><?php echo esc_html( $opt[3] ); ?></span></span>
+				<span class="scc-txt"><strong><?php echo esc_html( $opt[2] ); ?></strong><?php if ( '' !== $opt[3] ) : ?><span><?php echo esc_html( $opt[3] ); ?></span><?php endif; ?></span>
 			</a></li>
 			<?php endforeach; ?>
 		</ol>
 	</dialog>
+<?php endif; ?>
 </div>
 		<?php
 	}

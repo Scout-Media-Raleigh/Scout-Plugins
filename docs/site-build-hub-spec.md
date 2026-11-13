@@ -58,7 +58,7 @@ Status: draft for Sean and Joy. Nothing built yet.
 > monthly message is built from it. No Worker.
 
 7. **Fleet check-in.** Once a day each site sends its versions (WordPress, PHP, theme, every
-   plugin) and health flags to a small Scout endpoint (a Cloudflare Worker, like Bliss Compass).
+   plugin) and health flags to a small Scout endpoint (a Cloudflare Worker).
    Signed with a per-site key. No visitor or client data is sent. The fleet list (Scout-Internal `ops/fleet.md`)
    fills itself instead of being typed by hand.
 8. **Activity log.** Who logged in, who added an admin user, which plugins or themes changed, and
