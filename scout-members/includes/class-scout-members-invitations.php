@@ -438,14 +438,20 @@ final class Scout_Members_Invitations {
 		$n = current_user_can( Scout_Members_Admin::CAP ) ? self::pending_count() : 0;
 		if ( $n ) {
 			$items   = (array) $items;
-			$items[] = array(
-				/* translators: %d: number of invitations. */
-				'text'   => sprintf( _n( '%d member invitation to read.', '%d member invitations to read.', $n, 'scout-members' ), $n ),
-				'url'    => admin_url( 'edit.php?post_type=' . self::TYPE . '&post_status=pending' ),
-				'action' => __( 'Read invitations', 'scout-members' ),
-			);
+			$items[] = self::row( $n );
 		}
 		return (array) $items;
+	}
+
+	/** The "invitations to read" row, shared by Events Needs you and Scout Build's To do. */
+	public static function row( int $n ): array {
+		return array(
+			/* translators: %d: number of invitations. */
+			'text'   => sprintf( _n( '%d member invitation to read.', '%d member invitations to read.', $n, 'scout-members' ), $n ),
+			'url'    => admin_url( 'edit.php?post_type=' . self::TYPE . '&post_status=pending' ),
+			'action' => __( 'Read invitations', 'scout-members' ),
+			'todo'   => array( 'id' => 'members-invitations', 'label' => __( 'Member invitations', 'scout-members' ), 'count' => $n, 'cap' => Scout_Members_Admin::CAP ),
+		);
 	}
 
 	/* ---------- privacy ---------- */

@@ -68,6 +68,38 @@ final class Scout_Chat_Admin {
 		add_action( 'save_post_' . Scout_Chat::CPT, array( __CLASS__, 'save_answered' ) );
 		add_filter( 'parent_file', array( __CLASS__, 'highlight' ) );
 		add_filter( 'display_post_states', array( __CLASS__, 'states' ), 10, 2 );
+		add_filter( 'scout_admin_nav_group', array( __CLASS__, 'nav_group' ), 10, 2 );
+		add_filter( 'scout_admin_looking_for', array( __CLASS__, 'looking_for' ), 10, 2 );
+	}
+
+	/**
+	 * Site features ends with a "Looking for" line to Chat while it files under
+	 * Scout tools, for operators (the only ones who can open it there).
+	 *
+	 * @param mixed  $lines The group's lines.
+	 * @param string $key   The group key.
+	 */
+	public static function looking_for( $lines, $key = '' ): array {
+		$lines = (array) $lines;
+		if ( 'website' === $key && Scout_Chat::outside_on() ) {
+			$lines[] = array( self::SLUG, __( "Looking for chat settings? They're in", 'scout-chat' ), true );
+		}
+		return $lines;
+	}
+
+	/**
+	 * With an outside chat widget on, the Chat screen is an integration setting,
+	 * so it files under Scout tools (operators only) instead of Site features.
+	 * Chat messages stay in To do. The screen keeps its address.
+	 *
+	 * @param string $group The group the admin kit picked.
+	 * @param string $slug  The screen's sidebar slug.
+	 */
+	public static function nav_group( $group, $slug = '' ): string {
+		if ( self::SLUG === strtok( (string) $slug, '&' ) && Scout_Chat::outside_on() ) {
+			return 'build';
+		}
+		return (string) $group;
 	}
 
 	public static function parent(): string {

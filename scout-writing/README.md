@@ -25,6 +25,10 @@ can have one (Joy, 2026-11-03).
 - **The dashboard welcome**: "Welcome back, Sam. Here's your next prompt.", the
   prompt (a starred one first, else the next one in the first step), Write this
   one, Pick a different prompt, Keep writing, and their progress.
+  On a site where Scout Build opens Scout Home first after login (the setup
+  file's `dashboard.land_on_home`, Scout Build 0.18.0+), the same welcome is a
+  card on Home instead, headed "Your next prompt.", and the WordPress
+  Dashboard leaves it out, so it shows in one place.
 - Without JavaScript every button still works: Write opens the prompt on its
   own page with a plain form, and Star and Mark done are links.
 

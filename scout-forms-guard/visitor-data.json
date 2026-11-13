@@ -2,5 +2,5 @@
   "plugin": "scout-forms-guard",
   "items": [],
   "cookies": [],
-  "notes": "Scout Forms Guard keeps no information about visitors. It checks Gravity Forms submissions for spam and keeps only a monthly count of blocked ones. A message it marks as spam stays in that form's Spam folder as Gravity Forms' own data, and a file sent to a hidden upload field is dropped before it is saved."
+  "notes": "Scout Forms Guard keeps no information about visitors. It checks Gravity Forms submissions for spam and keeps only a monthly count of blocked ones. A message it marks as spam stays in that form's Spam folder as Gravity Forms' own data, and a file sent to a hidden upload field is dropped before it is saved. On a form set to \"Send only, keep no entry\", Gravity Forms' entry, its files and notes are deleted right after the notification goes out."
 }

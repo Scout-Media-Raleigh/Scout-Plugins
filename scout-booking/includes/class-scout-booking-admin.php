@@ -27,7 +27,7 @@ final class Scout_Booking_Admin {
 	public static function boot(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 31 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
-		foreach ( array( 'decide', 'cancel', 'block', 'unblock', 'settings', 'feed_reset', 'busy' ) as $a ) {
+		foreach ( array( 'decide', 'cancel', 'block', 'unblock', 'settings', 'feed_reset', 'busy', 'type_feed' ) as $a ) {
 			add_action( 'admin_post_scout_booking_' . $a, array( __CLASS__, $a ) );
 		}
 		add_filter( 'plugin_action_links_' . plugin_basename( SCOUT_BOOKING_FILE ), array( __CLASS__, 'action_link' ) );
@@ -302,6 +302,31 @@ final class Scout_Booking_Admin {
 	}
 
 	/**
+	 * A private calendar link for one session type: make it, make a new one
+	 * (the old one stops working), turn it off, or choose names or initials.
+	 */
+	public static function type_feed(): void {
+		self::guard( 'scout_booking_type_feed' );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$op   = isset( $_POST['op'] ) ? sanitize_key( wp_unslash( $_POST['op'] ) ) : '';
+		$type = isset( $_POST['type'] ) ? substr( sanitize_key( wp_unslash( $_POST['type'] ) ), 0, 20 ) : '';
+		if ( 'names' === $op ) {
+			Scout_Booking::save_settings( array( 'type_feed_names' => empty( $_POST['names'] ) ? 0 : 1 ) );
+			self::back( 'type-feed-names', 'sb-type-feeds' );
+		}
+		// phpcs:enable
+		if ( ! Scout_Booking::type( $type ) ) {
+			self::back( 'gone', 'sb-type-feeds' );
+		}
+		if ( 'off' === $op ) {
+			Scout_Booking::set_type_feed( $type, '' );
+			self::back( 'type-feed-off', 'sb-type-feeds' );
+		}
+		Scout_Booking::set_type_feed( $type, Scout_Booking::new_token() );
+		self::back( 'type-feed', 'sb-type-feeds' );
+	}
+
+	/**
 	 * Add, replace or remove a private calendar address. The address is a
 	 * secret: it is never logged and never printed back in full.
 	 */
@@ -383,6 +408,9 @@ final class Scout_Booking_Admin {
 			'saved'          => array( 'success', __( 'Settings saved.', 'scout-booking' ) ),
 			'feed'           => array( 'success', __( 'New calendar address made. The old one stops working, so subscribe again with the new one.', 'scout-booking' ) ),
 			'gone'           => array( 'error', __( 'That booking has already changed. Here is the latest.', 'scout-booking' ) ),
+			'type-feed'      => array( 'success', __( 'Calendar link made for that session type. If it had one before, the old one stops working.', 'scout-booking' ) ),
+			'type-feed-off'  => array( 'success', __( 'That session type’s calendar link is off. Anyone subscribed stops getting updates.', 'scout-booking' ) ),
+			'type-feed-names' => array( 'success', __( 'Saved. Session type calendar links update about once an hour.', 'scout-booking' ) ),
 			'busy-saved'     => array( 'success', __( 'Calendar saved and read. Times you’re busy there aren’t offered for booking.', 'scout-booking' ) ),
 			'busy-unread'    => array( 'warning', __( 'Calendar saved, but it couldn’t be read yet. The reason is below.', 'scout-booking' ) ),
 			'busy-bad'       => array( 'error', __( 'That isn’t a private calendar address. It starts with https:// or webcal://.', 'scout-booking' ) ),
@@ -489,6 +517,14 @@ final class Scout_Booking_Admin {
 					<?php else : ?>
 						<p class="sbk-empty"><?php esc_html_e( 'No requests waiting.', 'scout-booking' ); ?></p>
 					<?php endif; ?>
+					<?php
+					// One summary line; the full count lives in Contacts (Scout CRM), never a second copy here.
+					$declined = self::declines_line( Scout_Booking::decline_counts( 30 ) );
+					if ( '' !== $declined ) {
+						$contacts = self::declines_link();
+						echo '<p class="sh-note" id="sb-declines">' . esc_html( $declined ) . ( '' !== $contacts ? ' <a href="' . esc_url( $contacts ) . '">' . esc_html__( 'See them in Contacts', 'scout-booking' ) . '</a>' : '' ) . '</p>';
+					}
+					?>
 				</section>
 
 				<section class="sh-box" id="sb-schedule">
@@ -709,6 +745,87 @@ final class Scout_Booking_Admin {
 			</form>
 		</section>
 		<?php
+		self::type_feeds_box();
+	}
+
+	/**
+	 * Private calendar links for one session type, for someone who runs only
+	 * those sessions. Closed by default; no type has a link until one is made.
+	 */
+	private static function type_feeds_box(): void {
+		$types = Scout_Booking::types();
+		if ( ! $types ) {
+			return;
+		}
+		$feeds = Scout_Booking::type_feeds();
+		$names = Scout_Booking::settings()['type_feed_names'];
+		$post  = admin_url( 'admin-post.php' );
+		self::ui_fold_open( __( 'Calendar links for one session type', 'scout-booking' ), false, 'sb-type-feeds' );
+		?>
+		<p><?php esc_html_e( 'For someone who runs only one kind of session. Their link shows only that type’s booked sessions: the session, the time and the client’s initials. Never an email, a phone, answers or payments.', 'scout-booking' ); ?></p>
+		<ul class="sbk-list sbk-feeds">
+			<?php foreach ( $types as $id => $t ) : ?>
+				<?php $url = isset( $feeds[ $id ] ) ? Scout_Booking_Front::type_feed_url( (string) $id ) : ''; ?>
+				<li>
+					<p><strong><?php echo esc_html( $t['name'] ); ?></strong></p>
+					<?php if ( '' !== $url ) : ?>
+						<p><label class="screen-reader-text" for="<?php echo esc_attr( 'sbk-type-feed-' . $id ); ?>"><?php echo esc_html( sprintf( /* translators: %s: session type name. */ __( 'Calendar link for %s', 'scout-booking' ), $t['name'] ) ); ?></label><input type="text" id="<?php echo esc_attr( 'sbk-type-feed-' . $id ); ?>" class="large-text code" readonly value="<?php echo esc_attr( $url ); ?>" onclick="this.select()"></p>
+					<?php endif; ?>
+					<form method="post" action="<?php echo esc_url( $post ); ?>" class="sbk-actions">
+						<input type="hidden" name="action" value="scout_booking_type_feed">
+						<input type="hidden" name="type" value="<?php echo esc_attr( (string) $id ); ?>">
+						<?php wp_nonce_field( 'scout_booking_type_feed' ); ?>
+						<?php if ( '' === $url ) : ?>
+							<button type="submit" name="op" value="make" class="button"><?php esc_html_e( 'Make a calendar link', 'scout-booking' ); ?></button>
+						<?php else : ?>
+							<button type="submit" name="op" value="make" class="button sh-quiet"><?php esc_html_e( 'Make a new link (the old one stops working)', 'scout-booking' ); ?></button>
+							<button type="submit" name="op" value="off" class="button sh-quiet"><?php esc_html_e( 'Turn this link off', 'scout-booking' ); ?></button>
+						<?php endif; ?>
+					</form>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+		<form method="post" action="<?php echo esc_url( $post ); ?>">
+			<input type="hidden" name="action" value="scout_booking_type_feed">
+			<input type="hidden" name="op" value="names">
+			<?php wp_nonce_field( 'scout_booking_type_feed' ); ?>
+			<p class="sbk-check"><label><input type="checkbox" name="names" value="1" <?php checked( $names ); ?>> <?php esc_html_e( 'Show clients’ full names in these links instead of initials', 'scout-booking' ); ?></label></p>
+			<p><button type="submit" class="button"><?php esc_html_e( 'Save', 'scout-booking' ); ?></button></p>
+		</form>
+		<?php
+		self::ui_fold_close();
+	}
+
+	/**
+	 * One line on the Schedule: requests declined in the last 30 days, by the
+	 * reason picked. '' when there were none. Pure.
+	 *
+	 * @param array<string,int> $counts From Scout_Booking::decline_counts().
+	 */
+	public static function declines_line( array $counts ): string {
+		$parts = array();
+		foreach ( $counts as $reason => $n ) {
+			if ( (int) $n < 1 ) {
+				continue;
+			}
+			$reason = '' !== (string) $reason ? (string) $reason : __( 'no reason given', 'scout-booking' );
+			$lower  = preg_match( '/^\p{Lu}\p{Ll}/u', $reason ) && function_exists( 'mb_strtolower' ) ? mb_strtolower( mb_substr( $reason, 0, 1 ) ) . mb_substr( $reason, 1 ) : $reason;
+			/* translators: 1: the reason, such as "not a fit", 2: how many. */
+			$parts[] = sprintf( __( 'as %1$s: %2$d', 'scout-booking' ), $lower, (int) $n );
+		}
+		if ( ! $parts ) {
+			return '';
+		}
+		/* translators: %s: reasons with counts, such as "as not a fit: 3, as other: 1". */
+		return sprintf( __( 'Declined in the last 30 days %s.', 'scout-booking' ), implode( ', ', $parts ) );
+	}
+
+	/** Where the decline line links: Scout CRM's Contacts, which holds the full count, for people who can open it. */
+	public static function declines_link(): string {
+		if ( ! class_exists( 'Scout_CRM_Backfill' ) || ! method_exists( 'Scout_CRM_Backfill', 'page' ) || ! current_user_can( 'manage_options' ) ) {
+			return '';
+		}
+		return admin_url( 'admin.php?page=' . Scout_CRM_Backfill::page() );
 	}
 
 	/**

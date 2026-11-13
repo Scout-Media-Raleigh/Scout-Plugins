@@ -47,6 +47,23 @@ Off by default; a site that never ticks it sees no change.
 | Clearance on phones | 86 px | How far the button moves up while Scout Call Buttons' bar shows (86 px clears the bar, the same as Scout Chat's own button). 0 to 400. |
 | Launcher selector | Blank | The CSS id or class of the service's button. With it, Scout Chat moves that button up by the clearance while the call bar shows. Blank leaves the button where the service puts it. |
 
+**Where the screen lives (0.4.0).** With an outside widget on, the Chat
+screen is an integration setting, so the dashboard files it under **Scout
+tools** (operators only) instead of Site features, and Site features ends with
+a "Looking for chat settings?" line for operators. Chat messages stay in To do.
+The screen keeps its address. Turn the widget off and it moves back.
+
+**From the theme's setup file.** Scout Build 0.18.0+ fills these from
+`scout-setup.json`, blanks and untouched defaults only, with the same checks as
+the screen: `"chat": { "outside": true, "outside_src": "https://...",
+"outside_async": true, "outside_defer": false, "outside_attrs": { "widget-id":
+"abc123" }, "outside_config_var": "chatSettings", "outside_config": { "color":
+"#0A78C2" }, "outside_position": "left", "outside_clearance": 96,
+"outside_selector": "#chat-launcher" }`. `outside_attrs` takes the screen's
+`name=value` lines as one string, a list of lines, or an object; `outside_config`
+takes a JSON string or an object. `outside` only turns on with a script address
+that passes the check.
+
 **The "chat is here" signal.** Scout Call Buttons lifts Scout Chat's own
 button on phones with `body.scc-on .sc-root`. That contract stays as it is.
 With an outside widget on, Scout Chat also gives the page:

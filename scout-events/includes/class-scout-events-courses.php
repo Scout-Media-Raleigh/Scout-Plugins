@@ -58,19 +58,7 @@ final class Scout_Events_Courses {
 		register_post_type(
 			self::TYPE,
 			array(
-				'labels'              => array(
-					'name'               => __( 'Courses', 'scout-events' ),
-					'singular_name'      => __( 'Course', 'scout-events' ),
-					'add_new'            => __( 'Add course', 'scout-events' ),
-					'add_new_item'       => __( 'Add course', 'scout-events' ),
-					'edit_item'          => __( 'Edit course', 'scout-events' ),
-					'search_items'       => __( 'Search courses', 'scout-events' ),
-					'all_items'          => __( 'Courses', 'scout-events' ),
-					'not_found'          => __( 'No courses yet.', 'scout-events' ),
-					'not_found_in_trash' => __( 'No courses in the trash.', 'scout-events' ),
-					'featured_image'     => __( 'Course photo', 'scout-events' ),
-					'set_featured_image' => __( 'Set course photo', 'scout-events' ),
-				),
+				'labels'              => self::labels(),
 				'public'              => false,
 				'show_ui'             => true,
 				'show_in_menu'        => false,
@@ -79,6 +67,86 @@ final class Scout_Events_Courses {
 				'exclude_from_search' => true,
 				'supports'            => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ),
 			)
+		);
+	}
+
+	/* ---------- the site's word for courses ---------- */
+
+	/** True when the site set its own word (Events, Settings, "Your word for courses"). */
+	public static function custom_label(): bool {
+		return '' !== Scout_Events::settings()['course_label'];
+	}
+
+	/**
+	 * The site's word for courses, such as "Trainings", or "Courses". With
+	 * $one, the word for one: its own setting, else the plural without its
+	 * last s, else "Course".
+	 */
+	public static function label( bool $one = false ): string {
+		$s    = Scout_Events::settings();
+		$many = $s['course_label'];
+		if ( ! $one ) {
+			return '' !== $many ? $many : __( 'Courses', 'scout-events' );
+		}
+		if ( '' !== $s['course_label_one'] ) {
+			return $s['course_label_one'];
+		}
+		if ( '' !== $many ) {
+			if ( preg_match( '/sses$/i', $many ) ) {
+				return substr( $many, 0, -2 ); // Classes, Class.
+			}
+			return preg_match( '/[^sS]s$/', $many ) ? substr( $many, 0, -1 ) : $many;
+		}
+		return __( 'Course', 'scout-events' );
+	}
+
+	/** The word inside a sentence: lower case first letter, unless it reads as initials ("CPR"). */
+	public static function word( bool $one = false ): string {
+		$w = self::label( $one );
+		return preg_match( '/^\p{Lu}\p{Ll}/u', $w ) ? ( function_exists( 'mb_strtolower' ) ? mb_strtolower( mb_substr( $w, 0, 1 ) ) . mb_substr( $w, 1 ) : lcfirst( $w ) ) : $w;
+	}
+
+	/** Post type labels in the site's word. Without one, exactly the words from before. */
+	public static function labels(): array {
+		if ( ! self::custom_label() ) {
+			return array(
+				'name'               => __( 'Courses', 'scout-events' ),
+				'singular_name'      => __( 'Course', 'scout-events' ),
+				'add_new'            => __( 'Add course', 'scout-events' ),
+				'add_new_item'       => __( 'Add course', 'scout-events' ),
+				'edit_item'          => __( 'Edit course', 'scout-events' ),
+				'search_items'       => __( 'Search courses', 'scout-events' ),
+				'all_items'          => __( 'Courses', 'scout-events' ),
+				'not_found'          => __( 'No courses yet.', 'scout-events' ),
+				'not_found_in_trash' => __( 'No courses in the trash.', 'scout-events' ),
+				'featured_image'     => __( 'Course photo', 'scout-events' ),
+				'set_featured_image' => __( 'Set course photo', 'scout-events' ),
+			);
+		}
+		$many = self::label();
+		$one  = self::word( true );
+		$all  = self::word();
+		return array(
+			'name'               => $many,
+			'singular_name'      => self::label( true ),
+			/* translators: %s: the site's word for one course, such as "training". */
+			'add_new'            => sprintf( __( 'Add %s', 'scout-events' ), $one ),
+			/* translators: %s: the site's word for one course. */
+			'add_new_item'       => sprintf( __( 'Add %s', 'scout-events' ), $one ),
+			/* translators: %s: the site's word for one course. */
+			'edit_item'          => sprintf( __( 'Edit %s', 'scout-events' ), $one ),
+			/* translators: %s: the site's word for courses, such as "trainings". */
+			'search_items'       => sprintf( __( 'Search %s', 'scout-events' ), $all ),
+			'all_items'          => $many,
+			/* translators: %s: the site's word for courses. */
+			'not_found'          => sprintf( __( 'No %s yet.', 'scout-events' ), $all ),
+			/* translators: %s: the site's word for courses. */
+			'not_found_in_trash' => sprintf( __( 'No %s in the trash.', 'scout-events' ), $all ),
+			/* translators: %s: the site's word for one course, such as "Training". */
+			'featured_image'     => sprintf( __( '%s photo', 'scout-events' ), self::label( true ) ),
+			/* translators: %s: the site's word for one course. */
+			'set_featured_image' => sprintf( __( 'Set %s photo', 'scout-events' ), $one ),
+			'menu_name'          => $many,
 		);
 	}
 
@@ -379,8 +447,20 @@ final class Scout_Events_Courses {
 		}
 		wp_enqueue_style( 'scout-events' );
 		$only_dates = 'dates' === ( $atts['show'] ?? '' );
-		$title      = in_array( strtolower( (string) ( $atts['title'] ?? '' ) ), array( 'yes', '1', 'true' ), true );
-		return self::panel( $id, $only_dates, $title );
+		$want       = strtolower( (string) ( $atts['title'] ?? '' ) );
+		$title      = in_array( $want, array( 'yes', '1', 'true' ), true );
+		$panel      = self::panel( $id, $only_dates, $title );
+		// title="label" heads the panel with the site's word, such as "Training: Level 1".
+		if ( 'label' === $want ) {
+			$panel = preg_replace( '/^(<div [^>]*>)/', '$1' . self::heading( $id ), $panel, 1 );
+		}
+		return $panel;
+	}
+
+	/** The heading for title="label": the site's word for one course, then the course name. */
+	public static function heading( int $id ): string {
+		/* translators: 1: the site's word for one course, such as "Training", 2: the course name. */
+		return '<h2 class="se-course-title">' . esc_html( sprintf( __( '%1$s: %2$s', 'scout-events' ), self::label( true ), get_the_title( $id ) ) ) . '</h2>';
 	}
 
 	/** The course panel: dates, place, level, prices, teachers and the register button. */
@@ -780,7 +860,11 @@ final class Scout_Events_Courses {
 	}
 
 	public static function title_placeholder( $text, $post ) {
-		return ( $post instanceof WP_Post && self::TYPE === $post->post_type ) ? __( 'Course name, with no prices or sale words', 'scout-events' ) : $text;
+		if ( ! ( $post instanceof WP_Post && self::TYPE === $post->post_type ) ) {
+			return $text;
+		}
+		/* translators: %s: the site's word for one course, such as "Training". */
+		return self::custom_label() ? sprintf( __( '%s name, with no prices or sale words', 'scout-events' ), self::label( true ) ) : __( 'Course name, with no prices or sale words', 'scout-events' );
 	}
 
 	/** The Events edit-screen look on the course screens too. */
@@ -810,7 +894,8 @@ final class Scout_Events_Courses {
 		echo '<div class="se-top">';
 		self::render( $post );
 		echo '</div>';
-		echo '<h2 class="se-editor-head">' . esc_html__( 'About the course', 'scout-events' ) . '<span>' . esc_html__( 'What people learn and who it is for. The excerpt, or the start of this, is the description Google reads.', 'scout-events' ) . '</span></h2>';
+		/* translators: %s: the site's word for one course, such as "training". */
+		echo '<h2 class="se-editor-head">' . esc_html( self::custom_label() ? sprintf( __( 'About the %s', 'scout-events' ), self::word( true ) ) : __( 'About the course', 'scout-events' ) ) . '<span>' . esc_html__( 'What people learn and who it is for. The excerpt, or the start of this, is the description Google reads.', 'scout-events' ) . '</span></h2>';
 	}
 
 	private static function render( WP_Post $post ): void {

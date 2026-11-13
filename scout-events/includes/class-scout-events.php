@@ -59,6 +59,9 @@ final class Scout_Events {
 				'address_private'  => 0,
 				'address_note'     => '',
 				'door_role'        => 0,
+				// Added 0.18.0: the site's own word for courses, such as "Trainings". Blank keeps "Courses".
+				'course_label'     => '',
+				'course_label_one' => '',
 			)
 		);
 		foreach ( array( 'event_slug', 'speaker_slug', 'session_slug' ) as $key ) {
@@ -72,12 +75,20 @@ final class Scout_Events {
 		if ( '' === $s['agreements_label'] ) {
 			$s['agreements_label'] = __( 'Community Agreements', 'scout-events' );
 		}
+		$s['course_label']     = self::clean_label( (string) $s['course_label'] );
+		$s['course_label_one'] = self::clean_label( (string) $s['course_label_one'] );
 		$s['address_private'] = ! empty( $s['address_private'] ) ? 1 : 0;
 		$s['address_note']    = sanitize_text_field( (string) $s['address_note'] );
 		if ( '' === $s['address_note'] ) {
 			$s['address_note'] = self::default_address_note();
 		}
 		return $s;
+	}
+
+	/** A short plain label: no tags, at most 40 characters. */
+	public static function clean_label( string $label ): string {
+		$label = trim( sanitize_text_field( $label ) );
+		return function_exists( 'mb_substr' ) ? mb_substr( $label, 0, 40 ) : substr( $label, 0, 40 );
 	}
 
 	/** The line under the venue when the address goes out with the ticket. */

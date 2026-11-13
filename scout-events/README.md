@@ -24,6 +24,15 @@ and **Settings**. Other Scout features add their screens to this menu on the
 `scout_events_needs_you` filter. Anyone who can edit posts can manage events;
 only administrators change settings.
 
+**Needs you and Scout Build's To do are one queue.** Presenter applications,
+presenter profile changes, vendor applications, open volunteer spots (events in
+the next two weeks) and waitlist offers (someone waits and a place is open) also
+show in To do, built from the same Needs you rows, so the two never disagree.
+Each To do item opens the exact screen and needs `scout_events_manage_people`,
+so staff without it never see it or its count (Scout Build 0.18.0 or later). A
+Needs you row joins To do when it carries a `todo` part: `id`, `label`,
+`count` and, optionally, `cap`.
+
 ### Permissions
 
 | What | Who |
@@ -171,7 +180,8 @@ Show it on a page:
   teachers and the register button. `course="its-address-word"` works too,
   and without either it shows the first course picked for that page.
 - `show="dates"` for the dates and button only; `title="yes"` puts the
-  course name above as an H2 (for a page with several courses).
+  course name above as an H2 (for a page with several courses);
+  `title="label"` puts the site's word and the name there ("Training: Level 1").
 - Filters: `scout_events_course_rows` (rows of the panel),
   `scout_events_course_button` (the button or its stand-in),
   `scout_events_course_schema` ( $node, $course_id, $page_id ).
@@ -180,6 +190,12 @@ The register button carries `data-scout-track="course_register_click"`.
 
 Course names follow Google's course rules: no prices or sale words in the
 name. Google shows courses as a group once a site has three or more.
+
+**Your word for courses** (Events, Settings). A site can call them Trainings,
+Classes or Programs: the menu item, the course list and edit screens, and the
+`title="label"` heading use it. One field for more than one, one for just one
+(blank takes the first word without its last s). Both blank, the default,
+keeps every word exactly as before: Courses.
 
 ## Speaker photos
 

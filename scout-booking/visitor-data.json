@@ -14,6 +14,13 @@
       "shared": "Whatever calendar app the owner adds the feed to"
     },
     {
+      "what": "Initials (or, if the owner turns it on, the full name) and the time of each booked session of one session type, from the last 30 days and the next 400 days",
+      "where": "A private calendar link for that session type, a secret address on this website",
+      "kept": "Built fresh each time the link is read; nothing extra is stored",
+      "shared": "Whatever calendar app the person given the link adds it to",
+      "when": "only when the owner makes a calendar link for a session type"
+    },
+    {
       "what": "What the visitor typed in the booking form, when the form has to be sent back to fix a mistake",
       "where": "A temporary record in this website's database",
       "kept": "10 minutes",

@@ -549,6 +549,8 @@ final class Scout_Hub_Admin {
 			sprintf( __( '%1$s is ready for AI search on %2$d of %3$d checks.', 'scout-build' ), $site, $ready, count( $ai ) ),
 			'<a class="button sh-quiet" href="' . esc_url( self::url( 'health' ) ) . '">' . esc_html__( 'See the full report', 'scout-build' ) . ' &rsaquo;</a>'
 		);
+		// Cards other plugins add to Home (scout_hub_home_cards), such as the next writing prompt.
+		Scout_Hub_Owner_View::render_cards();
 		?>
 
 
@@ -604,20 +606,32 @@ final class Scout_Hub_Admin {
 		} elseif ( class_exists( 'Scout_Core_Admin' ) && class_exists( 'Scout_Hours_Admin' ) ) {
 			$do[] = array( admin_url( 'admin.php?page=scout&tab=business' ), __( 'Business info', 'scout-build' ), __( 'Name, phone, address and profiles, typed once.', 'scout-build' ) );
 		}
+		// The setup file's shortcuts and the scout_hub_home_shortcuts filter add to the list.
+		$do = Scout_Hub_Owner_View::shortcuts(
+			array_map(
+				static fn( $row ) => array( 'url' => $row[0], 'label' => $row[1], 'note' => $row[2] ),
+				$do
+			)
+		);
 		?>
+		<?php if ( $do ) : ?>
 		<section class="sh-box sh-ov-do">
 			<h2 class="sh-title"><?php esc_html_e( 'Things you can do here', 'scout-build' ); ?></h2>
 			<ul class="sh-rows">
-				<?php foreach ( $do as list( $url, $title, $text ) ) : ?>
+				<?php foreach ( $do as $row ) : ?>
 					<li class="sh-row">
 						<div>
-							<p class="sh-row-name"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $title ); ?> &rsaquo;</a></p>
-							<p class="sh-row-sub"><?php echo esc_html( $text ); ?></p>
+							<p class="sh-row-name"><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['label'] ); ?> &rsaquo;</a></p>
+							<?php if ( '' !== $row['note'] ) : ?>
+								<p class="sh-row-sub"><?php echo esc_html( $row['note'] ); ?></p>
+							<?php endif; ?>
 						</div>
 					</li>
 				<?php endforeach; ?>
 			</ul>
 		</section>
+		<?php endif; ?>
+		<?php Scout_Hub_Owner_View::render_links(); ?>
 		<?php if ( $operator ) : ?>
 			<p class="sh-ov-ops">
 				<span class="sh-label"><?php echo esc_html( method_exists( 'Scout_Admin_UI', 'label' ) ? Scout_Admin_UI::label( 'build' ) : __( 'Scout tools', 'scout-build' ) ); ?></span>

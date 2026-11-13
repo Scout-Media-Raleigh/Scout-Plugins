@@ -92,6 +92,13 @@ ever saved: every payment, renewals included, is a fresh checkout.
 Applications to read and renewals due also show in **Events, Needs you**, and
 in the Events toolbar menu, so one screen shows everything waiting.
 
+**In To do.** With Scout Build, three items wait in **Scout, To do**:
+membership applications, member invitations to read, and memberships that
+renew within 14 days or are past due. Each opens its own Members screen and
+needs `list_users` (the Members screens' capability), so staff who cannot
+open Members never see it, its count or its email line (Scout Build 0.18.0 or
+later). The same rows feed Events Needs you, and each is added once.
+
 ## On the site
 
 - `[scout_membership]` the membership page: the application for new people,

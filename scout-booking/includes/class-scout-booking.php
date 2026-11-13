@@ -40,6 +40,9 @@ final class Scout_Booking {
 	const DB_VERSION = '2';
 	const CRON       = 'scout_booking_hourly';
 
+	/** Private calendar links for one session type: type id => secret token. Not autoloaded. */
+	const TYPE_FEEDS = 'scout_booking_type_feeds';
+
 	/** Statuses that hold a time on the calendar. "pending" only while its hold lasts. */
 	const HOLDING = array( 'requested', 'approved', 'pending', 'confirmed', 'blocked' );
 
@@ -136,6 +139,8 @@ final class Scout_Booking {
 			'link_url'        => '',
 			'link_skip'       => array(),
 			'schema'          => 0,
+			// Added 0.4.0: session type calendar links show initials unless this is on.
+			'type_feed_names' => 0,
 		);
 	}
 
@@ -202,6 +207,7 @@ final class Scout_Booking {
 			'link_url'        => self::clean_link( (string) $s['link_url'] ),
 			'link_skip'       => array_values( array_filter( array_map( static fn( $id ) => substr( (string) preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $id ) ), 0, 20 ), (array) $s['link_skip'] ) ) ),
 			'schema'          => ! empty( $s['schema'] ),
+			'type_feed_names' => ! empty( $s['type_feed_names'] ),
 		);
 		return $out;
 	}
@@ -209,6 +215,71 @@ final class Scout_Booking {
 	public static function save_settings( array $changes ): void {
 		$s = array_merge( (array) get_option( self::OPTION, array() ), $changes );
 		update_option( self::OPTION, $s, false );
+	}
+
+	/* ---------- calendar links for one session type ---------- */
+
+	/**
+	 * The session types that have their own private calendar link, so a staff
+	 * member can subscribe to only their sessions. None until the owner makes one.
+	 *
+	 * @return array<string,string> type id => token
+	 */
+	public static function type_feeds(): array {
+		$out = array();
+		foreach ( (array) get_option( self::TYPE_FEEDS, array() ) as $type => $token ) {
+			$type  = substr( (string) preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $type ) ), 0, 20 );
+			$token = (string) preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $token ) );
+			if ( '' !== $type && strlen( $token ) >= 20 ) {
+				$out[ $type ] = $token;
+			}
+		}
+		return $out;
+	}
+
+	/** Make (or replace) a type's link, or remove it with an empty token. */
+	public static function set_type_feed( string $type, string $token ): void {
+		$all = self::type_feeds();
+		if ( '' === $token ) {
+			unset( $all[ $type ] );
+		} else {
+			$all[ $type ] = $token;
+		}
+		update_option( self::TYPE_FEEDS, $all, false );
+	}
+
+	/** The session type a link's token opens, or ''. Compared in constant time. */
+	public static function type_for_feed( string $token ): string {
+		if ( strlen( $token ) < 20 ) {
+			return '';
+		}
+		foreach ( self::type_feeds() as $type => $want ) {
+			if ( hash_equals( $want, $token ) ) {
+				return (string) $type;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * What a session type's link carries: that type's confirmed bookings only,
+	 * never requests, holds, blocked time or other types. Pure.
+	 */
+	public static function type_feed_rows( array $rows, string $type ): array {
+		return array_values( array_filter( $rows, static fn( $r ) => 'confirmed' === ( $r['status'] ?? '' ) && $type === (string) ( $r['type_id'] ?? '' ) ) );
+	}
+
+	/** "J. S." from a booking's names, for calendars other people see. */
+	public static function initials( array $row ): string {
+		$out = array();
+		foreach ( array( (string) ( $row['first_name'] ?? '' ), (string) ( $row['last_name'] ?? '' ) ) as $name ) {
+			$name = trim( $name );
+			if ( '' !== $name ) {
+				$first = function_exists( 'mb_substr' ) ? mb_substr( $name, 0, 1 ) : substr( $name, 0, 1 );
+				$out[] = ( function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $first ) : strtoupper( $first ) ) . '.';
+			}
+		}
+		return implode( ' ', $out );
 	}
 
 	/** Where booking emails for the owner go. */

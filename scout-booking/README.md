@@ -208,6 +208,22 @@ owner writes their own.
 - Block time: a day, a range of days, or hours on a day, with a note.
 - The phone calendar link (a private calendar feed): subscribe to it in a phone calendar; it refreshes
   about hourly. "Make a new address" retires the old one.
+- **Calendar links for one session type** (a closed box under the phone
+  calendar link). For someone who runs only one kind of session: "Make a
+  calendar link" gives that type its own secret address. It carries only that
+  type's booked (confirmed) sessions, never requests, holds, blocked time or
+  other types, and each one reads "Session name · J. S.": the session, the
+  time and the client's initials. No email, phone, answers, notes or money.
+  "Show clients' full names in these links instead of initials" (off by
+  default) swaps initials for names. "Make a new link" retires the old one and
+  "Turn this link off" removes it. No type has a link until one is made. The
+  tokens live in their own option (`scout_booking_type_feeds`, not loaded on
+  every page).
+- **Declines, last 30 days.** Under Requests to approve, one line counts the
+  requests declined in the last 30 days by reason ("Declined in the last 30
+  days as not a fit: 3, as other: 1."). With Scout CRM on, it links to
+  Contacts, where the full count lives, for people who can open it. Nothing
+  shows when nothing was declined.
 - A count of requests on the sidebar item and in the Scout menu, and a line in
   Scout Events' "Needs you" list.
 
@@ -318,6 +334,7 @@ requests unpaid after the pay window, and sends reminders.
 |---|---|---|---|
 | Booking details: first and last name, email, phone, the session and time picked, answers to the session's intake questions (for a tick box to agree, the exact sentence, whether it was ticked, when, and the link shown beside it), whether the newsletter box was ticked, the price, amount due, amount paid and order number, and, for a declined request, the reason the owner picked | This website's database, in the bookings table (the Bookings screen) | Until someone deletes it. The hourly check only changes a booking's status and never deletes it. The WordPress personal data tools export a person's bookings by email address. The eraser deletes unpaid bookings and keeps paid ones as payment records, with the name, email, phone and answers taken out, and deleting the plugin removes the whole table. | Emailed to the site's own booking notice address (the notice address in Business info unless another is set), with the intake answers |
 | Name, email and phone of each booking from the last 30 days and the next 400 days | The owner's private calendar feed, a secret address on this website | Built fresh each time the feed is read; nothing extra is stored | Whatever calendar app the owner adds the feed to |
+| Initials (or, if the owner turns it on, the full name) and the time of each booked session of one session type, from the last 30 days and the next 400 days (only when the owner makes a calendar link for a session type) | A private calendar link for that session type, a secret address on this website | Built fresh each time the link is read; nothing extra is stored | Whatever calendar app the person given the link adds it to |
 | What the visitor typed in the booking form, when the form has to be sent back to fix a mistake (only when the form is sent back with a problem, such as a missing field) | A temporary record in this website's database | 10 minutes | Nobody |
 | Email, first name, the page the form was on, the exact words beside the newsletter box, and the session type (only when the visitor ticks the newsletter box and Scout Newsletter is on) | Handed to the Scout Newsletter plugin. This plugin keeps no separate copy beyond the booking itself. | Not kept separately by this plugin | Scout Newsletter, which sends it to the newsletter service set there |
 | Name, email, phone, the appointment time and the booking's code (only when WooCommerce is on and the session takes a payment online) | WooCommerce's cart, checkout and order records on this website | As long as WooCommerce keeps the order. This plugin never deletes orders. | Nobody |

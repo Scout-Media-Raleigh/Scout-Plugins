@@ -255,6 +255,12 @@ final class Scout_Booking_Front {
 		return add_query_arg( 'scout_booking_feed', Scout_Booking::settings()['feed_token'], home_url( '/' ) );
 	}
 
+	/** A session type's own private calendar link, or '' when it has none. */
+	public static function type_feed_url( string $type ): string {
+		$token = Scout_Booking::type_feeds()[ $type ] ?? '';
+		return '' !== $token ? add_query_arg( 'scout_booking_type_feed', $token, home_url( '/' ) ) : '';
+	}
+
 	/** The booking page's own address with step arguments, keeping the page's other arguments out. */
 	private static function step_url( array $args ): string {
 		$base = get_permalink();
@@ -287,6 +293,17 @@ final class Scout_Booking_Front {
 			/* translators: %s: site name. */
 			$name = sprintf( __( '%s bookings', 'scout-booking' ), wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES ) );
 			self::serve_ics( Scout_Booking_Emails::ics( $rows, $name, true ), 'bookings.ics', false );
+		}
+		if ( isset( $_GET['scout_booking_type_feed'] ) ) {
+			$type = Scout_Booking::type_for_feed( sanitize_key( wp_unslash( $_GET['scout_booking_type_feed'] ) ) );
+			$info = '' !== $type ? Scout_Booking::type( $type ) : null;
+			if ( ! $info ) {
+				status_header( 404 );
+				exit;
+			}
+			$now  = Scout_Booking::now();
+			$rows = Scout_Booking::type_feed_rows( Scout_Booking::between( $now->modify( '-30 days' )->format( 'Y-m-d H:i:s' ), $now->modify( '+400 days' )->format( 'Y-m-d H:i:s' ), array( 'confirmed' ) ), $type );
+			self::serve_ics( Scout_Booking_Emails::type_ics( $rows, $info['name'], Scout_Booking::settings()['type_feed_names'] ), 'sessions.ics', false );
 		}
 		// phpcs:enable
 		if ( self::is_booking_view() ) {

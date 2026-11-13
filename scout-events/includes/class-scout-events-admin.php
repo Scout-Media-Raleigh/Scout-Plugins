@@ -30,6 +30,8 @@ final class Scout_Events_Admin {
 		add_action( 'admin_bar_menu', array( __CLASS__, 'toolbar' ), 91 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'toolbar_style' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'toolbar_style' ) );
+		// Applications and waitlist offers also wait in Scout Build's To do, read from the same rows.
+		add_filter( 'scout_hub_inbox_items', array( __CLASS__, 'todo_items' ), 20 );
 	}
 
 	/**
@@ -85,7 +87,7 @@ final class Scout_Events_Admin {
 			Scout_Events::SESSION => __( 'Sessions', 'scout-events' ),
 			Scout_Events::SPEAKER => __( 'Speakers', 'scout-events' ),
 			Scout_Events_Vendors::TYPE => __( 'Vendors', 'scout-events' ),
-			Scout_Events_Courses::TYPE => __( 'Courses', 'scout-events' ),
+			Scout_Events_Courses::TYPE => Scout_Events_Courses::label(),
 		);
 		foreach ( $lists as $type => $label ) {
 			$list = 'edit.php?post_type=' . $type;
@@ -207,6 +209,8 @@ final class Scout_Events_Admin {
 			'address_private'  => ! empty( $in['address_private'] ) ? 1 : 0,
 			'address_note'     => sanitize_text_field( (string) ( $in['address_note'] ?? '' ) ),
 			'door_role'        => ! empty( $in['door_role'] ) ? 1 : 0,
+			'course_label'     => Scout_Events::clean_label( (string) ( $in['course_label'] ?? '' ) ),
+			'course_label_one' => Scout_Events::clean_label( (string) ( $in['course_label_one'] ?? '' ) ),
 		);
 		// The default words are stored as empty, so a site keeps getting them as they improve.
 		if ( Scout_Events::default_address_note() === $new['address_note'] ) {
@@ -419,6 +423,54 @@ final class Scout_Events_Admin {
 		return (array) apply_filters( 'scout_events_needs_you', $items );
 	}
 
+	/**
+	 * The Needs you rows that also belong in Scout Build's To do: presenter and
+	 * vendor applications, presenter profile changes, open volunteer spots and
+	 * waitlist offers. Each such row carries a 'todo' part (id, label, count,
+	 * and optionally cap), so Needs you and To do read the same rows and never
+	 * disagree. Each item needs the people capability, so staff without it
+	 * never see it, its count or its email line (Scout Build 0.18.0 or later).
+	 *
+	 * @param array $items Scout Build's To do items.
+	 */
+	public static function todo_items( $items ): array {
+		return self::to_todo( (array) $items, self::needs_you() );
+	}
+
+	/**
+	 * Turn Needs you rows into To do items, skipping rows without a 'todo'
+	 * part and any id already in the list (Scout Members adds its own rows to
+	 * both lists, so whichever runs second leaves them alone). Pure.
+	 *
+	 * @param array $items To do items so far.
+	 * @param array $rows  Needs you rows.
+	 */
+	public static function to_todo( array $items, array $rows, int $now = 0 ): array {
+		$seen = array_flip( array_map( static fn( $i ) => (string) ( is_array( $i ) ? ( $i['id'] ?? '' ) : '' ), $items ) );
+		foreach ( $rows as $row ) {
+			$todo = is_array( $row ) && isset( $row['todo'] ) && is_array( $row['todo'] ) ? $row['todo'] : null;
+			if ( ! $todo || empty( $todo['id'] ) || empty( $row['url'] ) || isset( $seen[ (string) $todo['id'] ] ) ) {
+				continue;
+			}
+			$count   = max( 1, (int) ( $todo['count'] ?? 1 ) );
+			$items[] = array(
+				'id'      => (string) $todo['id'],
+				'kind'    => 'other',
+				'label'   => (string) ( $todo['label'] ?? '' ),
+				/* translators: %d: how many are waiting */
+				'from'    => sprintf( _n( '%d waiting', '%d waiting', $count, 'scout-events' ), $count ),
+				'preview' => (string) ( $row['text'] ?? '' ),
+				'when'    => $now ? $now : time(),
+				'url'     => (string) $row['url'],
+				'waiting' => true,
+				'count'   => $count,
+				'cap'     => (string) ( $todo['cap'] ?? Scout_Events_People::CAP ),
+			);
+			$seen[ (string) $todo['id'] ] = true;
+		}
+		return $items;
+	}
+
 	public static function render_import(): void {
 		self::render( 'import' );
 	}
@@ -595,6 +647,20 @@ final class Scout_Events_Admin {
 							<span class="sh-note" id="<?php echo esc_attr( $f[0] . '-end' ); ?>"><?php esc_html_e( 'Then a slash and the name, like /name.', 'scout-events' ); ?></span>
 						</p>
 					<?php endforeach; ?>
+				</section>
+
+				<section class="sh-box" id="se-course-label">
+					<h2 class="sh-title"><?php esc_html_e( 'Your word for courses', 'scout-events' ); ?></h2>
+					<p><?php esc_html_e( 'The menu, the course screens and a course heading on a page use this word. Leave both blank for Courses.', 'scout-events' ); ?></p>
+					<p class="se-field">
+						<label for="se-set-course-label"><?php esc_html_e( 'More than one, such as Trainings', 'scout-events' ); ?></label>
+						<input type="text" id="se-set-course-label" name="scout_events[course_label]" value="<?php echo esc_attr( $s['course_label'] ); ?>" maxlength="40" class="regular-text" placeholder="<?php esc_attr_e( 'Courses', 'scout-events' ); ?>">
+					</p>
+					<p class="se-field">
+						<label for="se-set-course-label-one"><?php esc_html_e( 'Just one, such as Training', 'scout-events' ); ?></label>
+						<input type="text" id="se-set-course-label-one" name="scout_events[course_label_one]" value="<?php echo esc_attr( $s['course_label_one'] ); ?>" maxlength="40" class="regular-text" placeholder="<?php esc_attr_e( 'Course', 'scout-events' ); ?>" aria-describedby="se-set-course-label-one-help">
+						<span class="sh-note" id="se-set-course-label-one-help"><?php esc_html_e( 'Blank uses the word above without its last s.', 'scout-events' ); ?></span>
+					</p>
 				</section>
 
 				<section class="sh-box" id="se-details">

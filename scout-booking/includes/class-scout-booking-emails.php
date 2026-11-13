@@ -353,6 +353,47 @@ final class Scout_Booking_Emails {
 		return implode( "\r\n", array_map( array( __CLASS__, 'fold' ), $lines ) ) . "\r\n";
 	}
 
+	/**
+	 * A session type's private calendar link: that type's confirmed bookings
+	 * with the session name, the time and the client's initials (full names
+	 * only when the owner turns that on). Never an email, a phone, answers, a
+	 * note or money, so it is safe on a staff member's own phone.
+	 *
+	 * @param array  $rows  Rows from Scout_Booking::type_feed_rows().
+	 * @param string $name  The calendar's name.
+	 * @param bool   $names Show full names instead of initials.
+	 */
+	public static function type_ics( array $rows, string $name, bool $names = false ): string {
+		$f     = 'Ymd\THis\Z';
+		$host  = wp_parse_url( home_url(), PHP_URL_HOST );
+		$lines = array(
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:-//Scout Media//Scout Booking ' . SCOUT_BOOKING_VERSION . '//EN',
+			'CALSCALE:GREGORIAN',
+			'METHOD:PUBLISH',
+			'X-WR-CALNAME:' . self::esc_ics( $name ),
+			'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+			'X-PUBLISHED-TTL:PT1H',
+		);
+		foreach ( $rows as $row ) {
+			if ( 'confirmed' !== ( $row['status'] ?? '' ) ) {
+				continue; // Requests, holds and blocked time never reach a shared calendar.
+			}
+			$who     = $names ? Scout_Booking::client_name( $row ) : Scout_Booking::initials( $row );
+			$lines[] = 'BEGIN:VEVENT';
+			$lines[] = 'UID:booking-type-' . $row['token'] . '@' . $host;
+			$lines[] = 'DTSTAMP:' . gmdate( $f );
+			$lines[] = 'DTSTART:' . gmdate( $f, Scout_Booking::at( $row['start_at'] )->getTimestamp() );
+			$lines[] = 'DTEND:' . gmdate( $f, Scout_Booking::at( $row['end_at'] )->getTimestamp() );
+			$lines[] = 'SUMMARY:' . self::esc_ics( $row['type_name'] . ( '' !== $who ? ' · ' . $who : '' ) );
+			$lines[] = 'STATUS:CONFIRMED';
+			$lines[] = 'END:VEVENT';
+		}
+		$lines[] = 'END:VCALENDAR';
+		return implode( "\r\n", array_map( array( __CLASS__, 'fold' ), $lines ) ) . "\r\n";
+	}
+
 	/** Remove temporary attachments and their folders. */
 	private static function cleanup( array $files ): void {
 		foreach ( $files as $f ) {

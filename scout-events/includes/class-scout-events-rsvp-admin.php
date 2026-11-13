@@ -59,6 +59,7 @@ final class Scout_Events_RSVP_Admin {
 					'text'   => sprintf( _n( '%1$d person is on the waitlist for %2$s, and a place is open.', '%1$d people are on the waitlist for %2$s, and places are open.', $c['waitlist'], 'scout-events' ), $c['waitlist'], get_the_title( $id ) ),
 					'url'    => Scout_Events_Admin::signups_url( $id ),
 					'action' => __( 'Move people in', 'scout-events' ),
+					'todo'   => array( 'id' => 'events-waitlist-' . (int) $id, 'label' => __( 'Waitlist, a place is open', 'scout-events' ), 'count' => (int) $c['waitlist'] ),
 				);
 			}
 		}

@@ -28,6 +28,8 @@ final class Scout_Members_Admin {
 		add_action( 'admin_post_scout_members_review', array( __CLASS__, 'review' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( SCOUT_MEMBERS_FILE ), array( __CLASS__, 'action_link' ) );
 		add_filter( 'scout_events_needs_you', array( __CLASS__, 'needs_you' ) );
+		// Applications, invitations and renewals due soon also wait in Scout Build's To do.
+		add_filter( 'scout_hub_inbox_items', array( __CLASS__, 'todo_items' ) );
 		add_action( 'admin_bar_menu', array( __CLASS__, 'toolbar' ), 92 );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'box' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_box' ), 10, 2 );
@@ -89,15 +91,10 @@ final class Scout_Members_Admin {
 		if ( ! current_user_can( self::CAP ) ) {
 			return array();
 		}
-		$items   = array();
-		$applied = count( Scout_Members::ids( 'applied' ) );
-		if ( $applied ) {
-			$items[] = array(
-				/* translators: %d: number of applications. */
-				'text'   => sprintf( _n( '%d membership application to read.', '%d membership applications to read.', $applied, 'scout-members' ), $applied ),
-				'url'    => self::url() . '#sm-applications',
-				'action' => __( 'Read applications', 'scout-members' ),
-			);
+		$items = array();
+		$queue = self::queue();
+		if ( isset( $queue['applications'] ) ) {
+			$items[] = $queue['applications'];
 		}
 		$review = count( self::to_review() );
 		if ( $review ) {
@@ -116,6 +113,85 @@ final class Scout_Members_Admin {
 				'url'    => self::url( 'renewals' ),
 				'action' => __( 'See renewals', 'scout-members' ),
 			);
+		}
+		return $items;
+	}
+
+	/** Renewals within this many days (or past due) go to Scout Build's To do. */
+	const TODO_RENEW_DAYS = 14;
+
+	/**
+	 * The rows Scout Build's To do shows: applications waiting, invitations to
+	 * read, and memberships that renew within 14 days or are past due. Each
+	 * carries a 'todo' part with its id, label, count and the capability the
+	 * Members screens need, so staff who cannot open Members never see them.
+	 * Not limited to the current reader: To do checks the capability itself.
+	 *
+	 * @return array<string,array{text:string,url:string,action:string,todo:array}>
+	 */
+	public static function queue(): array {
+		$rows    = array();
+		$applied = count( Scout_Members::ids( 'applied' ) );
+		if ( $applied ) {
+			$rows['applications'] = array(
+				/* translators: %d: number of applications. */
+				'text'   => sprintf( _n( '%d membership application to read.', '%d membership applications to read.', $applied, 'scout-members' ), $applied ),
+				'url'    => self::url() . '#sm-applications',
+				'action' => __( 'Read applications', 'scout-members' ),
+				'todo'   => array( 'id' => 'members-applications', 'label' => __( 'Membership applications', 'scout-members' ), 'count' => $applied, 'cap' => self::CAP ),
+			);
+		}
+		$invites = Scout_Members_Invitations::pending_count();
+		if ( $invites ) {
+			$rows['invitations'] = Scout_Members_Invitations::row( $invites );
+		}
+		$due = count( Scout_Members::renewals_due( self::TODO_RENEW_DAYS ) );
+		if ( $due ) {
+			$rows['renewals'] = array(
+				/* translators: %d: number of members. */
+				'text'   => sprintf( _n( '%d membership renews within 14 days or is past due.', '%d memberships renew within 14 days or are past due.', $due, 'scout-members' ), $due ),
+				'url'    => self::url( 'renewals' ),
+				'action' => __( 'See renewals', 'scout-members' ),
+				'todo'   => array( 'id' => 'members-renewals', 'label' => __( 'Renewals due soon', 'scout-members' ), 'count' => $due, 'cap' => self::CAP ),
+			);
+		}
+		return $rows;
+	}
+
+	/** @param array $items Scout Build's To do items. */
+	public static function todo_items( $items ): array {
+		return self::to_todo( (array) $items, array_values( self::queue() ) );
+	}
+
+	/**
+	 * Turn queue rows into To do items, skipping any id already in the list
+	 * (Scout Events adds the same rows from its Needs you list). Pure.
+	 *
+	 * @param array $items To do items so far.
+	 * @param array $rows  Rows from queue().
+	 */
+	public static function to_todo( array $items, array $rows, int $now = 0 ): array {
+		$seen = array_flip( array_map( static fn( $i ) => (string) ( is_array( $i ) ? ( $i['id'] ?? '' ) : '' ), $items ) );
+		foreach ( $rows as $row ) {
+			$todo = is_array( $row ) && isset( $row['todo'] ) && is_array( $row['todo'] ) ? $row['todo'] : null;
+			if ( ! $todo || empty( $todo['id'] ) || empty( $row['url'] ) || isset( $seen[ (string) $todo['id'] ] ) ) {
+				continue;
+			}
+			$count   = max( 1, (int) ( $todo['count'] ?? 1 ) );
+			$items[] = array(
+				'id'      => (string) $todo['id'],
+				'kind'    => 'other',
+				'label'   => (string) ( $todo['label'] ?? '' ),
+				/* translators: %d: how many are waiting */
+				'from'    => sprintf( _n( '%d waiting', '%d waiting', $count, 'scout-members' ), $count ),
+				'preview' => (string) ( $row['text'] ?? '' ),
+				'when'    => $now ? $now : time(),
+				'url'     => (string) $row['url'],
+				'waiting' => true,
+				'count'   => $count,
+				'cap'     => (string) ( $todo['cap'] ?? self::CAP ),
+			);
+			$seen[ (string) $todo['id'] ] = true;
 		}
 		return $items;
 	}

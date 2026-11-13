@@ -26,8 +26,22 @@
  *                "pick_heading", "spot_label", "spot_sub", "spot_url", "logo", "share_card", "share_links",
  *                "people": [ { "name", "slug", "title", "email", "intro", "pick", "tags", "photo", "share" } ],
  *                "links": [ { "label", "sub", "url" } ] },
- *   "brand":   { "on", "logo", "logo_width", "color", "background", "text", "message", "hide_menus", "off" }
+ *   "brand":   { "on", "logo", "logo_width", "color", "background", "text", "message", "hide_menus", "off" },
+ *   "dashboard": { "simple": { "on", "hide_groups", "hide_screens", "hide_menus" }, "land_on_home",
+ *                  "shortcuts": [ { "label", "url", "note" } ], "links": [ { "label", "url", "note" } ] },
+ *   "contact": { "sets": [ { "name", "pages", "children", "paths", "no_text", "label", "buttons": [ { "type", "label", "url" } ] } ] },
+ *   "booking": { "decline_reasons", "link_mode", "link_url", "link_skip", "schema",
+ *                "types": { "<session type id or name>": { "schema", "questions": [ { "label", "required", "kind", "link" } ] } } },
+ *   "events":  { "door_role", "members_only": [ "<event slug>" ],
+ *                "courses": [ { "name", "description", "photo", "page", "level", "prereq", "mode", "hours", "venue", "street", "city",
+ *                               "region", "postal", "country", "address_private", "register_url", "register_label",
+ *                               "teacher_names", "schema", "instances": [ ... ], "tiers": [ ... ] } ] }
  * }
+ * "team" people also take "link" (a path or full address), "link_page" (a page path), "no_page" and
+ * "licenses" (rows of name, number, issuer, url, source). "chat" also takes the outside widget keys:
+ * "outside", "outside_src", "outside_async", "outside_defer", "outside_attrs", "outside_config",
+ * "outside_config_var", "outside_position", "outside_clearance", "outside_selector".
+ * "dashboard" is read live by Scout_Hub_Owner_View, never filled into a plugin.
  * "approved_plugins" is read live by Site status (Scout_Hub_Plugins), never filled into a plugin.
  * "brand" is read live by Scout_Hub_Brand (login screen, admin bar, footer, menus, Dashboard message).
  * Having the section at all turns that layer on; a theme without it changes nothing.
@@ -127,6 +141,9 @@ final class Scout_Hub_Setup {
 			'hours'   => array( __CLASS__, 'hours' ),
 			'analytics' => array( __CLASS__, 'analytics' ),
 			'cards'   => array( __CLASS__, 'cards' ),
+			'contact' => array( __CLASS__, 'contact' ),
+			'booking' => array( __CLASS__, 'booking' ),
+			'events'  => array( __CLASS__, 'events' ),
 		);
 		$changed = false;
 		$filled  = array();
@@ -134,7 +151,7 @@ final class Scout_Hub_Setup {
 			if ( empty( $data[ $section ] ) || ! is_array( $data[ $section ] ) ) {
 				continue;
 			}
-			$hash = md5( (string) wp_json_encode( $data[ $section ] ) . ( 'reviews' === $section ? self::reviews_hash_extra( $data[ $section ] ) : '' ) );
+			$hash = md5( (string) wp_json_encode( $data[ $section ] ) . self::hash_extra( $section, $data[ $section ] ) );
 			if ( ( $done[ $section ] ?? '' ) === $hash ) {
 				continue;
 			}
@@ -150,7 +167,7 @@ final class Scout_Hub_Setup {
 			/**
 			 * The setup file filled something in. The Site log listens.
 			 *
-			 * @param string[] $filled The sections that ran: business, team, reviews, chat, hours, analytics, cards.
+			 * @param string[] $filled The sections that ran: business, team, reviews, chat, hours, analytics, cards, contact, booking, events.
 			 */
 			do_action( 'scout_hub_setup_done', $filled );
 		}
@@ -235,6 +252,20 @@ final class Scout_Hub_Setup {
 				'user'            => $user ? $user->ID : 0,
 				'military_branch' => (string) ( $p['military_branch'] ?? '' ),
 			);
+			// Profile link, No team page and licenses (Scout Team 0.5.0). An older Scout Team drops them.
+			if ( ! empty( $p['link'] ) ) {
+				$add['link_url'] = (string) $p['link'];
+			}
+			if ( ! empty( $p['link_page'] ) ) {
+				$page              = get_page_by_path( trim( (string) $p['link_page'], '/' ) );
+				$add['link_page'] = $page ? (int) $page->ID : 0;
+			}
+			if ( ! empty( $p['no_page'] ) ) {
+				$add['no_page'] = 1;
+			}
+			if ( ! empty( $p['licenses'] ) && is_array( $p['licenses'] ) ) {
+				$add['licenses'] = array_values( array_filter( $p['licenses'], 'is_array' ) );
+			}
 			foreach ( $add as $key => $value ) {
 				if ( empty( $profile[ $key ] ) && ! empty( $value ) ) {
 					$profile[ $key ] = $value;
@@ -338,8 +369,68 @@ final class Scout_Hub_Setup {
 			}
 			$fill[ $key ] = $value;
 		}
-		self::fill_option( Scout_Chat::OPTION, $fill );
+		$fill = array_merge( $fill, self::chat_outside( $in ) );
+		// A box still on its default counts as blank, so the file can switch the outside widget on.
+		self::fill_option( Scout_Chat::OPTION, $fill, array( 'outside' => '0', 'outside_async' => '0', 'outside_defer' => '0', 'outside_position' => 'right', 'outside_clearance' => '86' ) );
 		return true;
+	}
+
+	/**
+	 * The outside chat widget keys (Scout Chat 0.4.0), checked the way Chat checks
+	 * them on save. A script address that fails the check leaves the widget off.
+	 */
+	private static function chat_outside( array $in ): array {
+		if ( ! method_exists( 'Scout_Chat', 'outside_url' ) ) {
+			return array();
+		}
+		$fill = array();
+		$src  = Scout_Chat::outside_url( (string) ( $in['outside_src'] ?? '' ) );
+		if ( '' !== $src ) {
+			$fill['outside_src'] = $src;
+			if ( ! empty( $in['outside'] ) ) {
+				$fill['outside'] = '1';
+			}
+		}
+		foreach ( array( 'outside_async', 'outside_defer' ) as $key ) {
+			if ( ! empty( $in[ $key ] ) ) {
+				$fill[ $key ] = '1';
+			}
+		}
+		$attrs = $in['outside_attrs'] ?? '';
+		if ( is_array( $attrs ) ) {
+			$lines = array();
+			foreach ( $attrs as $name => $value ) {
+				$lines[] = is_int( $name ) ? (string) $value : $name . '=' . ( is_scalar( $value ) ? (string) $value : '' );
+			}
+			$attrs = implode( "\n", $lines );
+		}
+		$clean = array();
+		foreach ( Scout_Chat::outside_attrs( (string) $attrs ) as $name => $value ) {
+			$clean[] = $name . '=' . $value;
+		}
+		if ( $clean ) {
+			$fill['outside_attrs'] = implode( "\n", $clean );
+		}
+		$config = $in['outside_config'] ?? '';
+		$config = is_array( $config ) ? (string) wp_json_encode( $config ) : trim( (string) $config );
+		if ( '' !== $config && strlen( $config ) <= 4000 && is_array( json_decode( $config, true ) ) ) {
+			$fill['outside_config'] = $config;
+		}
+		$var = Scout_Chat::outside_var( (string) ( $in['outside_config_var'] ?? '' ) );
+		if ( '' !== $var ) {
+			$fill['outside_config_var'] = $var;
+		}
+		if ( 'left' === ( $in['outside_position'] ?? '' ) ) {
+			$fill['outside_position'] = 'left';
+		}
+		if ( isset( $in['outside_clearance'] ) && is_numeric( $in['outside_clearance'] ) ) {
+			$fill['outside_clearance'] = (string) max( 0, min( 400, (int) $in['outside_clearance'] ) );
+		}
+		$sel = Scout_Chat::outside_selector( (string) ( $in['outside_selector'] ?? '' ) );
+		if ( '' !== $sel ) {
+			$fill['outside_selector'] = $sel;
+		}
+		return $fill;
 	}
 
 	private static function hours( array $in ): bool {
@@ -483,6 +574,291 @@ final class Scout_Hub_Setup {
 			update_option( Scout_Cards_Settings::OPTION, $saved );
 		}
 		return true;
+	}
+
+	/**
+	 * Call bar button sets (Scout Call Buttons 0.3.0). Filled only while the site
+	 * has no sets. "pages" takes page IDs or page paths ("bodywork" or
+	 * "/bodywork/deep-tissue/"); a path that names no page is left out.
+	 */
+	private static function contact( array $in ): bool {
+		if ( ! class_exists( 'Scout_Contact' ) || ! method_exists( 'Scout_Contact', 'clean_set' ) ) {
+			return false;
+		}
+		if ( empty( $in['sets'] ) || ! is_array( $in['sets'] ) ) {
+			return true;
+		}
+		$saved = get_option( Scout_Contact::OPTION, array() );
+		$saved = is_array( $saved ) ? $saved : array();
+		if ( ! empty( $saved['sets'] ) ) {
+			return true; // Sets made in WordPress stay as they are.
+		}
+		$sets = array();
+		foreach ( $in['sets'] as $raw ) {
+			if ( ! is_array( $raw ) ) {
+				continue;
+			}
+			$raw['pages'] = self::page_ids( (array) ( $raw['pages'] ?? array() ) );
+			$set          = Scout_Contact::clean_set( $raw );
+			if ( null === $set ) {
+				continue;
+			}
+			if ( '' === $set['name'] ) {
+				$set['name'] = sprintf( 'Button set %d', count( $sets ) + 1 );
+			}
+			$sets[] = $set;
+			if ( count( $sets ) >= 20 ) {
+				break;
+			}
+		}
+		if ( $sets ) {
+			$saved['sets'] = $sets;
+			update_option( Scout_Contact::OPTION, $saved );
+		}
+		return true;
+	}
+
+	/**
+	 * Scout Booking settings (0.4.0): the decline reasons, where Book buttons go,
+	 * the sessions skipped for it, the Service schema switch, and per session
+	 * type its schema choice and questions (a "kind" of "agree" is the tick box
+	 * to agree, with an optional "link"). Blanks and untouched defaults only:
+	 * the reasons while they are the starting list, the link while it is the
+	 * booking page, a type's questions while it has none.
+	 */
+	private static function booking( array $in ): bool {
+		if ( ! class_exists( 'Scout_Booking' ) || ! method_exists( 'Scout_Booking', 'clean_reasons' ) ) {
+			return false;
+		}
+		$saved   = get_option( Scout_Booking::OPTION, array() );
+		$saved   = is_array( $saved ) ? $saved : array();
+		$current = Scout_Booking::settings();
+		$types   = Scout_Booking::types();
+		$change  = array();
+
+		if ( isset( $in['decline_reasons'] ) ) {
+			$reasons = Scout_Booking::clean_reasons( is_array( $in['decline_reasons'] ) ? array_map( 'strval', $in['decline_reasons'] ) : (string) $in['decline_reasons'] );
+			if ( $reasons && $current['decline_reasons'] === Scout_Booking::default_reasons() ) {
+				$change['decline_reasons'] = $reasons;
+			}
+		}
+		$mode = sanitize_key( (string) ( $in['link_mode'] ?? '' ) );
+		if ( in_array( $mode, array( 'url', 'off' ), true ) && 'page' === $current['link_mode'] ) {
+			$url = Scout_Booking::clean_link( (string) ( $in['link_url'] ?? '' ) );
+			if ( 'off' === $mode || '' !== $url ) {
+				$change['link_mode'] = $mode;
+			}
+		}
+		if ( ! empty( $in['link_url'] ) && '' === $current['link_url'] ) {
+			$url = Scout_Booking::clean_link( (string) $in['link_url'] );
+			if ( '' !== $url ) {
+				$change['link_url'] = $url;
+			}
+		}
+		if ( ! empty( $in['link_skip'] ) && ! $current['link_skip'] ) {
+			$skip = array();
+			foreach ( (array) $in['link_skip'] as $name ) {
+				$id = self::booking_type( $types, (string) $name );
+				if ( '' !== $id ) {
+					$skip[] = $id;
+				}
+			}
+			if ( $skip ) {
+				$change['link_skip'] = array_values( array_unique( $skip ) );
+			}
+		}
+		if ( ! empty( $in['schema'] ) && ! $current['schema'] ) {
+			$change['schema'] = 1;
+		}
+		if ( $change ) {
+			update_option( Scout_Booking::OPTION, array_merge( $saved, $change ), false );
+		}
+
+		// Per session type: its schema choice while still "auto", and its questions while it has none.
+		$dirty = false;
+		foreach ( (array) ( $in['types'] ?? array() ) as $name => $t ) {
+			$id = is_array( $t ) ? self::booking_type( $types, (string) $name ) : '';
+			if ( '' === $id ) {
+				continue;
+			}
+			$type = $types[ $id ];
+			if ( in_array( $t['schema'] ?? '', array( 'on', 'off' ), true ) && 'auto' === $type['schema'] ) {
+				$type['schema'] = $t['schema'];
+				$dirty          = true;
+			}
+			if ( ! empty( $t['questions'] ) && is_array( $t['questions'] ) && ! $type['questions'] ) {
+				foreach ( $t['questions'] as $q ) {
+					if ( ! is_array( $q ) ) {
+						continue;
+					}
+					$kind                = sanitize_key( (string) ( $q['kind'] ?? 'short' ) );
+					$type['questions'][] = array(
+						'label'    => (string) ( $q['label'] ?? '' ),
+						'required' => ! empty( $q['required'] ),
+						'long'     => 'long' === $kind,
+						'agree'    => 'agree' === $kind,
+						'link'     => (string) ( $q['link'] ?? '' ),
+					);
+				}
+				$dirty = true;
+			}
+			$types[ $id ] = $type;
+		}
+		if ( $dirty ) {
+			Scout_Booking::save_types( $types );
+			do_action( 'scout_booking_types_saved' );
+		}
+		return true;
+	}
+
+	/** A session type's id from its id or its name (any case), or ''. */
+	private static function booking_type( array $types, string $name ): string {
+		$name = trim( $name );
+		$id   = preg_replace( '/[^a-z0-9]/', '', strtolower( $name ) );
+		if ( '' !== $id && isset( $types[ $id ] ) ) {
+			return $id;
+		}
+		foreach ( $types as $tid => $t ) {
+			if ( '' !== $name && 0 === strcasecmp( (string) $t['name'], $name ) ) {
+				return (string) $tid;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Scout Events (0.18.0): the Door helper role, events only for members or
+	 * invited guests (by slug), and course records. A course is added once,
+	 * by name, and never edited from here after that.
+	 */
+	private static function events( array $in ): bool {
+		if ( ! class_exists( 'Scout_Events' ) ) {
+			return false;
+		}
+		if ( ! empty( $in['door_role'] ) && method_exists( 'Scout_Events_People', 'sync_role' ) ) {
+			$saved = get_option( Scout_Events::OPTION, array() );
+			$saved = is_array( $saved ) ? $saved : array();
+			if ( empty( $saved['door_role'] ) ) {
+				$saved['door_role'] = 1;
+				update_option( Scout_Events::OPTION, $saved );
+				Scout_Events_People::sync_role( true );
+			}
+		}
+		foreach ( self::event_ids( (array) ( $in['members_only'] ?? array() ) ) as $id ) {
+			$raw = get_post_meta( $id, '_scout_event', true );
+			$raw = is_array( $raw ) ? $raw : array();
+			if ( empty( $raw['members_only'] ) && array_key_exists( 'members_only', Scout_Events::empty_event() ) ) {
+				$raw['members_only'] = 1;
+				update_post_meta( $id, '_scout_event', Scout_Events::sanitize_event( $raw ) );
+			}
+		}
+		if ( ! empty( $in['courses'] ) && is_array( $in['courses'] ) && class_exists( 'Scout_Events_Courses' ) && post_type_exists( Scout_Events_Courses::TYPE ) ) {
+			foreach ( $in['courses'] as $c ) {
+				$name = is_array( $c ) ? sanitize_text_field( (string) ( $c['name'] ?? '' ) ) : '';
+				if ( '' === $name ) {
+					continue;
+				}
+				$found = get_posts(
+					array(
+						'post_type'   => Scout_Events_Courses::TYPE,
+						'title'       => $name,
+						'post_status' => 'any',
+						'numberposts' => 1,
+						'fields'      => 'ids',
+					)
+				);
+				if ( $found ) {
+					continue;
+				}
+				$id = (int) wp_insert_post(
+					array(
+						'post_type'    => Scout_Events_Courses::TYPE,
+						'post_status'  => 'publish',
+						'post_title'   => $name,
+						'post_content' => wp_kses_post( (string) ( $c['description'] ?? '' ) ),
+					)
+				);
+				if ( ! $id ) {
+					continue;
+				}
+				if ( ! empty( $c['page'] ) ) {
+					$c['page'] = self::page_ids( array( $c['page'] ) )[0] ?? 0;
+				}
+				unset( $c['teachers_team'], $c['teachers_speaker'] ); // Post IDs differ per site; typed names travel.
+				Scout_Events_Courses::save( $id, $c );
+				if ( ! empty( $c['photo'] ) ) {
+					$att = self::attachment( (string) $c['photo'] );
+					if ( $att ) {
+						set_post_thumbnail( $id, $att );
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	/** Event post IDs from slugs, published or not. */
+	private static function event_ids( array $slugs ): array {
+		$ids = array();
+		foreach ( $slugs as $slug ) {
+			$slug = sanitize_title( (string) $slug );
+			if ( '' === $slug ) {
+				continue;
+			}
+			$found = get_posts(
+				array(
+					'post_type'   => Scout_Events::EVENT,
+					'name'        => $slug,
+					'post_status' => 'any',
+					'numberposts' => 1,
+					'fields'      => 'ids',
+				)
+			);
+			if ( $found ) {
+				$ids[] = (int) $found[0];
+			}
+		}
+		return $ids;
+	}
+
+	/** Page IDs from IDs or page paths ("bodywork", "/bodywork/deep-tissue/"). */
+	private static function page_ids( array $pages ): array {
+		$ids = array();
+		foreach ( $pages as $page ) {
+			if ( is_int( $page ) || ctype_digit( (string) $page ) ) {
+				$ids[] = (int) $page;
+				continue;
+			}
+			$found = get_page_by_path( trim( (string) $page, '/' ) );
+			if ( $found ) {
+				$ids[] = (int) $found->ID;
+			}
+		}
+		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+
+	/**
+	 * Extra text in a section's run hash, so a section runs again when something
+	 * outside the file changes what it would do: the reviews rules above, and
+	 * for booking and events, the session types or events the file names that
+	 * exist now (a session type made later fills in once it exists).
+	 */
+	private static function hash_extra( string $section, array $in ): string {
+		if ( 'reviews' === $section ) {
+			return self::reviews_hash_extra( $in );
+		}
+		if ( 'booking' === $section && class_exists( 'Scout_Booking' ) && method_exists( 'Scout_Booking', 'types' ) ) {
+			$types = Scout_Booking::types();
+			$found = array();
+			foreach ( array_merge( array_keys( (array) ( $in['types'] ?? array() ) ), array_map( 'strval', (array) ( $in['link_skip'] ?? array() ) ) ) as $name ) {
+				$found[] = self::booking_type( $types, (string) $name );
+			}
+			return '|types:' . implode( ',', array_filter( $found ) );
+		}
+		if ( 'events' === $section && class_exists( 'Scout_Events' ) ) {
+			return '|events:' . implode( ',', self::event_ids( (array) ( $in['members_only'] ?? array() ) ) );
+		}
+		return '';
 	}
 
 	/* ---------- helpers ---------- */

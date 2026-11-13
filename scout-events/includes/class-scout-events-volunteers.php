@@ -526,6 +526,7 @@ final class Scout_Events_Volunteers {
 					'text'   => sprintf( _n( '%1$d volunteer spot is still open for %2$s.', '%1$d volunteer spots are still open for %2$s.', $open, 'scout-events' ), $open, get_the_title( $event ) ),
 					'url'    => Scout_Events_Admin::url( array( 'view' => 'volunteers', 'event' => $event ) ),
 					'action' => __( 'See the roster', 'scout-events' ),
+					'todo'   => array( 'id' => 'events-volunteer-spots-' . (int) $event, 'label' => __( 'Volunteer spots open', 'scout-events' ), 'count' => $open ),
 				);
 			}
 		}

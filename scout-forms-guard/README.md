@@ -39,11 +39,38 @@ written; the assumptions about its internals are listed at the top of
 Requires **Gravity Forms** (the one third-party plugin Scout keeps). Without it,
 this plugin does nothing.
 
+## Send only, keep no entry
+
+A per-form switch for sensitive forms, such as a concern report that only one
+person should read. Off by default. Turn it on in the form's **Settings**,
+under **Keep no entry**, then check that the form's notification goes only to
+the person who should read it.
+
+- The notification still goes out, sent in the same request (never queued
+  for later), so it is out before the entry goes.
+- Right after (`gform_after_submission`, priority 9999, after the add-ons),
+  `GFAPI::delete_entry()` removes the entry, its uploaded files and its notes.
+  Entries Gravity Forms marks as spam are deleted too.
+- The nightly form test never picks it: it is taken out of the test's saved
+  list (`scout_hub_form_test`), and if a test reaches it anyway its emails are
+  not sent, since the test mails the form's real addresses.
+- A To do item that names the form (`form_id`) is left out.
+- The message check (links and spam pitches) is skipped for it, so a real
+  report never lands in Spam, where no email goes out. The honeypot, time trap
+  and token still run.
+- Save and Continue keeps a draft on the site until it is sent; leave it off
+  on a send-only form.
+
+The setting is saved on the form as `scoutSendOnly` (Gravity Forms 2.5 and
+later save fields added with `gform_form_settings_fields`). The
+`scout_forms_guard_send_only` filter ( $on, $form ) turns it on or off in code.
+
 ## Filters
 
 - `scout_forms_guard_min_seconds` (default 3)
 - `scout_forms_guard_max_seconds` (default 1 day)
-- `scout_forms_guard_content_check` (default true), `scout_forms_guard_spam_phrases` (array)
+- `scout_forms_guard_content_check` (default true, false on a send-only form), `scout_forms_guard_spam_phrases` (array)
+- `scout_forms_guard_send_only` ( $on, $form ): a form keeps no entry
 - `scout_forms_guard_blocked`: action fired when a submission or a hidden
   upload is blocked (log it if you want).
 - `scout_forms_guard_block_hidden_uploads` (default true): return false to stop
@@ -65,7 +92,7 @@ Gravity Form with their own inline style, so the theme styles nothing for it.
 
 This plugin keeps nothing about the people who visit the site and sets no cookies.
 
-Scout Forms Guard keeps no information about visitors. It checks Gravity Forms submissions for spam and keeps only a monthly count of blocked ones. A message it marks as spam stays in that form's Spam folder as Gravity Forms' own data, and a file sent to a hidden upload field is dropped before it is saved.
+Scout Forms Guard keeps no information about visitors. It checks Gravity Forms submissions for spam and keeps only a monthly count of blocked ones. A message it marks as spam stays in that form's Spam folder as Gravity Forms' own data, and a file sent to a hidden upload field is dropped before it is saved. On a form set to "Send only, keep no entry", Gravity Forms' entry, its files and notes are deleted right after the notification goes out.
 
 Source: `visitor-data.json`. Edit that file, then run `php tools/visitor-data.php`.
 <!-- visitor-data:end -->
