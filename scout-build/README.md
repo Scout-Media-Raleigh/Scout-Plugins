@@ -23,7 +23,7 @@ screen or feature, is in `../docs/dashboard-map.md`.
 | Item | Who | What it holds |
 |---|---|---|
 | **Home** | everyone, the first screen | Is the site all right, what needs you, what Scout is doing, the things a client does here, and one line to ask for more. Clients also find **Site history** here (what Scout has done on the site, with Approve). |
-| **To do** (key `inbox`) | everyone | One list of everything waiting on a person, newest first, with filter chips: chat questions, new reviews, change requests and their status, site check requests, booking requests. Plugins add items with `scout_hub_inbox_items` (or a count row with `scout_hub_inbox`). Each person picks Inbox emails: never, once a day, or every new item. |
+| **To do** (key `inbox`) | everyone | One list of everything waiting on a person, newest first, with filter chips: chat questions, new reviews, change requests and their status, site check requests, booking requests. Plugins add items with `scout_hub_inbox_items` (or a count row with `scout_hub_inbox`), each with the capability its screen needs (see Permissions). Each person picks Inbox emails: never, once a day, or every new item. |
 | **Reports** | owner, operator | Reserved and empty. Recon's numbers are never shown in WordPress (Joy, 2026-11-05). Empty groups never show to clients. |
 | **Business** | everyone | Facts typed once: Business info, Hours, Team, Case results, a companion plugin's own types. |
 | **Site features** | owner, operator | What visitors see and use: Call buttons, Chat, Reviews and Review settings, Cards & links, Newsletter, Redirects, Free site check. |
@@ -38,6 +38,38 @@ sidebar sections and only appear on sites that have them.
 The shared admin kit (`tools/admin-kit/`) files every Scout screen into these
 groups by its slug, and `tools/tests/admin-kit-groups.php` fails when a screen
 drifts from the map. A screen never moves its address; only where it is filed.
+
+## Permissions: who sees what in To do (0.18.0+)
+
+Every To do item carries the capability its own screen needs, and the To do list, the count on
+the sidebar bubble and the All chip, Today on Home and the To do emails leave out what the reader
+cannot open. A staff login never sees a booking request's name, email or note.
+
+| Item | Capability |
+|---|---|
+| Change requests, chat questions, new reviews, site check requests | `edit_posts` (the To do screen's own, as before) |
+| Booking requests | the Bookings screen's own (`Scout_Booking_Admin::CAP`, `list_users`) |
+| A plugin's item or count row without `cap` | `edit_posts`, as before |
+
+A plugin passes the capability with the item:
+
+```php
+add_filter( 'scout_hub_inbox_items', function ( $items ) {
+	$items[] = array(
+		'id'    => 'myplugin-12',
+		'kind'  => 'other',
+		'label' => 'New application',
+		'from'  => 'A name',
+		'url'   => admin_url( 'admin.php?page=myplugin' ),
+		'cap'   => 'list_users', // The capability the item's own screen needs.
+	);
+	return $items;
+} );
+```
+
+Count rows from `scout_hub_inbox` take the same `cap` key. Items on Today (`scout_hub_today`)
+already had `cap` and still default to `edit_posts`. The email digest switches to each recipient
+before it builds the list, so each email only lists what that person can open.
 
 ## Settings in `wp-config.php`
 

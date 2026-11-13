@@ -602,7 +602,7 @@ final class Scout_Events_RSVP {
 		$code = isset( $_POST['se_code'] ) ? sanitize_text_field( wp_unslash( $_POST['se_code'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked next.
 		check_admin_referer( 'scout_events_checkin_' . $code );
 		$row = self::find( $code );
-		if ( ! $row || ! current_user_can( 'edit_post', (int) $row['event_id'] ) ) {
+		if ( ! $row || ! Scout_Events_People::can_check_in( (int) $row['event_id'] ) ) {
 			wp_die( esc_html__( 'You do not have permission to check people in.', 'scout-events' ), 403 );
 		}
 		$in = empty( $_POST['undo'] );
@@ -653,7 +653,7 @@ final class Scout_Events_RSVP {
 		wp_enqueue_style( 'scout-events' );
 		$id     = (int) $row['event_id'];
 		$e      = Scout_Events::event( $id );
-		$staff  = current_user_can( 'edit_post', $id );
+		$staff  = Scout_Events_People::can_check_in( $id ); // People managers, or a door helper on the day.
 		$in     = ! empty( $row['checked_in'] );
 		$status = $row['status'];
 		$who    = $row['name'] . ( (int) $row['guests'] > 0 ? ' + ' . sprintf( /* translators: %d: number of guests. */ _n( '%d guest', '%d guests', (int) $row['guests'], 'scout-events' ), (int) $row['guests'] ) : '' );
@@ -751,7 +751,7 @@ final class Scout_Events_RSVP {
 		$out .= self::answers( $row, Scout_Events::event( (int) $row['event_id'] ) );
 		$c    = self::counts( (int) $row['event_id'] );
 		/* translators: 1: people checked in, 2: people going. */
-		$out .= '<p class="se-ticket-count">' . esc_html( sprintf( __( '%1$d of %2$d people checked in', 'scout-events' ), $c['checked_in'], $c['going'] ) ) . ' · <a href="' . esc_url( Scout_Events_Admin::signups_url( (int) $row['event_id'] ) ) . '">' . esc_html__( 'Door list', 'scout-events' ) . '</a></p>';
+		$out .= '<p class="se-ticket-count">' . esc_html( sprintf( __( '%1$d of %2$d people checked in', 'scout-events' ), $c['checked_in'], $c['going'] ) ) . ' · <a href="' . esc_url( Scout_Events_People::door_url( (int) $row['event_id'] ) ) . '">' . esc_html__( 'Door list', 'scout-events' ) . '</a></p>';
 		return $out;
 	}
 

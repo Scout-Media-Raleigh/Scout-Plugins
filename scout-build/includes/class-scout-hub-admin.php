@@ -235,11 +235,19 @@ final class Scout_Hub_Admin {
 			$rows[] = array( 'label' => __( 'New reviews', 'scout-build' ), 'count' => (int) Scout_Reviews_Google_Sync::new_count(), 'url' => admin_url( 'admin.php?page=scout-reviews-inbox' ), 'note' => __( 'Reviews that arrived since you last looked. Pick the ones to show.', 'scout-build' ) );
 		}
 		/**
-		 * Filters the Inbox rows, so a plugin can add its own queue.
+		 * Filters the Inbox rows, so a plugin can add its own queue. A row may name
+		 * the capability its screen needs as 'cap'; people without it never see the
+		 * row or its count. Without 'cap' a row needs edit_posts, as before.
 		 *
-		 * @param array $rows Rows of label, count, url, note.
+		 * @param array $rows Rows of label, count, url, note, cap.
 		 */
-		return (array) apply_filters( 'scout_hub_inbox', $rows );
+		$rows = (array) apply_filters( 'scout_hub_inbox', $rows );
+		return array_values(
+			array_filter(
+				$rows,
+				static fn( $row ) => ! is_array( $row ) || ! class_exists( 'Scout_Hub_Inbox' ) || Scout_Hub_Inbox::can( (string) ( $row['cap'] ?? '' ) )
+			)
+		);
 	}
 
 	/** The Inbox total, for the sidebar bubble and the nav hint. */

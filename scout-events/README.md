@@ -24,6 +24,22 @@ and **Settings**. Other Scout features add their screens to this menu on the
 `scout_events_needs_you` filter. Anyone who can edit posts can manage events;
 only administrators change settings.
 
+### Permissions
+
+| What | Who |
+|---|---|
+| Events, sessions, speakers, vendors, courses, Home and Add from spreadsheet | Anyone who can edit posts, as before |
+| **Sign-ups** (the door list, its download, Check in, waitlist), **Volunteers** (the roster and its download), **Needs you** on Home and its toolbar count, Check in on a ticket page | `scout_events_manage_people`, which administrators get on activation and on update (option `scout_events_caps` records that it ran; re-running changes nothing) |
+| **Door list** (today's events only) | The optional Door helper role (`scout_door_helper`, capability `scout_events_door`) |
+| Settings | Administrators (`manage_options`) |
+
+**Door helpers** are off by default. Tick **Offer a Door helper role** under Events, Settings,
+then add a user with that role. A door helper signs in to one screen, Door list: today's events
+with sign-ups, names, guests, agreements and "No photos" marks, Find by name, and Check in or
+Undo. They see no emails, downloads, waitlist or other events, and nothing else in the
+dashboard. Scanning a ticket on the day of the event shows them the Check in button. Unticking
+the box removes the role. Deleting the plugin removes the role and the capability from every role.
+
 ## The content
 
 | Type | Holds | Address |

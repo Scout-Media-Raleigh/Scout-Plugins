@@ -9,6 +9,12 @@
  * Plugins add their own items with the scout_hub_inbox_items filter; the
  * counts for Home and the sidebar still come from scout_hub_inbox.
  *
+ * Who sees an item: each item carries the capability its own screen needs
+ * ('cap'). The list, the counts, Today on Home and the emails leave out what
+ * the reader cannot open, so a staff login never sees a booking request's
+ * name, email or note. An item without a cap keeps the To do screen's own
+ * capability (edit_posts), as before.
+ *
  * Each person chooses how often they get an email about it: once a day, for
  * every new item, or never (the default, so nobody gets mail they did not ask for).
  *
@@ -51,6 +57,23 @@ final class Scout_Hub_Inbox {
 		);
 	}
 
+	/** The capability an item needs when it does not name one: the To do screen's own. */
+	const DEFAULT_CAP = 'edit_posts';
+
+	/** The capability a booking request needs: the Bookings screen's own. */
+	public static function booking_cap(): string {
+		return class_exists( 'Scout_Booking_Admin' ) && defined( 'Scout_Booking_Admin::CAP' ) ? (string) Scout_Booking_Admin::CAP : 'list_users';
+	}
+
+	/**
+	 * Can the current reader open an item that needs this capability? The
+	 * email digest switches to each recipient first, so it asks the same question.
+	 */
+	public static function can( string $cap ): bool {
+		$cap = '' !== $cap ? $cap : self::DEFAULT_CAP;
+		return ! function_exists( 'current_user_can' ) || current_user_can( $cap );
+	}
+
 	/** A short preview: plain text, one or two lines. */
 	private static function preview( string $text ): string {
 		return wp_trim_words( wp_strip_all_tags( $text ), 24, '…' );
@@ -61,7 +84,9 @@ final class Scout_Hub_Inbox {
 	 * the last two weeks are included so the client sees them finished; they
 	 * never count as waiting.
 	 *
-	 * Item: id, kind, label (the small line above), from, preview, when (timestamp), url, waiting (bool).
+	 * Item: id, kind, label (the small line above), from, preview, when (timestamp), url, waiting (bool),
+	 * cap (the capability the item's own screen needs; edit_posts when left out).
+	 * Only items the current reader can open are returned.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -179,7 +204,8 @@ final class Scout_Hub_Inbox {
 			}
 		}
 
-		if ( class_exists( 'Scout_Booking' ) && method_exists( 'Scout_Booking', 'with_status' ) ) {
+		// Booking requests carry a name, an email and a note: only people who can open Bookings see them.
+		if ( class_exists( 'Scout_Booking' ) && method_exists( 'Scout_Booking', 'with_status' ) && self::can( self::booking_cap() ) ) {
 			foreach ( Scout_Booking::with_status( 'requested', 50 ) as $row ) {
 				$name    = trim( (string) ( $row['first_name'] ?? '' ) . ' ' . (string) ( $row['last_name'] ?? '' ) );
 				$start   = strtotime( (string) ( $row['start_at'] ?? '' ) );
@@ -194,6 +220,7 @@ final class Scout_Hub_Inbox {
 					'waiting' => true,
 					'body'    => trim( (string) ( $row['note'] ?? '' ) ),
 					'email'   => sanitize_email( (string) ( $row['email'] ?? '' ) ),
+					'cap'     => self::booking_cap(),
 				);
 			}
 		}
@@ -217,6 +244,7 @@ final class Scout_Hub_Inbox {
 				'url'     => (string) $row['url'],
 				'waiting' => true,
 				'count'   => $count,
+				'cap'     => (string) ( $row['cap'] ?? self::DEFAULT_CAP ),
 			);
 		}
 
@@ -224,7 +252,12 @@ final class Scout_Hub_Inbox {
 		 * Filters the Inbox items, so any plugin can add its own: a law-firm approval,
 		 * a membership application, a volunteer sign-up.
 		 *
-		 * @param array $items Items of id, kind, label, from, preview, when, url, waiting.
+		 * Give each item the capability its own screen needs as 'cap', for example
+		 * 'cap' => 'list_users' for an item that shows a customer's details. The
+		 * list, the counts, Today and the emails leave it out for anyone without
+		 * it. Without 'cap' an item needs edit_posts, as before.
+		 *
+		 * @param array $items Items of id, kind, label, from, preview, when, url, waiting, cap.
 		 */
 		$items = (array) apply_filters( 'scout_hub_inbox_items', $items );
 		$kinds = self::kinds();
@@ -232,6 +265,10 @@ final class Scout_Hub_Inbox {
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) || empty( $item['id'] ) || empty( $item['url'] ) ) {
 				continue;
+			}
+			$cap = isset( $item['cap'] ) && is_string( $item['cap'] ) && '' !== $item['cap'] ? $item['cap'] : self::DEFAULT_CAP;
+			if ( ! self::can( $cap ) ) {
+				continue; // The reader cannot open its screen, so they never see it, its count or its email line.
 			}
 			$kind    = (string) ( $item['kind'] ?? 'other' );
 			$clean[] = array(
@@ -247,6 +284,7 @@ final class Scout_Hub_Inbox {
 				'body'    => (string) ( $item['body'] ?? $item['preview'] ?? '' ),
 				'email'   => is_email( (string) ( $item['email'] ?? '' ) ) ? (string) $item['email'] : '',
 				'done'    => ! empty( $item['done'] ),
+				'cap'     => $cap,
 			);
 		}
 		// What still waits on someone comes first, newest first inside each part (Joy, 2026-11-11).
@@ -361,7 +399,7 @@ final class Scout_Hub_Inbox {
 			if ( 'daily' === $pref && ( $hour < 8 || wp_date( 'Ymd', $last ) === wp_date( 'Ymd' ) ) ) {
 				continue;
 			}
-			wp_set_current_user( $id ); // Each person only hears about what they can see.
+			wp_set_current_user( $id ); // Each person only hears about what they can see: items() checks each item's cap for them.
 			$items = self::waiting( self::items() );
 			if ( 'every' === $pref ) {
 				$items = array_values( array_filter( $items, static fn( $i ) => $i['when'] > $last ) );

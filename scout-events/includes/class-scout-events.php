@@ -58,6 +58,7 @@ final class Scout_Events {
 				'agreements_label' => '',
 				'address_private'  => 0,
 				'address_note'     => '',
+				'door_role'        => 0,
 			)
 		);
 		foreach ( array( 'event_slug', 'speaker_slug', 'session_slug' ) as $key ) {
@@ -65,6 +66,7 @@ final class Scout_Events {
 		}
 		$s['currency'] = preg_match( '/^[A-Z]{3}$/', (string) $s['currency'] ) ? $s['currency'] : 'USD';
 		$s['schema']   = ! empty( $s['schema'] ) ? 1 : 0;
+		$s['door_role'] = ! empty( $s['door_role'] ) ? 1 : 0;
 		$s['agreements_url']   = esc_url_raw( (string) $s['agreements_url'], array( 'http', 'https' ) );
 		$s['agreements_label'] = sanitize_text_field( (string) $s['agreements_label'] );
 		if ( '' === $s['agreements_label'] ) {

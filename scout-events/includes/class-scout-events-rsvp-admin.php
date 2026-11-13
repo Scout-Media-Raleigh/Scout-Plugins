@@ -6,6 +6,9 @@
  * choice, the waitlist with Move in, and a spreadsheet download. Built to
  * work on a phone at the door as well as on a laptop.
  *
+ * It needs Scout_Events_People::CAP. A door helper gets the same list in its
+ * door mode: today's events only, names without emails, and Check in only.
+ *
  * @package Scout_Events
  */
 
@@ -67,10 +70,14 @@ final class Scout_Events_RSVP_Admin {
 		$id = isset( $_POST['signup'] ) ? absint( $_POST['signup'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked next.
 		check_admin_referer( 'scout_events_signup_admin_' . $id );
 		$row = Scout_Events_RSVP::get( $id );
-		if ( ! $row || ! current_user_can( 'edit_post', (int) $row['event_id'] ) ) {
+		$op  = isset( $_POST['op'] ) ? sanitize_key( wp_unslash( $_POST['op'] ) ) : '';
+		// Check in and Undo: people managers, or a door helper on today's event. Everything else: people managers.
+		$ok = $row && ( in_array( $op, array( 'in', 'undo' ), true )
+			? Scout_Events_People::can_check_in( (int) $row['event_id'] )
+			: Scout_Events_People::can_manage() && current_user_can( 'edit_post', (int) $row['event_id'] ) );
+		if ( ! $ok ) {
 			wp_die( esc_html__( 'You do not have permission to change sign-ups.', 'scout-events' ), 403 );
 		}
-		$op = isset( $_POST['op'] ) ? sanitize_key( wp_unslash( $_POST['op'] ) ) : '';
 		if ( 'in' === $op || 'undo' === $op ) {
 			Scout_Events_RSVP::check_in( $id, 'in' === $op );
 		} elseif ( 'move' === $op && 'waitlist' === $row['status'] ) {
@@ -83,7 +90,7 @@ final class Scout_Events_RSVP_Admin {
 			Scout_Events_RSVP::set_status( $id, 'going' );
 		}
 		$ref = wp_get_referer();
-		wp_safe_redirect( ( $ref ? preg_replace( '/#.*$/', '', $ref ) : Scout_Events_Admin::signups_url( (int) $row['event_id'] ) ) . '#se-s-' . $id );
+		wp_safe_redirect( ( $ref ? preg_replace( '/#.*$/', '', $ref ) : Scout_Events_People::door_url( (int) $row['event_id'] ) ) . '#se-s-' . $id );
 		exit;
 	}
 
@@ -91,7 +98,7 @@ final class Scout_Events_RSVP_Admin {
 	public static function csv(): void {
 		$event = isset( $_GET['event'] ) ? absint( $_GET['event'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- checked next.
 		check_admin_referer( 'scout_events_signups_csv_' . $event );
-		if ( ! $event || ! current_user_can( 'edit_post', $event ) ) {
+		if ( ! $event || ! Scout_Events_People::can_manage() || ! current_user_can( 'edit_post', $event ) ) {
 			wp_die( esc_html__( 'You do not have permission to download sign-ups.', 'scout-events' ), 403 );
 		}
 		nocache_headers();
@@ -132,8 +139,21 @@ final class Scout_Events_RSVP_Admin {
 
 	/* ---------- the screen ---------- */
 
-	public static function view(): void {
+	/**
+	 * The door list. $mode 'door' is the door helper's: today's events only,
+	 * no emails, no download, no order links, and Check in or Undo only.
+	 */
+	public static function view( string $mode = 'full' ): void {
+		$door   = 'door' === $mode;
 		$events = self::events();
+		$page   = $door ? Scout_Events_People::DOOR_PAGE : Scout_Events_Admin::SLUG . '-signups';
+		if ( $door ) {
+			$events = array_values( array_filter( $events, array( 'Scout_Events_People', 'is_today' ) ) );
+			if ( ! $events ) {
+				Scout_Events_Admin::ui_status( 'off', __( 'No event with sign-ups is on today.', 'scout-events' ), __( 'The door list opens here on the day of the event.', 'scout-events' ) );
+				return;
+			}
+		}
 		if ( ! $events ) {
 			Scout_Events_Admin::ui_status( 'off', __( 'No event takes sign-ups yet.', 'scout-events' ) );
 			?>
@@ -152,7 +172,8 @@ final class Scout_Events_RSVP_Admin {
 		$rows  = Scout_Events_RSVP::for_event( $event );
 		$find  = isset( $_GET['find'] ) ? sanitize_text_field( wp_unslash( $_GET['find'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a search box.
 		if ( '' !== $find ) {
-			$rows = array_values( array_filter( $rows, static fn( $r ) => false !== stripos( $r['name'] . ' ' . $r['email'], $find ) ) );
+			// A door helper finds by name only, so the list never confirms an email address.
+			$rows = array_values( array_filter( $rows, static fn( $r ) => false !== stripos( $r['name'] . ( $door ? '' : ' ' . $r['email'] ), $find ) ) );
 		}
 		$going   = array_values( array_filter( $rows, static fn( $r ) => 'going' === $r['status'] ) );
 		$waiting = array_values( array_filter( $rows, static fn( $r ) => 'waitlist' === $r['status'] ) );
@@ -163,7 +184,7 @@ final class Scout_Events_RSVP_Admin {
 		// One status line for the chosen event instead of a row of four numbers.
 		$room   = null === $left ? __( 'No capacity set.', 'scout-events' ) : sprintf( /* translators: %d: places left. */ _n( '%d place left.', '%d places left.', (int) $left, 'scout-events' ), (int) $left );
 		$queue  = $c['waitlist'] ? ' ' . sprintf( /* translators: %d: people waiting. */ _n( '%d person on the waitlist.', '%d people on the waitlist.', (int) $c['waitlist'], 'scout-events' ), (int) $c['waitlist'] ) : '';
-		$move   = $c['waitlist'] > 0 && ( null === $left || $left > 0 ) && ! Scout_Events::is_past( $e );
+		$move   = ! $door && $c['waitlist'] > 0 && ( null === $left || $left > 0 ) && ! Scout_Events::is_past( $e );
 		Scout_Events_Admin::ui_status(
 			$move ? 'warn' : 'good',
 			/* translators: 1: people going, 2: people checked in. */
@@ -174,7 +195,7 @@ final class Scout_Events_RSVP_Admin {
 		?>
 		<section class="sh-box se-door">
 			<form method="get" class="se-door-pick">
-				<input type="hidden" name="page" value="<?php echo esc_attr( Scout_Events_Admin::SLUG . '-signups' ); ?>">
+				<input type="hidden" name="page" value="<?php echo esc_attr( $page ); ?>">
 				<label for="se-door-event" class="screen-reader-text"><?php esc_html_e( 'Event', 'scout-events' ); ?></label>
 				<select id="se-door-event" name="event" onchange="this.form.submit()">
 					<?php foreach ( $events as $id ) : ?>
@@ -185,16 +206,18 @@ final class Scout_Events_RSVP_Admin {
 			</form>
 			<div class="se-door-tools">
 				<form method="get" class="se-door-find" role="search">
-					<input type="hidden" name="page" value="<?php echo esc_attr( Scout_Events_Admin::SLUG . '-signups' ); ?>">
+					<input type="hidden" name="page" value="<?php echo esc_attr( $page ); ?>">
 					<input type="hidden" name="event" value="<?php echo (int) $event; ?>">
 					<label for="se-door-find" class="screen-reader-text"><?php esc_html_e( 'Find a name or email', 'scout-events' ); ?></label>
-					<input type="search" id="se-door-find" name="find" value="<?php echo esc_attr( $find ); ?>" placeholder="<?php esc_attr_e( 'Find a name or email', 'scout-events' ); ?>">
+					<input type="search" id="se-door-find" name="find" value="<?php echo esc_attr( $find ); ?>" placeholder="<?php echo esc_attr( $door ? __( 'Find a name', 'scout-events' ) : __( 'Find a name or email', 'scout-events' ) ); ?>">
 					<button type="submit" class="button"><?php esc_html_e( 'Find', 'scout-events' ); ?></button>
 				</form>
-				<span class="se-actions">
-					<a class="button sh-quiet" href="<?php echo esc_url( (string) get_permalink( $event ) ); ?>"><?php esc_html_e( 'Event page', 'scout-events' ); ?></a>
-					<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=scout_events_signups_csv&event=' . $event ), 'scout_events_signups_csv_' . $event ) ); ?>"><?php esc_html_e( 'Download list', 'scout-events' ); ?></a>
-				</span>
+				<?php if ( ! $door ) : ?>
+					<span class="se-actions">
+						<a class="button sh-quiet" href="<?php echo esc_url( (string) get_permalink( $event ) ); ?>"><?php esc_html_e( 'Event page', 'scout-events' ); ?></a>
+						<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=scout_events_signups_csv&event=' . $event ), 'scout_events_signups_csv_' . $event ) ); ?>"><?php esc_html_e( 'Download list', 'scout-events' ); ?></a>
+					</span>
+				<?php endif; ?>
 			</div>
 			<p class="sh-note"><?php esc_html_e( 'At the door, scan each ticket with your phone and tap Check in. Use this list for anyone without one.', 'scout-events' ); ?></p>
 			<?php if ( $owed ) : ?>
@@ -208,7 +231,10 @@ final class Scout_Events_RSVP_Admin {
 		</section>
 
 		<?php
-		self::block( __( 'Going', 'scout-events' ), $going, '' !== $find ? __( 'No one going matches that search.', 'scout-events' ) : __( 'No sign-ups yet.', 'scout-events' ) );
+		self::block( __( 'Going', 'scout-events' ), $going, '' !== $find ? __( 'No one going matches that search.', 'scout-events' ) : __( 'No sign-ups yet.', 'scout-events' ), false, '', $door );
+		if ( $door ) {
+			return; // The waitlist, cancellations and refunds are for people managers.
+		}
 		if ( $waiting ) {
 			self::block( __( 'Waitlist', 'scout-events' ), $waiting, '', false, 'se-waitlist' );
 		}
@@ -220,7 +246,7 @@ final class Scout_Events_RSVP_Admin {
 		}
 	}
 
-	private static function block( string $title, array $rows, string $empty, bool $closed = false, string $id = '' ): void {
+	private static function block( string $title, array $rows, string $empty, bool $closed = false, string $id = '', bool $door = false ): void {
 		?>
 		<section class="sh-box"<?php echo '' !== $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?>>
 			<?php if ( $closed ) : ?>
@@ -233,7 +259,7 @@ final class Scout_Events_RSVP_Admin {
 			<?php else : ?>
 				<ul class="sh-rows is-stacked se-signups">
 					<?php foreach ( $rows as $r ) : ?>
-						<?php self::row( $r ); ?>
+						<?php self::row( $r, $door ); ?>
 					<?php endforeach; ?>
 				</ul>
 			<?php endif; ?>
@@ -244,15 +270,17 @@ final class Scout_Events_RSVP_Admin {
 		<?php
 	}
 
-	private static function row( array $r ): void {
+	private static function row( array $r, bool $door = false ): void {
 		$in    = ! empty( $r['checked_in'] );
 		$paid  = 'shop' === $r['source'];
-		$order = $paid && (int) $r['order_id'] && function_exists( 'wc_get_order' ) ? wc_get_order( (int) $r['order_id'] ) : null;
+		$order = ! $door && $paid && (int) $r['order_id'] && function_exists( 'wc_get_order' ) ? wc_get_order( (int) $r['order_id'] ) : null;
 		?>
 		<li class="sh-row se-signup<?php echo $in ? ' is-in' : ''; ?>" id="se-s-<?php echo (int) $r['id']; ?>">
 			<div>
 				<p class="sh-row-name"><?php echo esc_html( $r['name'] ); ?></p>
-				<p class="sh-row-sub"><?php echo esc_html( $r['email'] ); ?></p>
+				<?php if ( ! $door ) : ?>
+					<p class="sh-row-sub"><?php echo esc_html( $r['email'] ); ?></p>
+				<?php endif; ?>
 			</div>
 			<div class="sh-row-facts">
 				<?php if ( (int) $r['guests'] > 0 ) : ?>
@@ -285,14 +313,14 @@ final class Scout_Events_RSVP_Admin {
 						<button type="submit" name="op" value="undo" class="button"><?php esc_html_e( 'Undo', 'scout-events' ); ?></button>
 					<?php else : ?>
 						<button type="submit" name="op" value="in" class="button"><?php esc_html_e( 'Check in', 'scout-events' ); ?></button>
-						<?php if ( ! $paid ) : ?>
+						<?php if ( ! $paid && ! $door ) : ?>
 							<button type="submit" name="op" value="cancel" class="button sh-quiet"><?php esc_html_e( 'Cancel', 'scout-events' ); ?></button>
 						<?php endif; ?>
 					<?php endif; ?>
-				<?php elseif ( 'waitlist' === $r['status'] ) : ?>
+				<?php elseif ( 'waitlist' === $r['status'] && ! $door ) : ?>
 					<button type="submit" name="op" value="move" class="button"><?php esc_html_e( 'Move in and email ticket', 'scout-events' ); ?></button>
 					<button type="submit" name="op" value="cancel" class="button sh-quiet"><?php esc_html_e( 'Remove', 'scout-events' ); ?></button>
-				<?php elseif ( 'cancelled' === $r['status'] ) : ?>
+				<?php elseif ( 'cancelled' === $r['status'] && ! $door ) : ?>
 					<button type="submit" name="op" value="restore" class="button"><?php esc_html_e( 'Put back', 'scout-events' ); ?></button>
 				<?php endif; ?>
 			</form>

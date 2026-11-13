@@ -537,7 +537,7 @@ final class Scout_Events_Volunteers {
 		check_admin_referer( 'scout_volunteer_admin_' . $id );
 		global $wpdb;
 		$event = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT event_id FROM ' . self::table() . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		if ( ! $event || ! current_user_can( 'edit_post', $event ) ) {
+		if ( ! $event || ! Scout_Events_People::can_manage() || ! current_user_can( 'edit_post', $event ) ) {
 			wp_die( esc_html__( 'You do not have permission to change the roster.', 'scout-events' ), 403 );
 		}
 		$wpdb->update( self::table(), array( 'status' => 'dropped' ), array( 'id' => $id ), array( '%s' ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -548,7 +548,7 @@ final class Scout_Events_Volunteers {
 	public static function csv(): void {
 		$event = isset( $_GET['event'] ) ? absint( $_GET['event'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- checked next.
 		check_admin_referer( 'scout_volunteers_csv_' . $event );
-		if ( ! $event || ! current_user_can( 'edit_post', $event ) ) {
+		if ( ! $event || ! Scout_Events_People::can_manage() || ! current_user_can( 'edit_post', $event ) ) {
 			wp_die( esc_html__( 'You do not have permission to download the roster.', 'scout-events' ), 403 );
 		}
 		nocache_headers();

@@ -22,6 +22,18 @@ and Events), and the Scout menu bar on every screen:
 Bookings hold clients' personal details, so every screen needs the
 `list_users` capability (administrators), the same rule as Scout Members.
 
+### Permissions
+
+- **Every Bookings screen** needs `list_users` (administrators).
+- **Booking requests in To do** carry the same capability (`'cap' => 'list_users'` on each
+  item, Scout Build 0.18.0+), so the To do list, its count, Today on Home and To do emails
+  show a request's name, email and note only to people who can open Bookings.
+- **Two boxes on Settings are the web team's:** "Book buttons across the site" and the
+  Search engines switch (Service schema). Only an operator can change them (Scout Build's
+  operator check; `manage_options` on a site without Scout Build). An owner who is not an
+  operator sees them greyed out with "Your web team sets this." and saving Settings keeps
+  their values as they were. Each session type's own schema choice is unchanged.
+
 ## Session types
 
 | Field | Notes |

@@ -55,6 +55,7 @@ require_once __DIR__ . '/includes/class-scout-events-woo.php';
 require_once __DIR__ . '/includes/class-scout-events-tickets.php';
 require_once __DIR__ . '/includes/class-scout-events-rsvp-admin.php';
 require_once __DIR__ . '/includes/class-scout-events-admin.php';
+require_once __DIR__ . '/includes/class-scout-events-people.php';
 require_once __DIR__ . '/includes/functions.php';
 
 Scout_Events::boot();
@@ -74,6 +75,7 @@ Scout_Events_Directory::boot();
 Scout_Events_Regions::boot();
 Scout_Events_Topics::boot();
 Scout_Events_RSVP_Admin::boot();
+Scout_Events_People::boot();
 // The shop's tickets need WooCommerce, which loads after Scout Events.
 add_action( 'plugins_loaded', array( 'Scout_Events_Woo', 'boot' ), 20 );
 
@@ -84,6 +86,8 @@ register_activation_hook(
 		Scout_Events_Presenters::role();
 		Scout_Events_RSVP::install();
 		Scout_Events_Volunteers::install();
+		Scout_Events_People::grant();
+		Scout_Events_People::sync_role( Scout_Events_People::door_on() );
 		flush_rewrite_rules();
 	}
 );

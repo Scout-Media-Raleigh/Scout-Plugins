@@ -21,6 +21,9 @@ final class Scout_Booking_Admin {
 	const SLUG = 'scout-booking';
 	const CAP  = 'list_users';
 
+	/** Settings only the web team changes: where Book buttons go, and the Service schema switch. */
+	const OPERATOR_KEYS = array( 'link_mode', 'link_url', 'link_skip', 'schema' );
+
 	public static function boot(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 31 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
@@ -30,6 +33,49 @@ final class Scout_Booking_Admin {
 		add_filter( 'plugin_action_links_' . plugin_basename( SCOUT_BOOKING_FILE ), array( __CLASS__, 'action_link' ) );
 		add_filter( 'scout_admin_nav_hint', array( __CLASS__, 'hint' ), 10, 2 );
 		add_filter( 'scout_events_needs_you', array( __CLASS__, 'needs_you' ) );
+		// Booking requests in To do need the Bookings capability (Scout Build 0.18.0+ reads it).
+		add_filter( 'scout_hub_inbox_items', array( __CLASS__, 'inbox_caps' ), 99 );
+	}
+
+	/**
+	 * Every booking item in To do carries the Bookings screen's capability, so
+	 * only people who can open Bookings see a request's name, email or note.
+	 * Scout Build 0.18.0 sets it on its own booking items too; this keeps any
+	 * other copy of a booking item covered.
+	 */
+	public static function inbox_caps( $items ): array {
+		$items = (array) $items;
+		foreach ( $items as $i => $item ) {
+			if ( is_array( $item ) && ( 'bookings' === ( $item['kind'] ?? '' ) || 0 === strpos( (string) ( $item['id'] ?? '' ), 'booking-' ) ) ) {
+				$items[ $i ]['cap'] = self::CAP;
+			}
+		}
+		return $items;
+	}
+
+	/**
+	 * Someone who looks after the site for Scout: Scout Build's operator check
+	 * when it is active, otherwise anyone who can manage the site's settings.
+	 * Site-wide switches (where Book buttons go, the Service schema) are theirs.
+	 */
+	public static function operator(): bool {
+		if ( class_exists( 'Scout_Hub_Access', false ) && method_exists( 'Scout_Hub_Access', 'is_operator' ) ) {
+			return Scout_Hub_Access::is_operator();
+		}
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * The settings an owner may save. The operator-only keys are dropped for
+	 * anyone else, so their saved values stay as they were.
+	 */
+	public static function allowed_changes( array $changes, bool $operator ): array {
+		if ( ! $operator ) {
+			foreach ( self::OPERATOR_KEYS as $key ) {
+				unset( $changes[ $key ] );
+			}
+		}
+		return $changes;
 	}
 
 	/** The hub, or one of its screens ('types', 'settings'), with an optional #anchor. */
@@ -220,26 +266,29 @@ final class Scout_Booking_Admin {
 		self::guard( 'scout_booking_settings' );
 		$in = isset( $_POST['sb'] ) ? (array) wp_unslash( $_POST['sb'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is cleaned by Scout_Booking::settings() on read and below.
 		Scout_Booking::save_settings(
-			array(
-				'page_id'      => absint( $in['page_id'] ?? 0 ),
-				'notify'       => sanitize_email( (string) ( $in['notify'] ?? '' ) ),
-				'cancel_hours' => absint( $in['cancel_hours'] ?? 24 ),
-				'late'         => 'allow' === ( $in['late'] ?? '' ) ? 'allow' : 'block',
-				'notice_hours' => absint( $in['notice_hours'] ?? 12 ),
-				'days_ahead'   => absint( $in['days_ahead'] ?? 60 ),
-				'step'         => absint( $in['step'] ?? 30 ),
-				'hold_minutes' => absint( $in['hold_minutes'] ?? 30 ),
-				'pay_hours'    => absint( $in['pay_hours'] ?? 48 ),
-				'policy'       => sanitize_textarea_field( (string) ( $in['policy'] ?? '' ) ),
-				'optin'        => empty( $in['optin'] ) ? 0 : 1,
-				'optin_label'  => sanitize_text_field( (string) ( $in['optin_label'] ?? '' ) ),
-				'reminders'    => empty( $in['reminders'] ) ? 0 : 1,
-				'hours'        => Scout_Booking::clean_week( (array) ( $in['hours'] ?? array() ) ),
-				'decline_reasons' => Scout_Booking::clean_reasons( (string) ( $in['decline_reasons'] ?? '' ) ),
-				'link_mode'       => sanitize_key( (string) ( $in['link_mode'] ?? 'page' ) ),
-				'link_url'        => Scout_Booking::clean_link( (string) ( $in['link_url'] ?? '' ) ),
-				'link_skip'       => array_map( 'sanitize_key', (array) ( $in['link_skip'] ?? array() ) ),
-				'schema'          => empty( $in['schema'] ) ? 0 : 1,
+			self::allowed_changes(
+				array(
+					'page_id'      => absint( $in['page_id'] ?? 0 ),
+					'notify'       => sanitize_email( (string) ( $in['notify'] ?? '' ) ),
+					'cancel_hours' => absint( $in['cancel_hours'] ?? 24 ),
+					'late'         => 'allow' === ( $in['late'] ?? '' ) ? 'allow' : 'block',
+					'notice_hours' => absint( $in['notice_hours'] ?? 12 ),
+					'days_ahead'   => absint( $in['days_ahead'] ?? 60 ),
+					'step'         => absint( $in['step'] ?? 30 ),
+					'hold_minutes' => absint( $in['hold_minutes'] ?? 30 ),
+					'pay_hours'    => absint( $in['pay_hours'] ?? 48 ),
+					'policy'       => sanitize_textarea_field( (string) ( $in['policy'] ?? '' ) ),
+					'optin'        => empty( $in['optin'] ) ? 0 : 1,
+					'optin_label'  => sanitize_text_field( (string) ( $in['optin_label'] ?? '' ) ),
+					'reminders'    => empty( $in['reminders'] ) ? 0 : 1,
+					'hours'        => Scout_Booking::clean_week( (array) ( $in['hours'] ?? array() ) ),
+					'decline_reasons' => Scout_Booking::clean_reasons( (string) ( $in['decline_reasons'] ?? '' ) ),
+					'link_mode'       => sanitize_key( (string) ( $in['link_mode'] ?? 'page' ) ),
+					'link_url'        => Scout_Booking::clean_link( (string) ( $in['link_url'] ?? '' ) ),
+					'link_skip'       => array_map( 'sanitize_key', (array) ( $in['link_skip'] ?? array() ) ),
+					'schema'          => empty( $in['schema'] ) ? 0 : 1,
+				),
+				self::operator()
 			)
 		);
 		Scout_Booking_Front::forget_site_link();
@@ -816,23 +865,27 @@ final class Scout_Booking_Admin {
 				<p class="sbk-field"><label for="sbk-reasons"><?php esc_html_e( 'Reasons to pick from, one per line', 'scout-booking' ); ?></label><textarea id="sbk-reasons" name="sb[decline_reasons]" rows="4" class="regular-text"><?php echo esc_textarea( implode( "\n", $s['decline_reasons'] ) ); ?></textarea><span class="description"><?php esc_html_e( 'Picking one is optional. Only you see it: the client gets the same kind note either way. Empty means no reasons are offered.', 'scout-booking' ); ?></span></p>
 			</section>
 
+			<?php $sbk_op = self::operator(); ?>
 			<section class="sh-box" id="sb-link">
 				<h2 class="sh-title"><?php esc_html_e( 'Book buttons across the site', 'scout-booking' ); ?></h2>
 				<p><?php esc_html_e( 'Where Call buttons, Chat and other features send people who want to book. Booking emails always use the booking page above.', 'scout-booking' ); ?></p>
+				<?php if ( ! $sbk_op ) : ?>
+					<p class="sh-note sbk-team"><?php esc_html_e( 'Your web team sets this.', 'scout-booking' ); ?></p>
+				<?php endif; ?>
 				<fieldset class="sbk-field">
 					<legend class="screen-reader-text"><?php esc_html_e( 'Where Book buttons go', 'scout-booking' ); ?></legend>
-					<label><input type="radio" name="sb[link_mode]" value="page" <?php checked( 'page', $s['link_mode'] ); ?>> <?php esc_html_e( 'The booking page', 'scout-booking' ); ?></label><br>
-					<label><input type="radio" name="sb[link_mode]" value="url" <?php checked( 'url', $s['link_mode'] ); ?>> <?php esc_html_e( 'This address:', 'scout-booking' ); ?></label>
+					<label><input type="radio" name="sb[link_mode]" value="page" <?php checked( 'page', $s['link_mode'] ); ?> <?php disabled( ! $sbk_op ); ?>> <?php esc_html_e( 'The booking page', 'scout-booking' ); ?></label><br>
+					<label><input type="radio" name="sb[link_mode]" value="url" <?php checked( 'url', $s['link_mode'] ); ?> <?php disabled( ! $sbk_op ); ?>> <?php esc_html_e( 'This address:', 'scout-booking' ); ?></label>
 					<label class="screen-reader-text" for="sbk-link-url"><?php esc_html_e( 'Address for Book buttons', 'scout-booking' ); ?></label>
-					<input type="url" id="sbk-link-url" name="sb[link_url]" class="regular-text code" value="<?php echo esc_attr( $s['link_url'] ); ?>" placeholder="<?php echo esc_attr( home_url( '/book/' ) ); ?>"><br>
-					<label><input type="radio" name="sb[link_mode]" value="off" <?php checked( 'off', $s['link_mode'] ); ?>> <?php esc_html_e( 'Not from Bookings: each feature uses its own link, such as the Contact page', 'scout-booking' ); ?></label>
+					<input type="url" id="sbk-link-url" name="sb[link_url]" class="regular-text code" value="<?php echo esc_attr( $s['link_url'] ); ?>" <?php disabled( ! $sbk_op ); ?> placeholder="<?php echo esc_attr( home_url( '/book/' ) ); ?>"><br>
+					<label><input type="radio" name="sb[link_mode]" value="off" <?php checked( 'off', $s['link_mode'] ); ?> <?php disabled( ! $sbk_op ); ?>> <?php esc_html_e( 'Not from Bookings: each feature uses its own link, such as the Contact page', 'scout-booking' ); ?></label>
 				</fieldset>
 				<?php $sbk_types = Scout_Booking::types(); ?>
 				<?php if ( $sbk_types ) : ?>
 					<fieldset class="sbk-field">
 						<legend><?php esc_html_e( 'Never send Book buttons to a page that only offers these sessions', 'scout-booking' ); ?></legend>
 						<?php foreach ( $sbk_types as $sbk_t ) : ?>
-							<label><input type="checkbox" name="sb[link_skip][]" value="<?php echo esc_attr( $sbk_t['id'] ); ?>" <?php checked( in_array( $sbk_t['id'], $s['link_skip'], true ) ); ?>> <?php echo esc_html( $sbk_t['name'] ); ?></label><br>
+							<label><input type="checkbox" name="sb[link_skip][]" value="<?php echo esc_attr( $sbk_t['id'] ); ?>" <?php checked( in_array( $sbk_t['id'], $s['link_skip'], true ) ); ?> <?php disabled( ! $sbk_op ); ?>> <?php echo esc_html( $sbk_t['name'] ); ?></label><br>
 						<?php endforeach; ?>
 						<span class="description"><?php esc_html_e( 'For sessions you only offer by request on their own page. Book buttons then go to the first published booking page that offers something else.', 'scout-booking' ); ?></span>
 					</fieldset>
@@ -852,7 +905,10 @@ final class Scout_Booking_Admin {
 
 			<section class="sh-box">
 				<h2 class="sh-title"><?php esc_html_e( 'Search engines', 'scout-booking' ); ?></h2>
-				<p class="sbk-check"><label><input type="checkbox" name="sb[schema]" value="1" <?php checked( $s['schema'] ); ?>> <?php esc_html_e( 'Describe your sessions to search engines as services you offer.', 'scout-booking' ); ?></label></p>
+				<?php if ( ! $sbk_op ) : ?>
+					<p class="sh-note sbk-team"><?php esc_html_e( 'Your web team sets this.', 'scout-booking' ); ?></p>
+				<?php endif; ?>
+				<p class="sbk-check"><label><input type="checkbox" name="sb[schema]" value="1" <?php checked( $s['schema'] ); ?> <?php disabled( ! $sbk_op ); ?>> <?php esc_html_e( 'Describe your sessions to search engines as services you offer.', 'scout-booking' ); ?></label></p>
 				<p class="description"><?php esc_html_e( 'Each session on the booking page gets its name, note, length and price, linked to your business. A session type can opt out, and sessions without a price or a note are left out unless you choose otherwise. Needs Scout Core.', 'scout-booking' ); ?></p>
 			</section>
 

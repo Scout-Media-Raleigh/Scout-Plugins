@@ -1,5 +1,11 @@
 # Scout Build changelog
 
+## 0.18.0 (2026-11-13)
+
+- **To do shows each person only what they can open.** Every To do item now carries the capability its own screen needs. The To do list, the sidebar count, the All chip, Today on Home and the To do emails leave out anything the reader cannot open. Booking requests (a name, an email and a note) need the Bookings screen's own capability (`list_users`), so an Editor, Author or Contributor no longer sees them or hears about them by email. Administrators see exactly what they saw before.
+- **For other features:** an item added with `scout_hub_inbox_items`, or a count row added with `scout_hub_inbox`, can name its capability as `'cap'`. Items and rows without one need `edit_posts`, as before. `Scout_Hub_Inbox::can()` answers the same question for a plugin's own screens.
+- Release Scout Booking 0.4.0 and Scout Events 0.18.0 after this one; both still work with an older Scout Build.
+
 ## 0.17.2 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.
