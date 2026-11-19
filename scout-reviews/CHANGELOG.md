@@ -1,5 +1,10 @@
 # Scout Reviews: Changelog
 
+## 0.8.2 (2026-11-19)
+
+- **Selected reviews say so (FTC review rule).** When a section hides reviews below a star rating (`min_rating` or the block's Minimum rating), it now adds "These are selected reviews." with a link to every review on Google when the Place ID is set. The FTC's Consumer Review rule (16 CFR 465.7) bans showing only high ratings while implying the set is complete.
+- **Law sites always show every rating.** With Scout Law active the star filter is ignored, since bar rules on testimonials are stricter. A site can change this with the `scout_reviews_allow_min_rating` filter.
+
 ## 0.8.1 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

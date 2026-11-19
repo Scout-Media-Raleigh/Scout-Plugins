@@ -1,7 +1,7 @@
 <?php
 /**
- * Remove the bookings table, the session types, the settings and the saved
- * calendar addresses on delete.
+ * Remove the session types, the settings and the saved calendar addresses on
+ * delete. The bookings table stays unless SCOUT_BOOKING_DELETE_DATA is true.
  * WooCommerce products made for session types are left for the shop owner,
  * since past orders point at them.
  *
@@ -12,10 +12,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 global $wpdb;
-$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'scout_bookings' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+// Bookings are the client's records (paid deposits included), so the table
+// stays when the plugin is deleted. To wipe it too, set
+// define( 'SCOUT_BOOKING_DELETE_DATA', true ); in wp-config.php first.
+if ( defined( 'SCOUT_BOOKING_DELETE_DATA' ) && true === SCOUT_BOOKING_DELETE_DATA ) {
+	$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'scout_bookings' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+	delete_option( 'scout_booking_db' );
+}
 delete_option( 'scout_booking' );
 delete_option( 'scout_booking_types' );
-delete_option( 'scout_booking_db' );
 delete_option( 'scout_booking_type_feeds' );
 wp_clear_scheduled_hook( 'scout_booking_hourly' );
 // Busy times from the owner's calendar: the private addresses, their notes and the saved busy times.

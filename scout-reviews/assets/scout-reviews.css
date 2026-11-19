@@ -247,6 +247,7 @@
 	text-decoration: underline;
 }
 
+.scout-reviews__selection,
 .scout-reviews__disclaimer {
 	margin: 0;
 	font-size: 13px;

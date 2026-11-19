@@ -1,5 +1,9 @@
 # Scout Events changelog
 
+## 0.18.1 (2026-11-19)
+
+- **Ready for PHP 8.5.** The ticket image no longer calls `imagedestroy()`, which does nothing since PHP 8.0 and is deprecated in 8.5. Tickets look and attach exactly as before.
+
 ## 0.18.0 (2026-11-13)
 
 - **Courses.** A course is a training program that runs over several dates, such as a multi-weekend training: its name, description and photo, level, who it is for, total hours, how people take part (in person, online or both), where, the teachers, price tiers and a registration link that may go to an outside booking site. Each run is a date range, or the events picked as its sessions, whose dates it takes. Add them under **Events, Courses**, pick the page about the course under "Shown on", and put `[scout_course id="7"]` on it for the dates, place, prices, teachers and register button (`show="dates"` for the dates and button only, `title="yes"` for the name as a heading). A run that has ended and a price after its last day leave the page.

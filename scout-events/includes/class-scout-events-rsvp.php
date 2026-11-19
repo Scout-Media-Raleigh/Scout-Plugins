@@ -441,12 +441,10 @@ final class Scout_Events_RSVP {
 		// A folder of its own, so the attachment keeps a readable name.
 		$dir = trailingslashit( get_temp_dir() ) . 'scout-ticket-' . wp_generate_password( 10, false, false );
 		if ( ! wp_mkdir_p( $dir ) ) {
-			imagedestroy( $im );
 			return '';
 		}
 		$file = $dir . '/' . ( '' !== $name ? sanitize_file_name( $name ) : 'ticket' ) . '.png';
-		imagepng( $im, $file );
-		imagedestroy( $im );
+		imagepng( $im, $file ); // GD frees the image itself (PHP 8.0+); imagedestroy() is deprecated in 8.5.
 		return file_exists( $file ) ? $file : '';
 	}
 

@@ -1,5 +1,9 @@
 # Scout Booking changelog
 
+## 0.4.1 (2026-11-19)
+
+- **Deleting the plugin keeps your bookings.** The bookings table holds the client's records, paid deposits included, so it now stays when the plugin is deleted. The settings, session types and saved calendar addresses still go. To wipe the bookings too, add `define( 'SCOUT_BOOKING_DELETE_DATA', true );` to `wp-config.php` before deleting.
+
 ## 0.4.0 (2026-11-13)
 
 - **A tick box to agree.** A question on a session type can now be a tick box beside a sentence you write, such as "I have read what to expect and agree to it.", with an optional link beside it. Made required, the booking is refused until it is ticked, with a note at the top and the box marked on the form. The booking keeps the exact sentence, the time it was ticked and the link, and shows it on the Schedule, in your booking emails and in the privacy export. Existing questions read exactly as before.

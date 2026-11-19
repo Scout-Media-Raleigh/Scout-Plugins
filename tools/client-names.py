@@ -17,7 +17,7 @@ only; the matching text is never printed, so CI logs stay clean too.
 How text is matched: lowercased, accents and apostrophes dropped, split into
 words at anything that is not a letter or digit and at camelCase humps, then
 every run of one to five words is joined without spaces and hashed. So
-"North Crest", "northcrest" and "NorthCrest" all give the same hash, and a
+"Blue Ridge", "blueridge" and "BlueRidge" all give the same hash, and a
 deny entry is always written as one joined lowercase word.
 
 Intentional mentions (a plugin built for a kind of business may need one) go in

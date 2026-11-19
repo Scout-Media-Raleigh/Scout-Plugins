@@ -2,8 +2,13 @@ name: Lint
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
+
+# A pull request runs once per commit. A newer push cancels the older run.
+concurrency:
+  group: lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   php-syntax:
@@ -12,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.0', '8.1', '8.2', '8.3']
+        php-version: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
       - uses: actions/checkout@v4

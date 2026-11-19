@@ -8,8 +8,8 @@ automatic runs, review, undo, WP-CLI). Section markers (phase 3) and retiring
 per-theme code (phase 4) are next. Owner: Sean and Joy.
 
 Decision (Joy, 2026-10-22): every site is built the same way, and Site Sync
-starts from the field-level, conflict-safe content update built for the Walter
-Lutz site in September 2026.
+starts from the field-level, conflict-safe content update built for a client's
+site in September 2026.
 
 ---
 

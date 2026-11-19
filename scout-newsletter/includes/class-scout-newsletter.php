@@ -12,7 +12,7 @@
  *
  * Calling the action means the person ticked a box. Nothing here ever adds
  * someone without one: imports and "everyone who bought a ticket" are not a
- * thing this plugin does (FOR-KAI #116: existing customers are invited).
+ * thing this plugin does (a client request: existing customers are invited).
  *
  * The call only writes a consent record and queues the send, so a visitor's
  * checkout or form never waits on Beehiiv. The queue does the rest.

@@ -314,7 +314,9 @@ requests unpaid after the pay window, and sends reminders.
   private calendar addresses) and `scout_booking_busy_state` (when each was
   read). Transient `scout_booking_busy` holds the busy times.
 - Personal data export and erase (Tools) cover bookings by email.
-- Deleting the plugin removes the table and options. The WooCommerce products
+- Deleting the plugin removes the options and keeps the bookings table, since
+  it holds the client's records. Define `SCOUT_BOOKING_DELETE_DATA` as `true`
+  in `wp-config.php` first to remove the table too. The WooCommerce products
   stay, because past orders point at them.
 
 ## Not built yet

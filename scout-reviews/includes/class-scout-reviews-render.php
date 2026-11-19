@@ -49,12 +49,29 @@ final class Scout_Reviews_Render {
 			'count'      => max( 0, (int) ( $raw['count'] ?? 0 ) ),
 			'source'     => Scout_Reviews_Sources::exists( $source ) ? $source : '',
 			'featured'   => $bool( $raw['featured'] ?? false ),
-			'min_rating' => max( 0, min( 5, (int) ( $raw['min_rating'] ?? 0 ) ) ),
+			'min_rating' => self::min_rating( (int) ( $raw['min_rating'] ?? 0 ) ),
 			'summary'    => $bool( $raw['summary'] ?? true ),
 			'topic'      => sanitize_title( (string) ( $raw['topic'] ?? '' ) ),
 			// When a topic has no reviews yet, show featured ones instead of nothing.
 			'fallback'   => 'none' === strtolower( (string) ( $raw['fallback'] ?? 'featured' ) ) ? 'none' : 'featured',
 		);
+	}
+
+	/**
+	 * The star floor a section may use. The FTC review rule (16 CFR 465.7)
+	 * bans showing only high ratings while implying the set is complete, and
+	 * bar rules are stricter still, so a law site (Scout Law active) always
+	 * shows every rating. Other sites may filter, and the section then says
+	 * the reviews are a selection (see the 'filtered' note in section.php).
+	 */
+	public static function min_rating( int $stars ): int {
+		$stars = max( 0, min( 5, $stars ) );
+		$allow = ! defined( 'SCOUT_LAW_VERSION' );
+		/** Filter: whether this site may hide reviews below a star rating. */
+		if ( ! apply_filters( 'scout_reviews_allow_min_rating', $allow ) ) {
+			return 0;
+		}
+		return $stars;
 	}
 
 	public static function shortcode_reviews( $atts ): string {
@@ -119,8 +136,19 @@ final class Scout_Reviews_Render {
 				'totals'     => $totals,
 				'layout'     => $opts['layout'],
 				'disclaimer' => Scout_Reviews_Settings::get()['disclaimer'],
+				'filtered'   => $query['min_rating'] > 0,
+				'all_url'    => self::all_reviews_url(),
 			)
 		);
+	}
+
+	/**
+	 * Google's page with every review for this business, when the Place ID is
+	 * known. Empty otherwise.
+	 */
+	public static function all_reviews_url(): string {
+		$id = class_exists( 'Scout_Reviews_Places' ) ? Scout_Reviews_Places::place_id() : '';
+		return '' === $id ? '' : 'https://search.google.com/local/reviews?placeid=' . rawurlencode( $id );
 	}
 
 	/**
