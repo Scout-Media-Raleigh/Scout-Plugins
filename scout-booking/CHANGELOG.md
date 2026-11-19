@@ -3,6 +3,7 @@
 ## 0.4.1 (2026-11-19)
 
 - **Deleting the plugin keeps your bookings.** The bookings table holds the client's records, paid deposits included, so it now stays when the plugin is deleted. The settings, session types and saved calendar addresses still go. To wipe the bookings too, add `define( 'SCOUT_BOOKING_DELETE_DATA', true );` to `wp-config.php` before deleting.
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
 
 ## 0.4.0 (2026-11-13)
 

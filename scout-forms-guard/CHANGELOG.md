@@ -1,5 +1,9 @@
 # Scout Forms Guard — Changelog
 
+## 0.4.1 (2026-11-19)
+
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
+
 ## 0.4.0 (2026-11-13)
 
 - **Send only, keep no entry (a per-form switch, off by default).** For a sensitive form, such as a concern report that only one person should read. Turn it on in the form's Settings, "Keep no entry". The form's notification still goes out (sent right away, never queued for later), then the entry, its uploaded files and its notes are deleted from the site, so nobody reads it in the dashboard. Entries marked as spam are deleted too.

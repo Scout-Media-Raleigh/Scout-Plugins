@@ -3,6 +3,7 @@
 ## 0.4.1 (2026-11-19)
 
 - **The AI connection key is saved encrypted.** A key typed on the settings screen is now stored encrypted with a key made from the site's own security salts, the way Scout Reviews stores its Google key, so a database copy or backup does not carry a usable key. A key saved earlier keeps working and is encrypted the next time the settings are saved. If the site's security keys change, type the key again. `SCOUT_CHAT_AI_KEY` in `wp-config.php` still wins and is never stored.
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
 
 ## 0.4.0 (2026-11-13)
 

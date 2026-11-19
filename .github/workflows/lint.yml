@@ -214,6 +214,8 @@ jobs:
         run: php tools/tests/plus-queues.php
       - name: Booking busy times from the owner's calendar (no WordPress needed)
         run: php tools/tests/booking-busy.php
+      - name: Updater checks each download's sha256 and source (no WordPress needed)
+        run: php tools/tests/updater-checksum.php
       - name: Redirects leave out bot probes and check broken links (no WordPress needed)
         run: php tools/tests/redirects-noise.php
       - name: Saved secrets after the site's security keys change (no WordPress needed)

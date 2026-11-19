@@ -1,5 +1,9 @@
 # Scout Members changelog
 
+## 0.6.1 (2026-11-19)
+
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
+
 ## 0.6.0 (2026-11-13)
 
 - **Membership work in To do.** With Scout Build, membership applications, member invitations to read, and memberships that renew within 14 days or are past due wait in Scout, To do, each linking to its own Members screen. Each item needs `list_users`, the Members screens' capability, so with Scout Build 0.18.0 or later staff who cannot open Members never see it, its count, Today on Home or the To do emails. The applications and invitations rows are the same ones Events Needs you shows, and when Scout Events is on each is added once. Members Home and Events Needs you look the same as before (renewals there still look 30 days ahead).

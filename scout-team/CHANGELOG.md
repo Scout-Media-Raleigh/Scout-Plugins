@@ -1,5 +1,9 @@
 # Scout Team changelog
 
+## 0.5.1 (2026-11-19)
+
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
+
 ## 0.5.0 (2026-11-13)
 
 - **Profile link.** Each person's Shows on box has a Profile link: their own team page (the default), a page on the site, or a typed address (a path like /about/ or a full address). Bylines, author links, the team grid and the Person schema `url` use it. `Scout_Team::profile_url()` returns it, so every caller follows.

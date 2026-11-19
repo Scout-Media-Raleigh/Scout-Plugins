@@ -3,6 +3,7 @@
 ## 0.2.7 (2026-11-19)
 
 - **Deleting the plugin removes its address marker.** New uninstall step. Sites and park content stay.
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
 
 ## 0.2.6 (2026-11-11)
 

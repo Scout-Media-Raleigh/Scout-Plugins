@@ -1,5 +1,9 @@
 # Scout CRM Sync changelog
 
+## 0.2.1 (2026-11-19)
+
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
+
 ## 0.2.0 (2026-11-13)
 
 - **Bookings join your contacts.** With Scout Booking 0.4.0 or later, everyone who books or requests a session is added or updated in FluentCRM with the tag Booking request and Session: (session name), and Booked a session once it is booked. When you decline a request with a reason, the person gets that reason as a tag, such as Not a fit. Only the name, email and phone are copied; intake answers stay with the booking. New people come in as transactional, as before.

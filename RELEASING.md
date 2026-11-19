@@ -20,6 +20,13 @@ release here is the whole job. A site opts out by defining
 `SCOUT_DISABLE_AUTO_UPDATES` as `true` in `wp-config.php`. Nothing extra is
 installed on the client site and no third-party updater service is involved.
 
+Before an update installs, the updater checks it. The zip must come from
+this repo's releases, and when the version list carries GitHub's sha256 for it
+(every release does since the Release workflow started copying GitHub's
+`digest` into `releases.json`), the download must match it, or the install
+stops and nothing on the site changes. Older entries without a sha256 install
+as before. Tested by `tools/tests/updater-checksum.php`.
+
 Sites check for updates roughly twice a day, and the lookup is cached for six
 hours, so a release reaches a site within a few hours rather than instantly.
 

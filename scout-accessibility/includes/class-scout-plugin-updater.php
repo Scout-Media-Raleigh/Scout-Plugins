@@ -78,6 +78,17 @@ final class Scout_Plugin_Updater {
 	private static $feed_ok = true;
 
 	/**
+	 * Every Scout plugin booted on this request, plugin basename => slug, so
+	 * the download check knows which updates are ours.
+	 *
+	 * @var array<string, string>
+	 */
+	private static $plugins = array();
+
+	/** The download check is hooked once, whichever copy boots first. */
+	private static $guarded = false;
+
+	/**
 	 * Absolute path to the plugin's main file.
 	 *
 	 * @var string
@@ -114,6 +125,11 @@ final class Scout_Plugin_Updater {
 	 */
 	public static function boot( string $file, string $slug ): void {
 		$updater = new self( $file, $slug );
+		self::$plugins[ plugin_basename( $file ) ] = $slug;
+		if ( ! self::$guarded ) {
+			self::$guarded = true;
+			add_filter( 'upgrader_pre_download', array( __CLASS__, 'pre_download' ), 10, 4 );
+		}
 
 		// Core derives this filter name from the Update URI header's hostname.
 		add_filter( 'update_plugins_github.com', array( $updater, 'check' ), 10, 3 );
@@ -361,7 +377,12 @@ final class Scout_Plugin_Updater {
 			$assets = array();
 			foreach ( (array) ( $release['assets'] ?? array() ) as $asset ) {
 				if ( isset( $asset['name'], $asset['browser_download_url'] ) ) {
-					$assets[] = array( 'name' => (string) $asset['name'], 'browser_download_url' => (string) $asset['browser_download_url'] );
+					$assets[] = array(
+						'name'                 => (string) $asset['name'],
+						'browser_download_url' => (string) $asset['browser_download_url'],
+						// GitHub's API and the version list both carry it as "digest": "sha256:<hex>".
+						'sha256'               => self::clean_sha256( $asset['sha256'] ?? ( $asset['digest'] ?? '' ) ),
+					);
 				}
 			}
 			$list[] = array(
@@ -393,6 +414,116 @@ final class Scout_Plugin_Updater {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Check a download before WordPress unpacks it (upgrader_pre_download).
+	 *
+	 * - A zip from this repo's releases whose sha256 is listed: downloaded
+	 *   here and checked. A mismatch deletes the file and stops the install;
+	 *   nothing on the site changes.
+	 * - The same with no sha256 listed (a release from before GitHub recorded
+	 *   one): WordPress downloads it as usual, and the error log says so.
+	 * - An update of a Scout plugin from any other address: refused.
+	 * - Anything else (other plugins, themes, a zip uploaded by hand): untouched.
+	 *
+	 * @param mixed  $reply      False, or what an earlier filter returned.
+	 * @param string $package    The package address or path.
+	 * @param mixed  $upgrader   The WP_Upgrader running.
+	 * @param array  $hook_extra What is being upgraded.
+	 * @return mixed False to let WordPress download, a file path, or WP_Error.
+	 */
+	public static function pre_download( $reply, $package, $upgrader = null, $hook_extra = array() ) {
+		if ( false !== $reply || ! is_string( $package ) || '' === $package ) {
+			return $reply;
+		}
+		if ( ! self::is_release_url( $package ) ) {
+			$plugin = is_array( $hook_extra ) && isset( $hook_extra['plugin'] ) ? (string) $hook_extra['plugin'] : '';
+			if ( '' !== $plugin && isset( self::$plugins[ $plugin ] ) && preg_match( '#^[a-z][a-z0-9+.-]*://#i', $package ) ) {
+				self::log( 'Refused an update of ' . self::$plugins[ $plugin ] . ' from ' . $package . ': not a release of ' . self::REPO . '.' );
+				return new WP_Error( 'scout_updater_source', 'This update was refused: Scout plugins only install from the Scout Plugins releases.' );
+			}
+			return $reply;
+		}
+
+		$expected = self::expected_sha256( $package );
+		if ( '' === $expected ) {
+			self::log( 'No sha256 listed for ' . $package . '; installing without a checksum check (an older release).' );
+			return $reply;
+		}
+
+		if ( ! function_exists( 'download_url' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		if ( is_object( $upgrader ) && isset( $upgrader->skin ) && is_object( $upgrader->skin ) && method_exists( $upgrader->skin, 'feedback' ) ) {
+			$upgrader->skin->feedback( 'downloading_package', $package );
+		}
+		$file = download_url( $package, 300 );
+		if ( is_wp_error( $file ) ) {
+			return $file;
+		}
+		$actual = (string) hash_file( 'sha256', $file );
+		if ( ! hash_equals( $expected, $actual ) ) {
+			wp_delete_file( $file );
+			self::log( 'Checksum mismatch for ' . $package . ': expected ' . $expected . ', got ' . $actual . '. Install stopped.' );
+			return new WP_Error( 'scout_updater_checksum', 'This update was stopped: the downloaded file does not match the checksum published with the release. Nothing was changed. Try again later; if it keeps failing, tell Scout.' );
+		}
+		return $file;
+	}
+
+	/**
+	 * Whether an address is a release download of this repo.
+	 *
+	 * @param string $url Package address.
+	 * @return bool
+	 */
+	public static function is_release_url( string $url ): bool {
+		$base = 'https://github.com/' . self::REPO . '/releases/download/';
+		return 0 === strpos( $url, $base ) && false === strpos( $url, '..' ) && false === strpos( $url, '?' );
+	}
+
+	/**
+	 * The sha256 the release list gives for one package address, or '' when
+	 * it gives none.
+	 *
+	 * @param string $package Package address.
+	 * @return string Lower-case hex, or ''.
+	 */
+	public static function expected_sha256( string $package ): string {
+		foreach ( self::feed() as $release ) {
+			foreach ( (array) ( $release['assets'] ?? array() ) as $asset ) {
+				if ( is_array( $asset ) && isset( $asset['browser_download_url'] ) && $package === $asset['browser_download_url'] ) {
+					return self::clean_sha256( $asset['sha256'] ?? '' );
+				}
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * A sha256 as 64 lower-case hex characters, or '' for anything else.
+	 *
+	 * @param mixed $value Raw value, plain hex or "sha256:<hex>".
+	 * @return string
+	 */
+	private static function clean_sha256( $value ): string {
+		$value = strtolower( trim( (string) $value ) );
+		if ( 0 === strpos( $value, 'sha256:' ) ) {
+			$value = substr( $value, 7 );
+		}
+		return 1 === preg_match( '/^[0-9a-f]{64}$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Note an update safety event in the PHP error log and pass it on through
+	 * the scout_updater_log action (Scout Build can show it on Site status).
+	 *
+	 * @param string $message Plain sentence.
+	 * @return void
+	 */
+	private static function log( string $message ): void {
+		error_log( 'Scout plugin updater: ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		do_action( 'scout_updater_log', $message );
 	}
 
 	/**

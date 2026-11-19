@@ -3,6 +3,7 @@
 ## 0.1.23 (2026-11-19)
 
 - **Deleting the plugin leaves nothing behind.** The one-time page description marker is now removed on delete.
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
 
 ## 0.1.22 (2026-11-11)
 

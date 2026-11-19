@@ -3,6 +3,7 @@
 ## 1.2.2 (2026-11-19)
 
 - **Deleting the plugin removes its settings.** New uninstall step: settings, the theme-import and people notes and the address marker go. Cards and the people table stay, and the Scout Media theme's own `scout_cards` setting is left alone.
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
 
 ## 1.2.1 (2026-11-11)
 

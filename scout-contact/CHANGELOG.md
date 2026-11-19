@@ -1,5 +1,9 @@
 # Scout Call Buttons changelog
 
+## 0.3.1 (2026-11-19)
+
+- **Updates are checked before they install.** The shared updater now compares each release zip with the sha256 GitHub publishes for it and stops the install on a mismatch, and refuses an update of a Scout plugin from any address other than this repo's releases. Releases from before the checksum was listed install as before.
+
 ## 0.3.0 (2026-11-13)
 
 - **Button sets: different buttons on some pages.** A site that keeps two kinds of service apart can give each part of the site its own buttons. Call buttons has a new closed box, Button sets. Each set has a name, the pages it covers (tick pages, with their child pages if you like) and/or addresses that start with a path such as `/bodywork/`, and its buttons: Call, Text, Book, Email, Directions and up to two link buttons with their own wording. Each button can take its own link, so Book on one set can go to an outside booking site. A set can also leave Text off. A page uses the first set that matches; every other page keeps the usual buttons.
