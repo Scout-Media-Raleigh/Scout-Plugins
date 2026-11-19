@@ -22,3 +22,4 @@ $scout_optimize_role = get_role( 'administrator' );
 if ( $scout_optimize_role ) {
 	$scout_optimize_role->remove_cap( 'manage_scout_optimize' );
 }
+delete_option( 'scout_optimize_parent' ); // Which menu the screens sit under.

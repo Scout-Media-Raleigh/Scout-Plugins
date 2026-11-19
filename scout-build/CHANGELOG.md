@@ -1,5 +1,9 @@
 # Scout Build changelog
 
+## 0.18.1 (2026-11-19)
+
+- **Deleting the plugin leaves nothing behind.** The auto-update sweep marker and two short-lived checks (refused log calls, staging password check) are now removed on delete.
+
 ## 0.18.0 (2026-11-13)
 
 - **To do shows each person only what they can open.** Every To do item now carries the capability its own screen needs. The To do list, the sidebar count, the All chip, Today on Home and the To do emails leave out anything the reader cannot open. Booking requests (a name, an email and a note) need the Bookings screen's own capability (`list_users`), so an Editor, Author or Contributor no longer sees them or hears about them by email. Administrators see exactly what they saw before.

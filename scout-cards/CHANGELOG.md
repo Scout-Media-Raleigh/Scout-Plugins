@@ -1,5 +1,9 @@
 # Scout Cards changelog
 
+## 1.2.2 (2026-11-19)
+
+- **Deleting the plugin removes its settings.** New uninstall step: settings, the theme-import and people notes and the address marker go. Cards and the people table stay, and the Scout Media theme's own `scout_cards` setting is left alone.
+
 ## 1.2.1 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

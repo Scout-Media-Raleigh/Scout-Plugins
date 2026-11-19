@@ -45,3 +45,7 @@ delete_metadata( 'user', 0, 'scout_hub_show_everything', '', true );
 delete_transient( 'scout_hub_catalog' );
 delete_transient( 'scout_hub_releases' );
 delete_transient( 'scout_updater_scout-build' );
+// Markers and short-lived checks left by the hub.
+delete_option( 'scout_hub_auto_update_sweep' );
+delete_transient( 'scout_hub_api_refused' );
+delete_transient( 'scout_hub_staging_auth' );

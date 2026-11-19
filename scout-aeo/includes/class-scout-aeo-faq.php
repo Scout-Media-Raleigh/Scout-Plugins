@@ -200,7 +200,7 @@ final class Scout_AEO_FAQ {
 			'url'        => get_permalink( $id ),
 			'mainEntity' => self::questions( self::$printed[ $id ] ),
 		);
-		echo "<script type=\"application/ld+json\">\n" . wp_json_encode( $node, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n</script>\n";
+		echo "<script type=\"application/ld+json\">\n" . wp_json_encode( $node, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_PRETTY_PRINT ) . "\n</script>\n";
 	}
 
 	/** A few neutral rules; everything else comes from the theme. */

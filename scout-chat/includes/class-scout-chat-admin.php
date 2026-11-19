@@ -258,13 +258,15 @@ final class Scout_Chat_Admin {
 			add_settings_error( Scout_Chat::OPTION, 'ai_url', __( 'The AI server address must start with https://.', 'scout-chat' ) );
 			$url = '';
 		}
-		$key = trim( (string) ( $in['ai_key'] ?? '' ) );
+		$key = sanitize_text_field( trim( (string) ( $in['ai_key'] ?? '' ) ) );
 		if ( '' === $key ) {
-			$key = Scout_Chat::settings()['ai_key']; // Blank keeps the saved key; it is never shown back.
+			// Blank keeps the saved key; it is never shown back. One saved before 0.4.1 gets encrypted now.
+			$key = Scout_Chat::unseal_key( Scout_Chat::settings()['ai_key'] );
 		}
 		if ( ! empty( $in['ai_key_clear'] ) ) {
 			$key = '';
 		}
+		$key = Scout_Chat::seal_key( $key );
 		// Outside chat widget: https only, checked again where it prints.
 		$src_in = trim( (string) ( $in['outside_src'] ?? '' ) );
 		$src    = Scout_Chat::outside_url( $src_in );
@@ -314,7 +316,7 @@ final class Scout_Chat_Admin {
 			'photo_1'   => esc_url_raw( (string) ( $in['photo_1'] ?? '' ) ),
 			'photo_2'   => esc_url_raw( (string) ( $in['photo_2'] ?? '' ) ),
 			'ai_url'    => $url,
-			'ai_key'    => sanitize_text_field( $key ),
+			'ai_key'    => $key, // Encrypted by seal_key(); sanitized before that.
 			'outside'            => $outside ? 1 : 0,
 			'outside_src'        => $src,
 			'outside_async'      => ! empty( $in['outside_async'] ) ? 1 : 0,

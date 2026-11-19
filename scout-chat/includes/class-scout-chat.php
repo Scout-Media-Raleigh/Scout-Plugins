@@ -266,7 +266,48 @@ final class Scout_Chat {
 
 	/** The connection key: wp-config's SCOUT_CHAT_AI_KEY wins over the setting. */
 	public static function ai_key(): string {
-		return defined( 'SCOUT_CHAT_AI_KEY' ) ? (string) SCOUT_CHAT_AI_KEY : self::settings()['ai_key'];
+		return defined( 'SCOUT_CHAT_AI_KEY' ) ? (string) SCOUT_CHAT_AI_KEY : self::unseal_key( self::settings()['ai_key'] );
+	}
+
+	/**
+	 * The saved key is stored encrypted ('e:' + base64 of IV and AES-256-CBC
+	 * text) with a key made from the site's auth salt, so a database copy or
+	 * backup does not carry a usable key. 'p:' is the fallback when openssl is
+	 * missing. A key saved before 0.4.1 has no prefix and is read as is until
+	 * the settings are saved again.
+	 */
+	public static function seal_key( string $plain ): string {
+		if ( '' === $plain ) {
+			return '';
+		}
+		if ( ! function_exists( 'openssl_encrypt' ) ) {
+			return 'p:' . base64_encode( $plain ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		}
+		$iv = random_bytes( 16 );
+		return 'e:' . base64_encode( $iv . openssl_encrypt( $plain, 'aes-256-cbc', self::cipher_key(), OPENSSL_RAW_DATA, $iv ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+	}
+
+	public static function unseal_key( string $stored ): string {
+		$tag = substr( $stored, 0, 2 );
+		if ( 'e:' !== $tag && 'p:' !== $tag ) {
+			return $stored; // Saved before 0.4.1, or empty.
+		}
+		$raw = base64_decode( substr( $stored, 2 ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		if ( false === $raw ) {
+			return '';
+		}
+		if ( 'p:' === $tag ) {
+			return $raw;
+		}
+		if ( ! function_exists( 'openssl_decrypt' ) || strlen( $raw ) < 17 ) {
+			return '';
+		}
+		$out = openssl_decrypt( substr( $raw, 16 ), 'aes-256-cbc', self::cipher_key(), OPENSSL_RAW_DATA, substr( $raw, 0, 16 ) );
+		return false === $out ? '' : $out; // Empty when the site's security keys changed: save the key again.
+	}
+
+	private static function cipher_key(): string {
+		return hash( 'sha256', wp_salt( 'auth' ) . 'scout-chat-ai', true );
 	}
 
 	/** The site's booking page from Scout Booking, or Contact when there is none (or it was removed). */

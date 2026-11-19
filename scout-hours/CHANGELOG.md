@@ -1,5 +1,9 @@
 # Scout Hours changelog
 
+## 0.1.17 (2026-11-19)
+
+- **Safer hours schema output.** The JSON-LD is encoded with `JSON_HEX_TAG`. The data is unchanged.
+
 ## 0.1.16 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

@@ -28,3 +28,4 @@ $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\\_transient
 
 delete_option( 'scout_redirects_settings' );
 delete_option( 'scout_redirects_count' );
+delete_option( 'scout_redirects_noise_swept' ); // Marker: bot probes were swept for this version.

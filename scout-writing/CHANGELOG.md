@@ -1,5 +1,9 @@
 # Scout Writing changelog
 
+## 0.2.1 (2026-11-19)
+
+- **Deleting the plugin removes its settings.** New uninstall step: settings and migration notes go. Writing, prompts and each writer's marks stay.
+
 ## 0.2.0 (2026-11-13)
 
 - **The welcome can be a card on Scout Home.** On a site where Scout Build opens Home first after login (the setup file's `dashboard.land_on_home`, Scout Build 0.18.0), people who land there get the writing welcome as a Home card, headed "Your next prompt." (Home already says hello), with the same prompt, Write this one, Pick a different prompt, Keep writing and progress. It shows in one place only: on Home for them, so the WordPress Dashboard leaves it out. It uses Scout Build's new `scout_hub_home_cards` filter.

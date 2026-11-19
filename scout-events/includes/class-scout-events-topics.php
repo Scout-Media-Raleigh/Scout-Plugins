@@ -179,7 +179,7 @@ final class Scout_Events_Topics {
 			'numberOfItems'   => count( $list ),
 			'itemListElement' => $list,
 		);
-		return '<script type="application/ld+json">' . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>';
+		return '<script type="application/ld+json">' . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG ) . '</script>';
 	}
 
 	/** [scout_topics]: a card for every topic with a live page, busiest first. */

@@ -1,5 +1,9 @@
 # Scout Accessibility changelog
 
+## 0.1.23 (2026-11-19)
+
+- **Deleting the plugin leaves nothing behind.** The one-time page description marker is now removed on delete.
+
 ## 0.1.22 (2026-11-11)
 
 - **Admin kit 1.12.0: setup screens go to Scout tools on every site (Joy, 2026-11-11).** Any Scout menu screen that imports, exports, sets up, syncs or migrates (a theme's Import pages, a companion's setup screen) now files under Scout tools, for Sean and Joy only. Spam protection's switches move there from Site status. A theme's copy of the Writing list files there too; the Writing room's own Plus section is its home.

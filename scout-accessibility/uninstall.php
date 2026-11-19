@@ -26,3 +26,4 @@ delete_option( 'scout_accessibility_results' );
 delete_option( 'scout_accessibility_launch' );
 delete_option( 'scout_accessibility_link_seen' );
 wp_clear_scheduled_hook( 'scout_accessibility_weekly' );
+delete_option( 'scout_accessibility_desc_v1' ); // Marker: the page description was set once.

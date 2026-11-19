@@ -24,3 +24,5 @@ if ( function_exists( 'wp_roles' ) ) {
 	}
 }
 remove_role( 'scout_door_helper' );
+// The Presenter role goes too. Presenters keep their accounts and their pages.
+remove_role( 'scout_presenter' );

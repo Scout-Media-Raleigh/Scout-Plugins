@@ -1,5 +1,9 @@
 # Scout Chat changelog
 
+## 0.4.1 (2026-11-19)
+
+- **The AI connection key is saved encrypted.** A key typed on the settings screen is now stored encrypted with a key made from the site's own security salts, the way Scout Reviews stores its Google key, so a database copy or backup does not carry a usable key. A key saved earlier keeps working and is encrypted the next time the settings are saved. If the site's security keys change, type the key again. `SCOUT_CHAT_AI_KEY` in `wp-config.php` still wins and is never stored.
+
 ## 0.4.0 (2026-11-13)
 
 - **Outside chat widget (Site Standard rule 7).** A site that runs its own chat service can load it from Scout Chat instead of from the theme. Chat, More options: Outside chat widget has "Use an outside chat widget" (off by default), the script address (https only, checked on save and again where it prints), async and defer, script attributes as name=value lines (data-* plus id, crossorigin, referrerpolicy, integrity and charset), an optional settings object as JSON with the name the service reads, the launcher corner (bottom right or bottom left), the clearance on phones (86 px by default) and an optional launcher selector. When it is on, Scout Chat prints that script in the footer in place of its own button; Show the chat on the site and the `scout_chat_show` filter still turn it on and off.

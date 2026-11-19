@@ -1,5 +1,9 @@
 # Scout Core — Changelog
 
+## 1.15.1 (2026-11-19)
+
+- **Safer schema output.** The JSON-LD graph is encoded with `JSON_HEX_TAG`, so a `<` or `>` in any business field can never close the script tag early. The data Google reads is unchanged.
+
 ## 1.15.0 (2026-11-11)
 
 A map of the business that loads only when a visitor taps it. Sites that don't use it are unchanged.

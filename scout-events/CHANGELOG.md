@@ -3,6 +3,8 @@
 ## 0.18.1 (2026-11-19)
 
 - **Ready for PHP 8.5.** The ticket image no longer calls `imagedestroy()`, which does nothing since PHP 8.0 and is deprecated in 8.5. Tickets look and attach exactly as before.
+- **The Presenter role goes with the plugin.** Deleting Scout Events now removes the Presenter role, the way the Door helper role already went. Presenters keep their accounts and pages.
+- **Safer schema output.** Event and topic JSON-LD is encoded with `JSON_HEX_TAG`. The data is unchanged.
 
 ## 0.18.0 (2026-11-13)
 
