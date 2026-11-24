@@ -7,6 +7,8 @@ Specs for the Scout Build hub and its Site log. Each plugin's own README stays i
   and switches a site's Scout features. Drafted 2026-10-12.
 - `site-log-spec.md`: the spec for the Site log, one line on the site for every change made to it,
   written by the plugins that make the change. Approved 2026-11-04.
+- `social-review-spec.md`: the spec for Social review, a private page on a client's site where
+  they approve the social posts we made for them. Drafted 2026-11-24.
 - Each site's one-time Site log history file is kept in Scout's private ops folder, not here,
   because it holds a client site's update history. `tools/tests/site-log.php` checks the import
   against a made-up sample, `tools/tests/site-log-sample.json`.
